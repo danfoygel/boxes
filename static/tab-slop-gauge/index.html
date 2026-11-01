@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tab Slop Gauge</title>
+<meta name="description" content="Generates a pair of laser-cut bars that measure tab and slot slop and material thickness.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: light; }
+body { margin: 0; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+[hidden] { display: none !important; }
+/* Layout: a workshop jig sheet. Controls on the left, the cut preview on the right, readings underneath. */
+:root {
+  --bg: #f4f6f7;
+  --panel: #ffffff;
+  --fg: #1a2026;
+  --muted: #5d6973;
+  --rule: #d8dee3;
+  --accent: #b5470f;      /* laser orange, used for the one action */
+  --accent-fg: #ffffff;
+  --etch: #23864a;        /* etched marks, as a laser job colour */
+  --side-a: #2f62a8;
+  --side-b: #8a4cb0;
+  --warn: #a15c00;
+  --warn-bg: #fff3dc;
+  --err: #b42318;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161a; --panel: #1a2026; --fg: #e6ebef; --muted: #98a4ae; --rule: #2c353d;
+    --accent: #f07a3a; --accent-fg: #1a0d05; --etch: #5fd08b; --side-a: #7fa8e8; --side-b: #c494e3;
+    --warn: #f0b85a; --warn-bg: #2e2412; --err: #ff8a7a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161a; --panel: #1a2026; --fg: #e6ebef; --muted: #98a4ae; --rule: #2c353d;
+  --accent: #f07a3a; --accent-fg: #1a0d05; --etch: #5fd08b; --side-a: #7fa8e8; --side-b: #c494e3;
+  --warn: #f0b85a; --warn-bg: #2e2412; --err: #ff8a7a; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 24px;
+}
+header { display: grid; gap: 4px; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: 28px; letter-spacing: 0.01em; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 68ch; }
+.main { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 820px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+.controls { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 18px; display: grid; gap: 18px; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; min-width: 0; }
+legend { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; padding: 0; }
+.field { display: grid; grid-template-columns: 1fr 104px; align-items: center; gap: 10px; }
+.field label { font-size: 14px; }
+.field small { display: block; color: var(--muted); font-size: 12px; }
+.input { position: relative; }
+.input input {
+  width: 100%; box-sizing: border-box; font: 500 15px/1 var(--font-data); font-variant-numeric: tabular-nums;
+  padding: 8px 30px 8px 8px; border: 1px solid var(--rule); border-radius: 4px; background: var(--bg); color: var(--fg); text-align: right;
+}
+.input input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.input input[aria-invalid="true"] { border-color: var(--err); }
+.input span { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font: 12px var(--font-data); color: var(--muted); pointer-events: none; }
+.actions { display: grid; gap: 8px; }
+button {
+  font: 600 15px var(--font-body); border-radius: 4px; padding: 10px 14px; cursor: pointer; border: 1px solid transparent;
+}
+button.primary { background: var(--accent); color: var(--accent-fg); }
+button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+button.secondary { background: transparent; color: var(--fg); border-color: var(--rule); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.status { font-size: 13px; color: var(--muted); min-height: 1.2em; margin: 0; }
+.status.err { color: var(--err); }
+
+.sheet { display: grid; gap: 16px; min-width: 0; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+@media (max-width: 560px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { background: var(--panel); padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.stat b { font: 500 18px var(--font-data); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.preview { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; overflow-x: auto; }
+.preview svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.preview .cut { fill: none; stroke: var(--fg); stroke-width: 0.15; stroke-linejoin: miter; }
+.preview .etch { stroke: var(--etch); stroke-width: 0.15; }
+.preview text { fill: var(--etch); font-family: var(--font-body); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); margin-top: 10px; }
+.legend i { display: inline-block; width: 14px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+.notice { background: var(--warn-bg); color: var(--warn); border-radius: 4px; padding: 8px 12px; font-size: 14px; margin: 0; }
+
+.readings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 560px) { .readings { grid-template-columns: minmax(0, 1fr); } }
+.side { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.side h2 { font: 600 15px var(--font-body); margin: 0; display: flex; gap: 8px; align-items: baseline; }
+.side h2 .tag { font: 600 13px var(--font-data); color: var(--panel); border-radius: 3px; padding: 1px 6px; }
+.side.a .tag { background: var(--side-a); }
+.side.b .tag { background: var(--side-b); }
+.side.len { grid-column: 1 / -1; }
+.side.len .tag { background: var(--etch); }
+.side.len > div { display: grid; gap: 4px; }
+.side.len .chip.flush { color: var(--etch); }
+.side p { margin: 0; font-size: 13px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font: 13px var(--font-data); font-variant-numeric: tabular-nums; padding: 2px 6px; border: 1px solid var(--rule); border-radius: 3px; }
+.chip.flush { border-color: currentColor; font-weight: 500; }
+.side.a .chip.flush { color: var(--side-a); }
+.side.b .chip.flush { color: var(--side-b); }
+
+.howto { color: var(--muted); font-size: 14px; max-width: 72ch; display: grid; gap: 6px; }
+.howto h2 { color: var(--fg); font: 600 15px var(--font-body); margin: 0; }
+.howto ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tab Slop Gauge</h1>
+    <p class="lede">A pair of bars that mesh along both long edges. Slide the bottom bar along the top one until the fit feels right: its end points at the slop that suits your laser and material. The bottom bar's tabs also come in different lengths, so you can find the length that sits flush with your real material thickness.</p>
+  </header>
+
+  <div class="main">
+    <form class="controls" id="form" novalidate>
+      <fieldset>
+        <legend>Material</legend>
+        <div class="field">
+          <label for="t">Thickness</label>
+          <div class="input"><input id="t" type="number" inputmode="decimal" step="0.1" min="0.5" value="3"><span>mm</span></div>
+        </div>
+        <div class="field">
+          <label for="f">Tab width<small id="fhint">Blank: 2 × thickness</small></label>
+          <div class="input"><input id="f" type="number" inputmode="decimal" step="0.5" min="1" placeholder="6"><span>mm</span></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Slop</legend>
+        <div class="field">
+          <label for="sinc">Increment</label>
+          <div class="input"><input id="sinc" type="number" inputmode="decimal" step="0.005" min="0.001" value="0.01"><span>mm</span></div>
+        </div>
+        <div class="field">
+          <label for="sspread">Spread<small>Readings from −spread to +spread</small></label>
+          <div class="input"><input id="sspread" type="number" inputmode="decimal" step="0.01" min="0" value="0.10"><span>mm</span></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Tab length</legend>
+        <div class="field">
+          <label for="linc">Increment<small>Lengths centred on the thickness</small></label>
+          <div class="input"><input id="linc" type="number" inputmode="decimal" step="0.01" min="0.001" value="0.01"><span>mm</span></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Slots</legend>
+        <div class="field">
+          <label for="fclr">Top bar face slots<small>Extra width over the thickness</small></label>
+          <div class="input"><input id="fclr" type="number" inputmode="decimal" step="0.05" min="0" value="0.20"><span>mm</span></div>
+        </div>
+        <div class="field">
+          <label for="sxtra">Bottom bar thickness slots<small>Extra length over the tab width</small></label>
+          <div class="input"><input id="sxtra" type="number" inputmode="decimal" step="0.1" min="0" value="0.50"><span>mm</span></div>
+        </div>
+      </fieldset>
+      <div class="actions">
+        <button type="submit" class="primary" id="gen">Generate SVG</button>
+        <p class="status" id="status" role="status"></p>
+      </div>
+    </form>
+
+    <section class="sheet" aria-label="Preview">
+      <div class="stats" id="stats"></div>
+      <div class="preview" id="preview"></div>
+      <p class="notice" id="notice" hidden></p>
+      <div class="readings" id="readings"></div>
+      <div class="howto">
+        <h2>How to read it</h2>
+        <ol>
+          <li>Cut both bars from the same sheet. The SVG has cut lines in black and etched marks in green.</li>
+          <li>Turn the bottom bar end for end and mesh its side A with side A of the top bar (or B with B).</li>
+          <li>The bottom bar is one tab longer than the top bar, so one of its ends always sits on the top bar. Slide it one tab at a time: every pair of tabs gets one increment looser or tighter.</li>
+          <li>Stop where the bars mesh best. The end of the bottom bar that lies on the top bar sits on a tick: that number is the slop to use. The foot of each tick points along the bottom bar; if it points the other way you have slid past the end of the scale.</li>
+          <li>The top bar also has a row of slots inside each edge, matching the edge slots along the bar and a little wider than the material across it. Push the bottom bar's tabs into a row from the face instead of meshing along the edge; the shifts and readings work the same way.</li>
+          <li>To check the thickness, push one of the tabs on the ends of the top bar into the slots across the bottom bar. Those two tabs are the nominal size: the tab width by the thickness. Each slot is as wide as its label says; the narrowest one the material slides into snugly is your real thickness.</li>
+          <li>For the tab length, stand the bottom bar upright and push its tabs through the slots of the top bar. The tab that ends flush with the far face shows the length that matches your material.</li>
+        </ol>
+        <p>The SVG has no kerf compensation, so the slop reading includes your laser's kerf.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const FS = 2;          // label size, mm
+  const LETTER = 3;      // side letter size, mm
+  const MARGIN = 2, GAP = 2;
+  const INSET = 1.5 + LETTER + 1;  // from an edge to the slots inside it
+  let current = null;
+
+  const r6 = v => Math.round(v * 1e6) / 1e6;
+  const fmt = v => v.toFixed(2);
+  const trim3 = s => (s.endsWith("0") ? s.slice(0, -1) : s);
+  function label(v) {
+    v = r6(v);
+    if (Math.abs(v) < 1e-9) return "0.00";
+    return trim3((v > 0 ? "+" : "") + v.toFixed(3));
+  }
+  const lengthLabel = v => trim3(r6(v).toFixed(3));
+  const fmtLen = v => String(r6(Math.round(v * 10) / 10));
+  const num = id => { const v = $(id).value.trim(); return v === "" ? NaN : Number(v); };
+
+  // Work out both bars from the inputs. Throws a message for bad input.
+  function plan() {
+    const t = num("t");
+    const fIn = num("f");
+    const f = Number.isNaN(fIn) ? 2 * t : fIn;
+    const inc = num("sinc"), spread = num("sspread"), linc = num("linc");
+    const fclr = num("fclr"), sxtra = num("sxtra");
+    const flag = (id, ok) => $(id).setAttribute("aria-invalid", ok ? "false" : "true");
+    flag("t", t > 0);
+    flag("f", Number.isNaN(fIn) || fIn > 0);
+    flag("sinc", inc > 0);
+    flag("sspread", spread >= 0);
+    flag("linc", linc > 0);
+    flag("fclr", fclr >= 0);
+    flag("sxtra", sxtra >= 0);
+    if (!(t > 0)) throw "Enter a thickness above 0 mm.";
+    if (!(f > 0)) throw "Enter a tab width above 0 mm.";
+    if (!(inc > 0)) throw "Enter a slop increment above 0 mm.";
+    if (!(spread >= 0)) throw "Enter a slop spread of 0 mm or more.";
+    if (!(linc > 0)) throw "Enter a tab length increment above 0 mm.";
+    if (!(fclr >= 0)) throw "Enter a face slot clearance of 0 mm or more.";
+    if (!(sxtra >= 0)) throw "Enter a thickness slot extra length of 0 mm or more.";
+
+    // Readings from -spread to +spread. The two sides share them out
+    // equally without repeats, so an odd count gets one more at the top.
+    const wanted = Math.round(2 * spread / inc) + 1;
+    const perSide = Math.max(3, Math.ceil(wanted / 2));
+    if (2 * perSide > 80) throw `That needs ${2 * perSide} readings. Use a larger increment or a smaller spread (80 at most).`;
+    const values = Array.from({ length: 2 * perSide }, (_, k) => r6(-spread + k * inc));
+
+    // The top bar has one tick per tab position (n1 + 1 of them), one for
+    // each reading. The bottom bar is one tab longer, so exactly one of
+    // its ends lies on the top bar at a time.
+    const n1 = perSide - 1, n2 = perSide;
+    const h = Math.floor(perSide / 2);   // ticks read by the bottom bar's near end
+    const p = 2 * f;                     // a tab plus the slot after it
+    const L1 = n1 * p, L2 = n2 * p;
+    const H = Math.max(2 * (1.5 + 1.5 * FS) + 1, 3 * t);
+
+    // Tabs grow by inc along an edge. With the bottom bar's start k tabs
+    // along the top bar's edge, every pair has slop X - inc/2 - k*inc.
+    const widths = (n, X) => {
+      const tabs = [], gaps = [];
+      for (let i = 0; i < n; i++) {
+        const w = f + (i - (n - 1) / 2) * inc - X / 2;
+        tabs.push(w); gaps.push(2 * f - w);
+      }
+      return { tabs, gaps };
+    };
+    const sides = {};
+    for (const [name, vals] of [["A", values.slice(0, perSide)], ["B", values.slice(perSide)]]) {
+      const X = vals[h - 1] + inc / 2;
+      // Tick m: the bottom bar's start end sits there (shift m) for the
+      // first h ticks, its far end (shift m - n2) for the rest. dir is the
+      // way the bottom bar runs from that end, along the edge.
+      const ticks = [];
+      for (let m = 0; m <= n1; m++) {
+        const k = m < h ? m : m - n2;
+        ticks.push({ m, value: vals[h - 1 - k], dir: m < h ? 1 : -1 });
+      }
+      sides[name] = { values: vals, ticks, top: widths(n1, X), bottom: widths(n2, X) };
+    }
+    const all = Object.values(sides).flatMap(s => [...s.top.tabs, ...s.top.gaps, ...s.bottom.tabs, ...s.bottom.gaps]);
+    if (Math.min(...all) <= 0.5) throw "The tabs get too narrow at the ends. Use a wider tab, a smaller increment or a smaller spread.";
+
+    // Bottom bar: every tab a different length, centred on the thickness.
+    const lengths = Array.from({ length: 2 * n2 }, (_, j) => r6(t + (j - n2) * linc));
+    if (lengths[0] <= 0.3) throw "The shortest tab gets too short. Use a smaller tab length increment.";
+
+    // Bottom bar thickness slots: one across the bar under each tab label,
+    // as wide as that tab is long, as long as a tab is wide plus sxtra.
+    // The two rows sit side by side, so the slots alternate along the bar.
+    const slotLen = f + sxtra;
+    const H2 = Math.max(H, 2 * INSET + slotLen);
+    const slots = [
+      ...sides.B.bottom.tabs.map((w, i) => ({ side: "B", x: i * p + w / 2, w: lengths[i] })),
+      ...sides.A.bottom.tabs.map((w, i) => ({ side: "A", x: L2 - i * p - w / 2, w: lengths[n2 + i] })),
+    ];
+    const edges = slots.map(sl => [sl.x - sl.w / 2, sl.x + sl.w / 2]).sort((a, b) => a[0] - b[0]);
+    let between = Infinity;
+    for (let i = 1; i < edges.length; i++) between = Math.min(between, edges[i][0] - edges[i - 1][1]);
+    if (between < 1) throw "The thickness slots in the bottom bar run into each other. Use a smaller tab length increment or a wider tab.";
+    if (edges[0][0] < 1 || edges[edges.length - 1][1] > L2 - 1) throw "The end thickness slots come too close to the ends of the bottom bar. Use a wider tab.";
+
+    const notes = [];
+    if (2 * perSide > wanted) notes.push(`Added ${label(values[values.length - 1])} at the top so both sides have the same number of readings.`);
+    if (L2 > 600) notes.push(`The bottom bar is ${Math.round(L2)} mm long. Check that it fits your laser bed.`);
+
+    return { t, f, inc, spread, linc, fclr, sxtra, slotLen, H, H2, slots, perSide, h, n1, n2, p, L1, L2, sides, values, lengths, notes, fAuto: Number.isNaN(fIn) };
+  }
+
+  // Both bars as SVG. themed: preview colours from CSS; otherwise laser colours.
+  function svg(P, themed) {
+    const { t, p } = P;
+    // The top bar also has a row of slots inside each edge, so the bottom
+    // bar can be pushed into its face. It runs past the tabs at both ends
+    // so the end slots stay closed.
+    const ext = Math.max(3, t);
+    const inset = INSET;
+    const faceW = t + P.fclr;            // face slots have room for the thickness
+    const H1 = Math.max(2 * inset + 2 * faceW + Math.max(2, t), P.f + 4);
+    const cutAttr = themed ? 'class="cut"' : 'fill="none" stroke="#000000" stroke-width="0.1"';
+    const etchAttr = themed ? 'class="etch"' : 'stroke="#00ff00" stroke-width="0.1"';
+    const textAttr = themed ? "" : 'fill="#00ff00" font-family="Arial, Helvetica, sans-serif"';
+    const c = v => r6(v).toString();
+    const out = [];
+
+    // One bar at (ox, oy), the start of its tab pattern. lens: tab lengths
+    // along side B then side A. scale: the top bar, with the vernier marks
+    // and the face slots. Returns the bar's height.
+    function bar(ox, oy, lens, scale) {
+      const geo = scale ? "top" : "bottom";
+      const n = scale ? P.n1 : P.n2, L = scale ? P.L1 : P.L2;
+      const B = P.sides.B[geo], A = P.sides.A[geo];
+      const lensB = lens.slice(0, n), lensA = lens.slice(n);
+      const below = Math.max(...lensB), above = Math.max(...lensA);
+      const Hb = scale ? H1 : P.H2, e = scale ? ext : 0;
+      const total = below + Hb + above, top = below + Hb;
+      // Bar coordinates have y up from the bottom of side B's tabs.
+      const X = x => c(ox + x), Y = y => c(oy + total - y);
+      const texts = [], ticks = [];
+      const txt = (x, y, s, anchor, size) =>
+        texts.push(`<text ${textAttr} x="${X(x)}" y="${Y(y)}" font-size="${c(size)}" text-anchor="${anchor}">${s}</text>`);
+      const lenSize = w => Math.min(FS, w / 2.4);
+
+      const pts = [[-e, below], [0, below]];
+      let x = 0;
+      B.tabs.forEach((w, i) => {
+        const l = lensB[i];
+        pts.push([x, below - l], [x + w, below - l], [x + w, below]);
+        if (!scale) txt(x + w / 2, below + 1.5, lengthLabel(l), "middle", lenSize(w));
+        x += w + B.gaps[i];
+        pts.push([x, below]);
+      });
+      // The top bar has a nominal tab (tab width by thickness) in the
+      // middle of each end, for trying in the bottom bar's thickness slots.
+      const mid = below + Hb / 2, et = scale ? t : 0, ew = scale ? P.f / 2 : 0;
+      pts.push([L + e, below], [L + e, mid - ew], [L + e + et, mid - ew], [L + e + et, mid + ew], [L + e, mid + ew], [L + e, top], [L, top]);
+      x = L;
+      A.tabs.forEach((w, i) => {
+        const l = lensA[i];
+        pts.push([x, top + l], [x - w, top + l], [x - w, top]);
+        if (!scale) txt(x - w / 2, top - 1.5 - lenSize(w), lengthLabel(l), "middle", lenSize(w));
+        x -= w + A.gaps[i];
+        pts.push([x, top]);
+      });
+      pts.push([-e, top], [-e, mid + ew], [-e - et, mid + ew], [-e - et, mid - ew], [-e, mid - ew]);
+      out.push(`<path ${cutAttr} d="M ${pts.map(([a, b]) => X(a) + " " + Y(b)).join(" L ")} Z"/>`);
+
+      const hole = (xa, xb, ya, hh) =>
+        out.push(`<path ${cutAttr} d="M ${X(xa)} ${Y(ya)} H ${X(xb)} V ${Y(ya + hh)} H ${X(xa)} Z"/>`);
+      if (scale) {
+        // Face slots right inside the edge slots, just as wide along the
+        // bar, with clearance over the thickness across it.
+        for (let i = 0; i < n; i++) {
+          hole(i * p + B.tabs[i], (i + 1) * p, below + inset, faceW);
+          hole(L - (i + 1) * p, L - i * p - A.tabs[i], top - inset - faceW, faceW);
+        }
+        // Ticks: a short line in from the edge with a foot pointing the way
+        // the bottom bar runs from the end that sits on it.
+        const tick = (gx, edgeY, inward, foot, value, anchor) => {
+          ticks.push(`M ${X(gx)} ${Y(edgeY)} V ${Y(edgeY + inward)} H ${X(gx + foot)}`);
+          txt(gx, inward > 0 ? edgeY + 1.5 : edgeY - 1.5 - FS, label(value), anchor, FS);
+        };
+        const anchorFor = m => (m === 0 ? "start" : m === n ? "end" : "middle");
+        for (const tk of P.sides.B.ticks) tick(tk.m * p, below, 1, 0.8 * tk.dir, tk.value, anchorFor(tk.m));
+        // Side A runs the other way round the bar.
+        const flip = { start: "end", end: "start", middle: "middle" };
+        for (const tk of P.sides.A.ticks) tick(L - tk.m * p, top, -1, -0.8 * tk.dir, tk.value, flip[anchorFor(tk.m)]);
+        out.push(`<path ${etchAttr} fill="none" d="${ticks.join(" ")}"/>`);
+        // Side letters in the face slot rows, between two slots.
+        const i = Math.floor(n / 2), mid = (faceW - 0.72 * LETTER) / 2;
+        txt(i * p + B.tabs[i] / 2, below + inset + mid, "B", "middle", LETTER);
+        txt(L - i * p - A.tabs[i] / 2, top - inset - faceW + mid, "A", "middle", LETTER);
+      } else {
+        // Thickness slots across the bar, under each tab length label.
+        for (const sl of P.slots) {
+          const ya = sl.side === "B" ? below + inset : top - inset - P.slotLen;
+          hole(sl.x - sl.w / 2, sl.x + sl.w / 2, ya, P.slotLen);
+        }
+        // Side letters in the middle of the bar, over a slot so they stay
+        // clear of the tab length labels.
+        const g = Math.floor((n - 1) / 2);
+        const letterX = s => g * p + s.tabs[g] + s.gaps[g] / 2;
+        txt(letterX(B), below + 1.5, "B", "middle", LETTER);
+        txt(L - letterX(A), top - 1.5 - LETTER, "A", "middle", LETTER);
+      }
+      out.push(...texts);
+      return total;
+    }
+
+    const h1 = bar(MARGIN + ext + t, MARGIN, Array(2 * P.n1).fill(t), true);
+    // Both bars start at the left margin, so they nest for cutting.
+    const h2 = bar(MARGIN, MARGIN + h1 + GAP, P.lengths, false);
+    const W = Math.max(P.L1 + 2 * ext + 2 * t, P.L2) + 2 * MARGIN, SH = h1 + GAP + h2 + 2 * MARGIN;
+    const size = themed ? "" : ` width="${c(W)}mm" height="${c(SH)}mm"`;
+    return `<svg xmlns="http://www.w3.org/2000/svg"${size} viewBox="0 0 ${c(W)} ${c(SH)}">\n${out.join("\n")}\n</svg>\n`;
+  }
+
+  function render() {
+    let P;
+    try {
+      P = plan();
+    } catch (msg) {
+      current = null;
+      $("gen").disabled = true;
+      $("status").textContent = String(msg);
+      $("status").className = "status err";
+      return;
+    }
+    current = P;
+    $("gen").disabled = false;
+    $("status").textContent = "";
+    $("status").className = "status";
+    $("f").placeholder = fmt(2 * P.t);
+    $("fhint").textContent = P.fAuto ? `Blank: 2 × thickness = ${fmt(P.f)}` : "Blank: 2 × thickness";
+
+    const all = P.values;
+    $("stats").innerHTML = [
+      [`${P.n1} / ${P.n2}`, "tabs per edge, top / bottom"],
+      [`${label(all[0])} to ${label(all[all.length - 1])}`, `slop, ${all.length} readings`],
+      [`${lengthLabel(P.lengths[0])}–${lengthLabel(P.lengths[P.lengths.length - 1])}`, "tab lengths, mm"],
+      // overall: the top bar adds its end extensions and end tabs
+      [`${fmtLen(P.L1 + 2 * Math.max(3, P.t) + 2 * P.t)} / ${fmtLen(P.L2)}`, "bar lengths overall, mm"],
+    ].map(([v, s]) => `<div class="stat"><b>${v}</b><span>${s}</span></div>`).join("");
+
+    $("preview").innerHTML = svg(P, true) +
+      `<div class="legend"><span><i style="color:var(--fg)"></i>Cut</span><span><i style="color:var(--etch)"></i>Etch</span><span>Top: slop scale · Bottom: tab lengths</span></div>`;
+
+    $("notice").hidden = !P.notes.length;
+    $("notice").textContent = P.notes.join(" ");
+
+    const side = name => {
+      const s = P.sides[name];
+      const vals = s.values;
+      return `<div class="side ${name.toLowerCase()}"><h2><span class="tag">${name}</span>Side ${name}: ${label(vals[0])} to ${label(vals[vals.length - 1])} mm</h2>
+        <p>${vals.length} ticks, one per reading. Each tab of shift changes the slop by ${label(P.inc).replace("+", "")}.</p>
+        <div class="chips">${vals.map(v => `<span class="chip">${label(v)}</span>`).join("")}</div></div>`;
+    };
+    const lens = (name, list) => `<div><p>Side ${name}, left to right as cut</p><div class="chips">${list.map(l => `<span class="chip${Math.abs(l - P.t) < 1e-9 ? " flush" : ""}">${lengthLabel(l)}</span>`).join("")}</div></div>`;
+    $("readings").innerHTML = side("A") + side("B") +
+      `<div class="side len"><h2><span class="tag">L</span>Bottom bar tab lengths: ${lengthLabel(P.lengths[0])} to ${lengthLabel(P.lengths[P.lengths.length - 1])} mm</h2>
+        <p>${2 * P.n2} tabs, ${lengthLabel(P.linc)} mm apart. The highlighted one is the nominal thickness. Each label also has a slot across the bar that wide and ${lengthLabel(P.slotLen)} mm long.</p>
+        ${lens("B", P.lengths.slice(0, P.n2))}${lens("A", P.lengths.slice(P.n2).reverse())}</div>`;
+  }
+
+  function filename(P) {
+    const n = v => r6(v).toString();
+    return `tab-slop-gauge_t${n(P.t)}_tab${n(P.f)}_slop${n(P.spread)}by${n(P.inc)}_len${n(P.linc)}_face${n(P.fclr)}_slot${n(P.sxtra)}.svg`;
+  }
+
+  $("form").addEventListener("input", render);
+  $("form").addEventListener("submit", e => {
+    e.preventDefault();
+    if (!current) return;
+    const name = filename(current);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([svg(current, false)], { type: "image/svg+xml" }));
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    $("status").className = "status";
+    $("status").textContent = `Downloaded ${name}`;
+  });
+
+  // exposed for testing from the browser console
+  window.__gauge = { plan, svg, label };
+  render();
+})();
+</script>
+</body>
+</html>

@@ -23,6 +23,7 @@ body { margin: 0; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-seri
   --accent: #b5470f;      /* laser orange, used for the one action */
   --accent-fg: #ffffff;
   --etch: #23864a;        /* etched marks, as a laser job colour */
+  --inner: #2563d9;       /* inner cuts, cut before the outlines */
   --side-a: #2f62a8;
   --side-b: #8a4cb0;
   --warn: #a15c00;
@@ -35,13 +36,13 @@ body { margin: 0; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-seri
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #12161a; --panel: #1a2026; --fg: #e6ebef; --muted: #98a4ae; --rule: #2c353d;
-    --accent: #f07a3a; --accent-fg: #1a0d05; --etch: #5fd08b; --side-a: #7fa8e8; --side-b: #c494e3;
+    --accent: #f07a3a; --accent-fg: #1a0d05; --etch: #5fd08b; --inner: #74a7ff; --side-a: #7fa8e8; --side-b: #c494e3;
     --warn: #f0b85a; --warn-bg: #2e2412; --err: #ff8a7a; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #12161a; --panel: #1a2026; --fg: #e6ebef; --muted: #98a4ae; --rule: #2c353d;
-  --accent: #f07a3a; --accent-fg: #1a0d05; --etch: #5fd08b; --side-a: #7fa8e8; --side-b: #c494e3;
+  --accent: #f07a3a; --accent-fg: #1a0d05; --etch: #5fd08b; --inner: #74a7ff; --side-a: #7fa8e8; --side-b: #c494e3;
   --warn: #f0b85a; --warn-bg: #2e2412; --err: #ff8a7a; color-scheme: dark;
 }
 body {
@@ -94,6 +95,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .preview { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; overflow-x: auto; }
 .preview svg { display: block; width: 100%; min-width: 640px; height: auto; }
 .preview .cut { fill: none; stroke: var(--fg); stroke-width: 0.15; stroke-linejoin: miter; }
+.preview .cut.inner { stroke: var(--inner); }
 .preview .etch { stroke: var(--etch); stroke-width: 0.15; }
 .preview text { fill: var(--etch); font-family: var(--font-body); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); margin-top: 10px; }
@@ -186,7 +188,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       <div class="howto">
         <h2>How to read it</h2>
         <ol>
-          <li>Cut both bars from the same sheet. The SVG has cut lines in black and etched marks in green.</li>
+          <li>Cut both bars from the same sheet. In the SVG, outlines are black, inner cuts are blue and etching is green. Set your laser to cut blue before black, so parts don't shift before their slots are cut.</li>
           <li>Turn the bottom bar end for end and mesh its side A with side A of the top bar (or B with B).</li>
           <li>The bottom bar is one tab longer than the top bar, so one of its ends always sits on the top bar. Slide it one tab at a time: every pair of tabs gets one increment looser or tighter.</li>
           <li>Stop where the bars mesh best. The end of the bottom bar that lies on the top bar sits on a tick: that number is the slop to use. The foot of each tick points along the bottom bar; if it points the other way you have slid past the end of the scale.</li>
@@ -323,11 +325,16 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     const inset = INSET;
     const faceW = t + P.fclr;            // face slots have room for the thickness
     const H1 = Math.max(2 * inset + 2 * faceW + Math.max(2, t), P.f + 4);
+    // Laser colours as boxes.py uses them: black outer cuts, blue inner
+    // cuts, green etching.
     const cutAttr = themed ? 'class="cut"' : 'fill="none" stroke="#000000" stroke-width="0.1"';
+    const innerAttr = themed ? 'class="cut inner"' : 'fill="none" stroke="#0000ff" stroke-width="0.1"';
     const etchAttr = themed ? 'class="etch"' : 'stroke="#00ff00" stroke-width="0.1"';
     const textAttr = themed ? "" : 'fill="#00ff00" font-family="Arial, Helvetica, sans-serif"';
     const c = v => r6(v).toString();
-    const out = [];
+    // Etching first, then inner cuts, then outlines, for lasers that
+    // follow the order in the file.
+    const etch = [], inner = [], outer = [];
 
     // One bar at (ox, oy), the start of its tab pattern. lens: tab lengths
     // along side B then side A. scale: the top bar, with the vernier marks
@@ -369,10 +376,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         pts.push([x, top]);
       });
       pts.push([-e, top], [-e, mid + ew], [-e - et, mid + ew], [-e - et, mid - ew], [-e, mid - ew]);
-      out.push(`<path ${cutAttr} d="M ${pts.map(([a, b]) => X(a) + " " + Y(b)).join(" L ")} Z"/>`);
+      outer.push(`<path ${cutAttr} d="M ${pts.map(([a, b]) => X(a) + " " + Y(b)).join(" L ")} Z"/>`);
 
       const hole = (xa, xb, ya, hh) =>
-        out.push(`<path ${cutAttr} d="M ${X(xa)} ${Y(ya)} H ${X(xb)} V ${Y(ya + hh)} H ${X(xa)} Z"/>`);
+        inner.push(`<path ${innerAttr} d="M ${X(xa)} ${Y(ya)} H ${X(xb)} V ${Y(ya + hh)} H ${X(xa)} Z"/>`);
       if (scale) {
         // Face slots right inside the edge slots, just as wide along the
         // bar, with clearance over the thickness across it.
@@ -391,7 +398,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         // Side A runs the other way round the bar.
         const flip = { start: "end", end: "start", middle: "middle" };
         for (const tk of P.sides.A.ticks) tick(L - tk.m * p, top, -1, -0.8 * tk.dir, tk.value, flip[anchorFor(tk.m)]);
-        out.push(`<path ${etchAttr} fill="none" d="${ticks.join(" ")}"/>`);
+        etch.push(`<path ${etchAttr} fill="none" d="${ticks.join(" ")}"/>`);
         // Side letters in the face slot rows, between two slots.
         const i = Math.floor(n / 2), mid = (faceW - 0.72 * LETTER) / 2;
         txt(i * p + B.tabs[i] / 2, below + inset + mid, "B", "middle", LETTER);
@@ -409,7 +416,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         txt(letterX(B), below + 1.5, "B", "middle", LETTER);
         txt(L - letterX(A), top - 1.5 - LETTER, "A", "middle", LETTER);
       }
-      out.push(...texts);
+      etch.push(...texts);
       return total;
     }
 
@@ -418,7 +425,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     const h2 = bar(MARGIN, MARGIN + h1 + GAP, P.lengths, false);
     const W = Math.max(P.L1 + 2 * ext + 2 * t, P.L2) + 2 * MARGIN, SH = h1 + GAP + h2 + 2 * MARGIN;
     const size = themed ? "" : ` width="${c(W)}mm" height="${c(SH)}mm"`;
-    return `<svg xmlns="http://www.w3.org/2000/svg"${size} viewBox="0 0 ${c(W)} ${c(SH)}">\n${out.join("\n")}\n</svg>\n`;
+    return `<svg xmlns="http://www.w3.org/2000/svg"${size} viewBox="0 0 ${c(W)} ${c(SH)}">\n${[...etch, ...inner, ...outer].join("\n")}\n</svg>\n`;
   }
 
   function render() {
@@ -449,7 +456,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     ].map(([v, s]) => `<div class="stat"><b>${v}</b><span>${s}</span></div>`).join("");
 
     $("preview").innerHTML = svg(P, true) +
-      `<div class="legend"><span><i style="color:var(--fg)"></i>Cut</span><span><i style="color:var(--etch)"></i>Etch</span><span>Top: slop scale · Bottom: tab lengths</span></div>`;
+      `<div class="legend"><span><i style="color:var(--inner)"></i>Inner cut (first)</span><span><i style="color:var(--fg)"></i>Outer cut</span><span><i style="color:var(--etch)"></i>Etch</span><span>Top: slop scale · Bottom: tab lengths</span></div>`;
 
     $("notice").hidden = !P.notes.length;
     $("notice").textContent = P.notes.join(" ");

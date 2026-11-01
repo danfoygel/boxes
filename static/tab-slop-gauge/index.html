@@ -83,7 +83,10 @@ button.primary { background: var(--accent); color: var(--accent-fg); }
 button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
 button.secondary { background: transparent; color: var(--fg); border-color: var(--rule); }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.status { font-size: 13px; color: var(--muted); min-height: 1.2em; margin: 0; }
+.status { font-size: 13px; color: var(--muted); min-height: 1.2em; margin: 0; overflow-wrap: anywhere; }
+/* keep long messages (file names) from widening the controls column */
+.controls, .actions { grid-template-columns: minmax(0, 1fr); }
+.controls > * { min-width: 0; }
 .status.err { color: var(--err); }
 
 .sheet { display: grid; gap: 16px; min-width: 0; }

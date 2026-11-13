@@ -12,12 +12,16 @@ mkdir -p boxes sheets/clustered sheets/split
 
 # 1. The four boxes: inside dimensions, 3 mm material, lid height 20 mm.
 i=1
-for dims in "160 80 60" "168 95 68" "176 110 76" "184 125 84"; do
-  set -- $dims
-  PYTHONPATH="$ROOT" "$PY" "$ROOT/scripts/boxes" HingeBox --x "$1" --y "$2" --h "$3" \
+while read -r x y h; do
+  PYTHONPATH="$ROOT" "$PY" "$ROOT/scripts/boxes" HingeBox --x "$x" --y "$y" --h "$h" \
     --lidheight 20 --thickness 3 --reference 0 --output "boxes/box$i.svg"
   i=$((i + 1))
-done
+done <<'SIZES'
+160 80 60
+168 95 68
+176 110 76
+184 125 84
+SIZES
 BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 
 # 2. Everything on one sheet.

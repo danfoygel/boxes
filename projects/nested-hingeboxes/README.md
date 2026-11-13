@@ -184,4 +184,4 @@ node projects/nested-hingeboxes/render_previews.js
 
 The multi-sheet searches take one to a few minutes each, and `generate.sh` runs them
 in parallel. The results are deterministic. To change sizes, thickness or lid height,
-edit the box list at the top of `generate.sh`.
+edit the size list in step 1 of `generate.sh`.

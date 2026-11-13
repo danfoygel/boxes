@@ -6,7 +6,6 @@ usage: compare.py   (run after generate.sh; reads boxes/*.svg and sheets/*/*.svg
 Utilisation here = real area of the cut pieces (outlines minus holes, from the
 box SVGs) / total sheet area, so clustered and split layouts compare directly.
 """
-import math
 import re
 import sys
 import xml.etree.ElementTree as ET

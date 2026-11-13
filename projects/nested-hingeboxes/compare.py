@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Print a comparison table of the generated cut sheets.
 
-usage: compare.py   (run after generate.sh; reads boxes/*.svg and sheets/*/*.svg)
+usage: compare.py   (run after generate.sh; reads cutsheet.svg and sheets/*.svg)
 
-Utilisation here = real area of the cut pieces (outlines minus holes, from the
-box SVGs) / total sheet area, so clustered and split layouts compare directly.
+Utilisation here = real area of the cut pieces in that file (outlines minus
+holes, spare hinge pieces included) / total sheet area.
 """
 import re
 import sys
@@ -15,6 +15,8 @@ from shapely.geometry import Polygon
 from svgpathtools import parse_path
 
 HERE = Path(__file__).resolve().parent
+BLACK = "rgb(0,0,0)"
+NEEDED_HINGES = 40   # 4 boxes x 2 hinges x 5 pieces
 
 
 def path_area(d):
@@ -25,25 +27,28 @@ def path_area(d):
     return Polygon([(p.real, p.imag) for p in pts]).area
 
 
-def piece_area():
-    total = 0.0
-    for f in sorted((HERE / "boxes").glob("box*.svg")):
-        for el in ET.parse(f).iter():
-            if el.tag.endswith("path"):
-                a = path_area(el.get("d"))
-                total += a if el.get("stroke") == "rgb(0,0,0)" else -a
-    return total
-
-
-def sheet_info(f):
+def file_info(f):
+    """Piece area and number of hinge pieces in one cut file."""
     root = ET.parse(f).getroot()
-    TW, TH = float(root.get("width")[:-2]), float(root.get("height")[:-2])
-    d = [g for g in root if g.get("id") == "sheet-cut-lines"][0][0].get("d")
-    # d = outer border "M 0 0 H .. V .. H 0 Z", then "M x 0 V .." per inner column line
-    # and "M 0 y H .." per inner row line
-    cols = len(re.findall(r"M [\d.]+ 0 V", d)) + 1
-    rows = len(re.findall(r"M 0 [\d.]+ H", d))   # also matches the border's "M 0 0 H"
-    return cols * rows, TW / cols, TH / rows, cols, rows, TW, TH
+    area, hinges = 0.0, 0
+    for g in root:
+        if not g.tag.endswith("g") or g.get("id") == "sheet-cut-lines":
+            continue
+        paths = [el for el in g.iter() if el.tag.endswith("path")]
+        black = sum(el.get("stroke") == BLACK for el in paths)
+        has_text = any(el.tag.endswith("text") for el in g)
+        if black > 1:              # a cluster of hinge pieces
+            hinges += black
+        elif black == 1 and not has_text:
+            hinges += 1            # a single (unlabelled) hinge piece
+        for el in paths:
+            a = path_area(el.get("d"))
+            area += a if el.get("stroke") == BLACK else -a
+    return root, area, hinges
+
+
+def mm(root, key):
+    return float(root.get(key)[:-2])
 
 
 def inch(v):
@@ -51,26 +56,31 @@ def inch(v):
 
 
 def main():
-    area = piece_area()
     rows = []
-    cs = ET.parse(HERE / "cutsheet.svg").getroot()
-    W, H = float(cs.get("width")[:-2]), float(cs.get("height")[:-2])
-    rows.append(("single sheet", 1, W, H, 1, 1, W, H))
-    for kind in ("clustered", "split"):
-        for f in sorted((HERE / "sheets" / kind).glob("sheets*.svg"),
-                        key=lambda p: int(re.findall(r"\d+", p.name)[0])):
-            n, w, h, c, r, tw, th = sheet_info(f)
-            rows.append((kind, n, w, h, c, r, tw, th))
-    best = min(n * w * h for _, n, w, h, *_ in rows)
-    print(f"Real piece area: {area / 1e6:.4f} m2\n")
-    print("| Hinge pieces | Sheets | Sheet (mm) | Sheet (in) | Grid | Overall (mm) | Overall (in) "
-          "| Material (m²) | vs best | Utilization |")
+    root, area, hinges = file_info(HERE / "cutsheet.svg")
+    W, H = mm(root, "width"), mm(root, "height")
+    rows.append((1, W, H, 1, 1, W, H, area, hinges))
+    for f in sorted((HERE / "sheets").glob("sheets*.svg"),
+                    key=lambda p: int(re.findall(r"\d+", p.name)[0])):
+        root, area, hinges = file_info(f)
+        TW, TH = mm(root, "width"), mm(root, "height")
+        d = [g for g in root if g.get("id") == "sheet-cut-lines"][0][0].get("d")
+        # d = outer border "M 0 0 H .. V .. H 0 Z", then "M x 0 V .." per inner column
+        # line and "M 0 y H .." per inner row line
+        cols = len(re.findall(r"M [\d.]+ 0 V", d)) + 1
+        rows_ = len(re.findall(r"M 0 [\d.]+ H", d))   # also matches the border's "M 0 0 H"
+        rows.append((cols * rows_, TW / cols, TH / rows_, cols, rows_, TW, TH, area, hinges))
+    best = min(n * w * h for n, w, h, *_ in rows)
+    print("| Sheets | Sheet (mm) | Sheet (in) | Grid | Overall (mm) | Overall (in) "
+          "| Material (m²) | vs best | Hinge pieces | Utilization |")
     print("|---|---|---|---|---|---|---|---|---|---|")
-    for kind, n, w, h, c, r, tw, th in rows:
+    for n, w, h, c, r, tw, th, area, hinges in rows:
         a = n * w * h
-        print(f"| {kind} | {n} | {w:.0f} × {h:.0f} | {inch(w)} × {inch(h)} | {c} × {r} "
+        spare = hinges - NEEDED_HINGES
+        hp = f"{hinges} (+{spare} spare)" if spare else f"{hinges}"
+        print(f"| {n} | {w:.0f} × {h:.0f} | {inch(w)} × {inch(h)} | {c} × {r} "
               f"| {tw:.0f} × {th:.0f} | {inch(tw)} × {inch(th)} | {a / 1e6:.3f} "
-              f"| {(a / best - 1) * 100:+.1f}% | {area / a:.1%} |")
+              f"| {(a / best - 1) * 100:+.1f}% | {hp} | {area / a:.1%} |")
 
 
 if __name__ == "__main__":

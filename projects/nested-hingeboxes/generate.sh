@@ -8,7 +8,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 PY="${PYTHON:-python3}"
 cd "$HERE"
-mkdir -p boxes sheets/clustered sheets/split
+mkdir -p boxes sheets
 
 # 1. The four boxes: inside dimensions, 3 mm material, lid height 20 mm.
 i=1
@@ -27,12 +27,14 @@ BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 # 2. Everything on one sheet.
 "$PY" pack_single.py cutsheet.svg "${BOXES[@]}"
 
-# 3. N equal sheets, hinge pieces kept in clusters and split (runs in parallel).
+# 3. N equal sheets, plus as many spare hinge pieces as fit (runs in parallel).
 for n in 6 8 9 10 12; do
-  "$PY" pack_sheets.py "$n" "sheets/clustered/sheets$n.svg" "${BOXES[@]}" &
-  "$PY" pack_sheets.py --split-hinges "$n" "sheets/split/sheets$n.svg" "${BOXES[@]}" &
+  "$PY" pack_sheets.py "$n" "sheets/sheets$n.svg" "${BOXES[@]}" &
 done
 wait
 
-# 4. Comparison table of all layouts.
+# 4. Independent check of every multi-sheet file.
+"$PY" check_layout.py sheets/sheets*.svg
+
+# 5. Comparison table of all layouts.
 "$PY" compare.py

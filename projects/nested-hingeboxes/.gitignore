@@ -1,0 +1,2 @@
+# The repository-wide .gitignore ignores *.svg; keep the generated cut files here.
+!*.svg

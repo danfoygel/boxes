@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print a comparison table of the generated cut sheets.
 
-usage: compare.py   (run after generate.sh; reads cutsheet.svg and sheets/*.svg)
+usage: compare.py   (run after generate.sh; reads boxes/*.svg and sheets/*.svg)
 
 Utilisation here = real area of the cut pieces in that file (outlines minus
 holes, spare hinge pieces included) / total sheet area.
@@ -16,7 +16,6 @@ from svgpathtools import parse_path
 
 HERE = Path(__file__).resolve().parent
 BLACK = "rgb(0,0,0)"
-NEEDED_HINGES = 40   # 4 boxes x 2 hinges x 5 pieces
 
 
 def path_area(d):
@@ -47,6 +46,17 @@ def file_info(f):
     return root, area, hinges
 
 
+def needed_hinges():
+    """Hinge pieces the boxes need: outlines in the box SVGs' multi-piece groups."""
+    n = 0
+    for f in (HERE / "boxes").glob("box*.svg"):
+        for g in ET.parse(f).getroot():
+            black = sum(el.get("stroke") == BLACK for el in g if el.tag.endswith("path"))
+            if black > 1:
+                n += black
+    return n
+
+
 def mm(root, key):
     return float(root.get(key)[:-2])
 
@@ -57,9 +67,6 @@ def inch(v):
 
 def main():
     rows = []
-    root, area, hinges = file_info(HERE / "cutsheet.svg")
-    W, H = mm(root, "width"), mm(root, "height")
-    rows.append((1, W, H, 1, 1, W, H, area, hinges))
     for f in sorted((HERE / "sheets").glob("sheets*.svg"),
                     key=lambda p: int(re.findall(r"\d+", p.name)[0])):
         root, area, hinges = file_info(f)
@@ -71,12 +78,13 @@ def main():
         rows_ = len(re.findall(r"M 0 [\d.]+ H", d))   # also matches the border's "M 0 0 H"
         rows.append((cols * rows_, TW / cols, TH / rows_, cols, rows_, TW, TH, area, hinges))
     best = min(n * w * h for n, w, h, *_ in rows)
+    needed = needed_hinges()
     print("| Sheets | Sheet (mm) | Sheet (in) | Grid | Overall (mm) | Overall (in) "
           "| Material (m²) | vs best | Hinge pieces | Utilization |")
     print("|---|---|---|---|---|---|---|---|---|---|")
     for n, w, h, c, r, tw, th, area, hinges in rows:
         a = n * w * h
-        spare = hinges - NEEDED_HINGES
+        spare = hinges - needed
         hp = f"{hinges} (+{spare} spare)" if spare else f"{hinges}"
         print(f"| {n} | {w:.0f} × {h:.0f} | {inch(w)} × {inch(h)} | {c} × {r} "
               f"| {tw:.0f} × {th:.0f} | {inch(tw)} × {inch(th)} | {a / 1e6:.3f} "

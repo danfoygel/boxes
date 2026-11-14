@@ -7,13 +7,11 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
 | Path | What it is |
 |---|---|
 | `generate.sh` | Regenerates every SVG in this folder |
-| `pack_single.py` | Packs all pieces onto one sheet |
 | `pack_sheets.py` | Packs all pieces onto N equal sheets laid out in a grid, with cut lines between sheets, and fills the leftover space with spare hinge pieces |
 | `check_layout.py` | Checks a multi-sheet file from the SVG alone: every gap ≥ 3 mm, every piece ≥ 5 mm inside its sheet |
 | `compare.py` | Prints the comparison table of all layouts |
 | `render_previews.js` | Renders the SVGs to PNG previews (Playwright + Chromium) |
-| `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator |
-| `cutsheet.svg` | All four boxes on one sheet |
+| `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges) |
 | `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces |
 | `previews/` | PNG renders of the cut sheets |
 
@@ -34,6 +32,11 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
 6. *Add a 12-sheet layout and a table comparing all the options.*
 7. *Drop the clustered layouts. For the others, fit as many extra hinge pieces as
    possible without making the sheets bigger.*
+8. *Build each hinge from 7 pieces instead of 5 to make it stronger.* Then: *remove
+   the single cutsheet.*
+
+The single cutsheet (request 3) and the clustered layouts (request 4) have since been
+removed. The repository history has them.
 
 ## 1. How much smaller the inner box must be
 
@@ -72,8 +75,8 @@ The chosen offsets are **8 mm for x and height, 15 mm for y**. With 3 mm materia
 leaves about 2 mm of play in x and height and 1.5 mm in y. That works for material up
 to about 3.3 mm thick; at that thickness y has no play left.
 
-All boxes use inside dimensions (outside mode off), `--thickness 3` and
-`--lidheight 20`. The height is split as h + 20.
+All boxes use inside dimensions (outside mode off), `--thickness 3`,
+`--lidheight 20` and `--CabinetHinge_eyes_per_hinge 7`. The height is split as h + 20.
 
 | Box | x | y | height (h + lidheight) | h | x (in) | y (in) | height (in) |
 |---|---|---|---|---|---|---|---|
@@ -99,12 +102,20 @@ subtracts the walls. For HingeBox there are three exceptions:
 The offsets above work in either mode, as long as all boxes use the same mode and
 thickness.
 
-## 3. One cutsheet
+### 7-piece hinges
 
-`cutsheet.svg`: 44 pieces on **803 × 559 mm**, 74.4% utilization by real piece area
-(85% by bounding box). Pieces are 3 mm apart and may be rotated 90°.
+Each box has 2 hinges, and each hinge is now built from 7 pieces instead of the
+generator's default 5: 4 attached to the box's back wall and 3 to the lid's, alternating
+on one pin. So each box has 14 hinge pieces, 56 for all four. The pieces themselves are
+unchanged. The back walls get 4 t × t holes per hinge (lid walls 3), and each hinge's
+cut-out in the wall edge is 2 × (t + play) = 6.3 mm wider. That widens the bearing
+surface on the pin from about 16 mm to about 22 mm per hinge.
 
-## 4.–7. N equal sheets with spare hinge pieces
+Nesting is unaffected: the hinge pieces have the same shape and sit in the same
+place, so the knuckle and interior offsets above still hold. The hinges get wider, but
+the 160 mm innermost box still has plenty of room for two of them.
+
+## 3. N equal sheets with spare hinge pieces
 
 Every piece is at least 5 mm inside its sheet's cut line, which leaves a protective
 frame, and 3 mm from every other piece. The sheets sit in the grid closest to square,
@@ -112,10 +123,12 @@ and neighbours share one cut line.
 
 How `pack_sheets.py` builds a layout:
 
-1. **Sheet size.** The smallest sheet into which a rectangle packer (rectpack, several
-   algorithms and sort orders, 90° rotation) fits every piece's bounding box, with the
-   40 hinge pieces packed one by one. These sizes are the same as in the earlier
-   rounds; adding spares never makes a sheet bigger.
+1. **Sheet size.** The size search finds the smallest sheet into which a rectangle
+   packer (rectpack, several algorithms and sort orders, 90° rotation) fits every
+   piece's bounding box. It ran with the 5-piece hinges, and those sizes are kept
+   (`--sheet` in `generate.sh`). A sheet grows, in 2 mm steps and smallest area
+   first, only if the required pieces no longer fit. With 7-piece hinges, only the
+   8-sheet layout had to grow, from 188 × 285 to 190 × 287 mm.
 2. **Spare hinge pieces at that fixed size.** The hinge pieces are identical for all
    four boxes, so any spare fits any box. Each layout is tried both ways:
    * **A:** the box pieces plus k hinge pieces are packed as rectangles, then more
@@ -131,8 +144,8 @@ How `pack_sheets.py` builds a layout:
 3. **Independent check.** `check_layout.py` re-reads every finished SVG and confirms
    each gap is ≥ 3 mm and each piece is ≥ 5 mm inside its sheet. All layouts pass.
 
-Spare pieces are unlabelled like the other hinge pieces. Cut them all; any 10 make one
-box's hinges.
+Spare pieces are unlabelled like the other hinge pieces. Cut them all; any 14 make one
+box's hinges (2 hinges × 7 pieces).
 
 All of this is heuristic: these are the best layouts found, not proven optima.
 
@@ -145,27 +158,26 @@ extra material compared with the smallest layout. The table is the output of
 
 | Sheets | Sheet (mm) | Sheet (in) | Grid | Overall (mm) | Overall (in) | Material (m²) | vs best | Hinge pieces | Utilization |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | 803 × 559 | 31.61 × 22.00 | 1 × 1 | 803 × 559 | 31.61 × 22.00 | 0.449 | +5.5% | 40 | 74.4% |
-| **6** | **278 × 255** | **10.94 × 10.04** | **2 × 3** | **556 × 765** | **21.89 × 30.12** | **0.425** | **best** | **74 (+34 spare)** | **79.5%** |
-| 8 | 188 × 285 | 7.40 × 11.22 | 4 × 2 | 752 × 570 | 29.61 × 22.44 | 0.429 | +0.8% | 48 (+8 spare) | 78.1% |
-| 9 | 256 × 189 | 10.08 × 7.44 | 3 × 3 | 768 × 567 | 30.24 × 22.32 | 0.435 | +2.4% | 71 (+31 spare) | 77.5% |
-| 10 | 222 × 197 | 8.74 × 7.76 | 2 × 5 | 444 × 985 | 17.48 × 38.78 | 0.437 | +2.8% | 59 (+19 spare) | 76.9% |
-| 12 | 188 × 198 | 7.40 × 7.80 | 4 × 3 | 752 × 594 | 29.61 × 23.39 | 0.447 | +5.0% | 78 (+38 spare) | 75.8% |
+| **6** | **278 × 255** | **10.94 × 10.04** | **2 × 3** | **556 × 765** | **21.89 × 30.12** | **0.425** | **best** | **74 (+18 spare)** | **79.3%** |
+| 8 | 190 × 287 | 7.48 × 11.30 | 4 × 2 | 760 × 574 | 29.92 × 22.60 | 0.436 | +2.6% | 75 (+19 spare) | 77.3% |
+| 9 | 256 × 189 | 10.08 × 7.44 | 3 × 3 | 768 × 567 | 30.24 × 22.32 | 0.435 | +2.4% | 71 (+15 spare) | 77.4% |
+| 10 | 222 × 197 | 8.74 × 7.76 | 2 × 5 | 444 × 985 | 17.48 × 38.78 | 0.437 | +2.8% | 59 (+3 spare) | 76.7% |
+| 12 | 188 × 198 | 7.40 × 7.80 | 4 × 3 | 752 × 594 | 29.61 × 23.39 | 0.447 | +5.0% | 78 (+22 spare) | 75.6% |
 
-The single sheet is the original one-sheet layout (`cutsheet.svg`, 3 mm margins), with
-no spares added.
+56 hinge pieces are needed (4 boxes × 2 hinges × 7).
 
 Takeaways:
 
-* **6 sheets uses the least material and still fits 34 spare hinge pieces,** enough
-  for three more boxes' hinges.
-* **8 sheets is the tightest layout:** its sheet size was pushed down until the
-  required pieces barely fit, so only 8 spares fit.
-* **More sheets means more leftover space but also more frame,** so total material
-  rises from 0.425 m² (6 sheets) to 0.447 m² (12 sheets). 12 sheets fits the most
-  spares (38).
+* **6 sheets uses the least material** and still fits 18 spare hinge pieces, enough
+  for one more box's hinges.
+* **The 7-piece hinges fit at unchanged sheet sizes everywhere except 8 sheets.** The
+  16 extra required pieces come out of the spares, so 6, 9, 10 and 12 sheets each
+  hold the same total number of hinge pieces as before.
+* **8 sheets grew by 2 mm each way** (+1.8% material). The larger sheet happened to
+  pack much better, so it now holds 19 spares instead of 8.
+* **10 sheets has only 3 spares**, the fewest of any layout.
 * How many spares fit depends on where the packer happens to leave gaps, not just on
-  total free area. That is why 9 sheets fits more than 10.
+  total free area.
 
 ## Cutting notes
 
@@ -176,8 +188,9 @@ Takeaways:
   lines go last.
 * Kerf compensation is the boxes.py default (`--burn 0.1`).
 * Each box needs two metal hinge pins about 3 mm thick, for example cut-off nails; the
-  holes are 3.2 mm. Cut the pins to length: they are captured once the hinge is
-  assembled.
+  holes are 3.2 mm. With 7 pieces per hinge each pin spans about 22 mm of hinge
+  pieces (7 × 3.15 mm). Cut the pins to that length: they are captured once the hinge
+  is assembled.
 
 ## Regenerating
 
@@ -197,7 +210,7 @@ python3 projects/nested-hingeboxes/compare.py
 node projects/nested-hingeboxes/render_previews.js
 ```
 
-Each multi-sheet layout takes about 10–15 minutes (the sheet-size search plus filling
-spares into every candidate layout), and `generate.sh` runs them in parallel. The
-results are deterministic. `pack_sheets.py --sheet WxH` skips the size search. To change sizes, thickness or lid height,
-edit the size list in step 1 of `generate.sh`.
+Each multi-sheet layout takes about 3–8 minutes, and `generate.sh` runs them in
+parallel. The results are deterministic. To change sizes, thickness, lid height or
+hinge pieces, edit step 1 of `generate.sh`. To search sheet sizes from scratch instead
+of starting from the stored ones, drop `--sheet` in step 2 (10–15 minutes per layout).

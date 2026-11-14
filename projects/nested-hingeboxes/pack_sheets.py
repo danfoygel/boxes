@@ -17,11 +17,10 @@ usage: pack_sheets.py [--sheet WxH] N OUT.svg BOX1.svg [BOX2.svg ...]
   split so each piece is handled on its own.  Hinge pieces are left
   unlabelled: they are identical for all boxes of the same thickness.
 * Hinge pieces (the required ones and spares), with the sheet size fixed:
-  - Strategy A: rectangle-pack everything plus as many spare hinge pieces as
-    the packer can fit (gallop + binary search on the count, then a few probes
-    above it), then shape-fill.
-  - Strategy B: rectangle-pack only the box pieces (every packer setting that
-    fits), then place all hinge pieces by shape-filling.
+  - The box pieces are rectangle-packed together with k hinge-piece
+    rectangles, for several k up to the largest that packs, with every packer
+    setting that fits.  A keeps those hinge pieces and shape-fills the rest; B
+    drops them and places every hinge piece by shape-filling.
   - Shape filling drops hinge pieces into the free space by their real
     outline, in 4 rotations, top-left first, at RES mm steps.  A grid
     correlation proposes positions; each is checked exactly against the real
@@ -166,38 +165,20 @@ def find_best(parts, n_sheets):
     return best[1:]
 
 
-def rect_spares(parts, n_sheets, W, H):
-    """Largest k so that parts + k extra hinge pieces still rectangle-pack."""
-    hinge = next(p for p in parts if p["box"] is None)
-
-    def attempt(k):
-        ps = parts + [hinge] * k
-        return ps, try_pack(ps, n_sheets, W, H)
-
-    best = (parts, try_pack(parts, n_sheets, W, H))
-    k, lo = 1, 0
-    while True:                       # gallop: 1, 2, 4, ... until a failure
-        ps, r = attempt(k)
-        if r is None:
-            break
-        best, lo = (ps, r), k
-        k *= 2
-    hi = k                            # lo packs, hi does not
-    while True:
-        while hi - lo > 1:
-            mid = (lo + hi) // 2
-            ps, r = attempt(mid)
-            if r:
-                lo, best = mid, (ps, r)
-            else:
-                hi = mid
-        for k in range(hi + 1, hi + 4):   # probe a little above the failure
-            ps, r = attempt(k)
-            if r:
-                lo, best, hi = k, (ps, r), k + 1
-                break
+def max_hinge_rects(panels, hinge, n_sheets, W, H, upto):
+    """Largest k <= upto such that the box pieces plus k hinge-piece rectangles pack
+    (-1 if none does).  The packer is not monotone in k, so every 5th k is tried
+    and the best one is then extended one at a time."""
+    ok = lambda k: try_pack(panels + [hinge] * k, n_sheets, W, H) is not None   # noqa: E731
+    best = max((k for k in range(0, upto + 1, 5) if ok(k)), default=-1)
+    misses, k = 0, best
+    while best >= 0 and misses < 3 and k < upto:
+        k += 1
+        if ok(k):
+            best, misses = k, 0
         else:
-            return best
+            misses += 1
+    return best
 
 
 def rect_placements(parts, rl):
@@ -301,7 +282,7 @@ def shape_fill(filler, n_sheets, placed):
     return placed
 
 
-def best_layout(parts, n_sheets, W, H, log):
+def best_layout(parts, n_sheets, W, H, log, quick=False):
     """Try the rectangle layouts below and shape-fill each; the most hinge pieces wins.
 
     The rectangle packer is a heuristic whose choices depend on the small pieces
@@ -310,7 +291,8 @@ def best_layout(parts, n_sheets, W, H, log):
     count that still packs), with every packer setting that fits.  For each
     layout, A keeps the rectangle-placed hinge pieces and shape-fills the rest;
     B drops them and places all hinge pieces by shape-filling.  A layout must
-    end up with at least the required number of hinge pieces.
+    end up with at least the required number of hinge pieces; None if none does.
+    quick: stop at the first layout that holds every required piece.
     """
     hinge = next(p for p in parts if p["box"] is None)
     panels = [p for p in parts if p["box"] is not None]
@@ -318,10 +300,10 @@ def best_layout(parts, n_sheets, W, H, log):
     filler = Filler(hinge, W, H)
     count = lambda pl: sum(p["box"] is None for _, p, _, _ in pl)   # noqa: E731
 
-    k_max = len(rect_spares(parts, n_sheets, W, H)[0]) - len(panels)
+    k_max = max_hinge_rects(panels, hinge, n_sheets, W, H, needed + 60)
     best, seen, tried = None, set(), 0
-    for k in sorted(set(range(0, k_max + 1, 10)) | {needed, k_max}):
-        if k > k_max:
+    for k in sorted(set(range(0, k_max + 1, 10)) | {min(needed, k_max), k_max}):
+        if k < 0:
             continue
         ps = panels + [hinge] * k
         for rl in packs(ps, n_sheets, W, H):
@@ -337,8 +319,11 @@ def best_layout(parts, n_sheets, W, H, log):
                 tried += 1
                 if count(pl) >= needed and (best is None or count(pl) > best[1]):
                     best = (f"{name}, k={k}", count(pl), pl)
-    log(f"{tried} layouts tried (rectangle packing fits at most {k_max} hinge pieces), "
-        f"best {best[1]} hinge pieces ({best[0]})")
+                    if quick:
+                        return best
+    log(f"{W:g} x {H:g}: {tried} layouts tried (rectangle packing fits at most {k_max} "
+        f"hinge pieces), best {best[1] if best else 'none'} "
+        f"{'hinge pieces (' + best[0] + ')' if best else f'(needs {needed})'}")
     return best
 
 
@@ -383,7 +368,9 @@ def write_svg(out, n_sheets, W, H, placed):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--sheet", help="sheet size WxH in mm (skips the size search)")
+    ap.add_argument("--sheet", help="sheet size WxH in mm to start from (skips the size "
+                    "search); grown in 2 mm steps, smallest area first, only if the "
+                    "required pieces do not fit")
     ap.add_argument("n_sheets", type=int)
     ap.add_argument("out")
     ap.add_argument("files", nargs="+")
@@ -399,7 +386,16 @@ def main():
     else:
         W, H = find_best(parts, a.n_sheets)
     log(f"sheet {W:g} x {H:g} mm")
-    strategy, hinges, placed = best_layout(parts, a.n_sheets, W, H, log)
+    best = best_layout(parts, a.n_sheets, W, H, log)
+    if best is None:
+        sizes = sorted(((W + dw, H + dh) for dw in range(0, 42, 2) for dh in range(0, 42, 2)
+                        if dw or dh), key=lambda s: (s[0] * s[1], abs(s[0] - s[1])))
+        for W, H in sizes:
+            if best_layout(parts, a.n_sheets, W, H, log, quick=True):
+                log(f"grown to {W:g} x {H:g} mm")
+                best = best_layout(parts, a.n_sheets, W, H, log)
+                break
+    strategy, hinges, placed = best
     cols, rows, TW, TH = write_svg(a.out, a.n_sheets, W, H, placed)
     print(json.dumps(dict(N=a.n_sheets, sheet=[W, H], grid=[cols, rows], overall=[TW, TH],
                           hinge_pieces=hinges, spare_hinge_pieces=hinges - needed,

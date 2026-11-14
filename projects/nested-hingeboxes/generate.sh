@@ -14,7 +14,7 @@ mkdir -p boxes sheets
 i=1
 while read -r x y h; do
   PYTHONPATH="$ROOT" "$PY" "$ROOT/scripts/boxes" HingeBox --x "$x" --y "$y" --h "$h" \
-    --lidheight 20 --thickness 3 --reference 0 --output "boxes/box$i.svg"
+    --lidheight 20 --thickness 3 --CabinetHinge_eyes_per_hinge 7 --reference 0 --output "boxes/box$i.svg"
   i=$((i + 1))
 done <<'SIZES'
 160 80 60
@@ -24,17 +24,23 @@ done <<'SIZES'
 SIZES
 BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 
-# 2. Everything on one sheet.
-"$PY" pack_single.py cutsheet.svg "${BOXES[@]}"
-
-# 3. N equal sheets, plus as many spare hinge pieces as fit (runs in parallel).
-for n in 6 8 9 10 12; do
-  "$PY" pack_sheets.py "$n" "sheets/sheets$n.svg" "${BOXES[@]}" &
-done
+# 2. N equal sheets, plus as many spare hinge pieces as fit (runs in parallel).
+#    Sheet sizes are kept from the earlier size search (done for 5-piece hinges)
+#    and grown only where the required pieces no longer fit.  Drop --sheet to
+#    run the size search from scratch.
+while read -r n size; do
+  "$PY" pack_sheets.py --sheet "$size" "$n" "sheets/sheets$n.svg" "${BOXES[@]}" &
+done <<'SHEETS'
+6 278x255
+8 188x285
+9 256x189
+10 222x197
+12 188x198
+SHEETS
 wait
 
-# 4. Independent check of every multi-sheet file.
+# 3. Independent check of every multi-sheet file.
 "$PY" check_layout.py sheets/sheets*.svg
 
-# 5. Comparison table of all layouts.
+# 4. Comparison table of all layouts.
 "$PY" compare.py

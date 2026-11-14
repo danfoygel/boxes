@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 
 const here = __dirname;
-const files = ["cutsheet.svg"];
+const files = [];
 for (const n of [6, 8, 9, 10, 12]) files.push(`sheets/sheets${n}.svg`);
 
 (async () => {

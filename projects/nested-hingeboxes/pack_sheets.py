@@ -30,7 +30,8 @@ usage: pack_sheets.py [--sheet WxH] N OUT.svg BOX1.svg [BOX2.svg ...]
   closest to square.  Neighbouring sheets share one cut line.  The sheet cut
   lines come last in the file so they are cut after the parts.
 * Labels are red (boxes.py annotation colour, not meant to be cut): "Box N" on
-  each box part and "Sheet N" in each sheet's top-left frame.
+  each box part and "Sheet N" in each sheet's top-left frame.  On a part with
+  engraved text (green, from engrave_boxes.py) the label sits below the text.
 """
 import argparse
 import copy
@@ -344,8 +345,14 @@ def write_svg(out, n_sheets, W, H, placed):
             ng.append(copy.deepcopy(c))
         if p["box"] is None:
             continue
+        # The label goes in the middle of the piece, or, on a piece with engraved
+        # text (engrave_boxes.py), halfway between the text and the piece's edge below it.
+        ly = (y0 + y1) / 2
+        engraved = [c for c in p["g"] if c.get("class") == "engraving"]
+        if engraved:
+            ly = (max(parse_path(c.get("d")).bbox()[3] for c in engraved) + y1) / 2
         lbl = ET.SubElement(ng, f"{{{SVG_NS}}}text", {
-            "x": f"{(x0 + x1) / 2:.2f}", "y": f"{(y0 + y1) / 2:.2f}", "font-size": "5",
+            "x": f"{(x0 + x1) / 2:.2f}", "y": f"{ly:.2f}", "font-size": "5",
             "font-family": "sans-serif", "fill": "rgb(255,0,0)", "text-anchor": "middle",
             "dominant-baseline": "middle"})
         lbl.text = f"Box {p['box']}"

@@ -218,66 +218,19 @@ function size2(outline) {
 }
 const mm = v => (Math.round(v * 10) / 10).toString();
 
-// Front text is drawn white on a transparent canvas and tinted by its material.
+// Engraved text: the outlines from engraving.py (the same as on the cut sheets),
+// in mm on the face, drawn white on a transparent canvas and tinted by the material.
 const TEXT_PX_PER_MM = 8;
-const TEXT_FONT = '400 100px "Special Elite", "Courier New", Courier, monospace';
-const TEXT_PAD_MM = 12;    // clear space around the text on every side
-const TEXT_LEADING = 1.2;  // line pitch, in font sizes
-const BOTTOM_TEXT_MM = 6;  // font size of the text under the boxes
 const textLabels = [];
-const fontAt = px => TEXT_FONT.replace("100px", `${px}px`);
-
-// Inked extent of the lines at a given font size: widest line, and from the top
-// of the first line to the bottom of the last.
-function textBlock(g, lines, px) {
-  g.font = fontAt(px);
-  const m = lines.map(l => g.measureText(l));
-  const ascent = m[0].actualBoundingBoxAscent;
-  return {
-    w: Math.max(...m.map(x => x.actualBoundingBoxLeft + x.actualBoundingBoxRight)),
-    h: ascent + (lines.length - 1) * TEXT_LEADING * px + m[m.length - 1].actualBoundingBoxDescent,
-    ascent,
-  };
-}
-
-// Largest font size (px) at which the lines fit their face with TEXT_PAD_MM all
-// round.  The block scales with the font size.
-function fitSize({ canvas, lines }) {
-  const pad = TEXT_PAD_MM * TEXT_PX_PER_MM;
-  const b = textBlock(canvas.getContext("2d"), lines, 100);
-  return 100 * Math.min((canvas.width - 2 * pad) / b.w, (canvas.height - 2 * pad) / b.h);
-}
-
-// Font size (px) of every label.
-function labelSizes() {
-  const sizes = new Map();
-  // Front: the box with the lowest front gets the largest size that fits it; the
-  // others scale up from it in proportion to their front's height (never past
-  // their own fit).
-  const fronts = textLabels.filter(l => l.face === "front");
-  if (fronts.length) {
-    const ref = fronts.reduce((a, l) => (l.canvas.height < a.canvas.height ? l : a));
-    const refPx = fitSize(ref);
-    for (const l of fronts) sizes.set(l, Math.min(refPx * l.canvas.height / ref.canvas.height, fitSize(l)));
-  }
-  // Bottom: a fixed size on all four.
-  for (const l of textLabels.filter(l => l.face === "bottom")) sizes.set(l, BOTTOM_TEXT_MM * TEXT_PX_PER_MM);
-  return sizes;
-}
 
 function drawLabels() {
-  const sizes = labelSizes();
-  for (const label of textLabels) {
-    const { canvas, map, lines } = label;
-    const px = sizes.get(label);
+  for (const { canvas, map, d } of textLabels) {
     const g = canvas.getContext("2d");
+    g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, canvas.width, canvas.height);
-    const b = textBlock(g, lines, px);
+    g.setTransform(TEXT_PX_PER_MM, 0, 0, TEXT_PX_PER_MM, 0, 0);
     g.fillStyle = "#fff";
-    g.textAlign = "center";
-    g.textBaseline = "alphabetic";
-    const top = (canvas.height - b.h) / 2;
-    lines.forEach((l, k) => g.fillText(l, canvas.width / 2, top + b.ascent + k * TEXT_LEADING * px));
+    g.fill(new Path2D(d));
     map.needsUpdate = true;
   }
 }
@@ -342,13 +295,13 @@ const boxes = DATA.boxes.map((b, i) => {
 
   // Engraved text on an outer face: a w x h area, placed by `matrix` (u reading
   // direction, v up the text, w out of the face).
-  const addText = (face, lines, w, h, matrix) => {
+  const addText = (face, { lines, w, h, d }, matrix) => {
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(w * TEXT_PX_PER_MM);
     canvas.height = Math.round(h * TEXT_PX_PER_MM);
     const map = new THREE.CanvasTexture(canvas);
     map.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    textLabels.push({ face, canvas, map, lines });
+    textLabels.push({ canvas, map, d });
     const geom = new THREE.PlaneGeometry(w, h).translate(w / 2, h / 2, 0);
     const mat = new THREE.MeshStandardMaterial({
       map, transparent: true, depthWrite: false, roughness: 0.9,
@@ -362,11 +315,11 @@ const boxes = DATA.boxes.map((b, i) => {
     meshes.push({ mesh, edges: null, kind: "text" });
   };
   // Front: the outer face of the box's front wall (y = -t), the lid not included.
-  if (b.front_text) addText("front", b.front_text, b.x, b.h, basis([1, 0, 0], [0, 0, 1], [0, -1, 0], [0, -t - 0.05, 0]));
+  if (b.text) addText("front", b.text.front, basis([1, 0, 0], [0, 0, 1], [0, -1, 0], [0, -t - 0.05, 0]));
   // Bottom: the underside (z = -t), reading right way up when the box is tipped
   // back to look underneath (front edge at the top), as when orbiting under it
   // from the front.
-  if (b.bottom_text) addText("bottom", b.bottom_text, b.x, b.y, basis([1, 0, 0], [0, -1, 0], [0, 0, -1], [0, b.y, -t - 0.05]));
+  if (b.text) addText("bottom", b.text.bottom, basis([1, 0, 0], [0, -1, 0], [0, 0, -1], [0, b.y, -t - 0.05]));
 
   // Extents of the closed box in its own frame (knuckles stick out e behind the back wall).
   const ext = { x0: -t, x1: b.x + t, y0: -t, y1: b.y + t + b.eye, z0: -t, z1: b.h + b.lidheight + t };
@@ -540,8 +493,8 @@ boxes.forEach((bx, i) => {
   const li = document.createElement("li");
   li.innerHTML = `<label><input type="checkbox" id="show-${i}" checked>
     <span class="swatch" style="background:${bx.b.color}"></span>
-    <span><span class="boxname">${bx.b.name}</span>${bx.b.front_text ? ` <span class="front">${bx.b.front_text.join(" ")}</span>` : ""}
-    ${bx.b.bottom_text ? `<span class="under">Underneath: ${bx.b.bottom_text.join(" · ")}</span>` : ""}
+    <span><span class="boxname">${bx.b.name}</span>${bx.b.text ? ` <span class="front">${bx.b.text.front.lines.join(" ")}</span>` : ""}
+    ${bx.b.text ? `<span class="under">Underneath: ${bx.b.text.bottom.lines.join(" · ")}</span>` : ""}
     <span class="dims">${mm(ox)} × ${mm(oy)} × ${mm(oz)} mm</span>
     <span class="dims">${inch(ox)} × ${inch(oy)} × ${inch(oz)} in</span></span></label>`;
   li.querySelector("input").addEventListener("change", e => { state.shown[i] = e.target.checked; refresh(); });
@@ -577,7 +530,6 @@ new MutationObserver(applyTheme).observe(document.documentElement, { attributes:
 
 resize();
 drawLabels();
-document.fonts.load(TEXT_FONT).then(drawLabels, () => {});
 applyTheme();
 refresh(true);
 fit();

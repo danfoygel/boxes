@@ -12,9 +12,12 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
 | `color_layouts.py` | Makes the colour-coded layout views in `layouts/` |
 | `compare.py` | Prints the comparison table of all layouts |
 | `render_previews.js` | Renders the SVGs to PNG previews (Playwright + Chromium) |
+| `engraving.py` | The engraved text: the words, their sizes, and their outlines in Special Elite |
+| `engrave_boxes.py` | Adds the engraved text to the box SVGs |
+| `fonts/` | Special Elite (`SpecialElite-Regular.ttf`, from Google Fonts) and its licence (Apache 2.0) |
 | `make_model.py`, `model_template.html` | Build `model.html`, the interactive 3D model |
 | `model.html` | The four boxes in 3D: open it in a browser to rotate, nest and open them |
-| `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges) |
+| `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges), plus their engraved text |
 | `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files |
 | `layouts/sheetsN.svg` | The same layouts colour-coded by box, for reading, not cutting |
 | `previews/` | PNG renders of the cut files (`sheetsN.png`) and layout views (`layout-sheetsN.png`) |
@@ -49,6 +52,7 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
 11. *Add text on the bottom of the boxes:* each recipient's name (Ember Barber, Leah
     Barber, Rina Foygel Barber, Mathew Barber), then "Chrismukkah 2026". Then: *try
     6 mm, and rotate it 180 degrees.* And then: *rotate it 180 degrees* again.
+12. *Add the text to the layouts and cut files.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -232,33 +236,8 @@ from a CDN). Drag to orbit, scroll to zoom, right-drag to pan.
 * The lid slider turns the lids about their hinge pins, 0–110°.
 * Colour by box (the colours above, hinge pieces grey) or as plywood.
 * Hovering a piece names it, with its flat size.
-* Each box has text on its front, set in `FRONT_TEXT` in `make_model.py`, in the
-  typewriter face [Special Elite](https://fonts.google.com/specimen/Special+Elite). The
-  text is on two lines, centred on the front wall of the box (not the lid). Box 1 gets
-  the largest font size that leaves 12 mm clear on every side of its 54 mm high front:
-  15.4 mm. The other boxes scale up from it in proportion to the height of their
-  fronts, so the text takes up the same share of each front's height. The text is
-  only in the model so far, not on the cut sheets.
-
-| Box | Front text | Front (mm) | Font size (mm) |
-|---|---|---|---|
-| 1 | Scientific / Discoveries | 154 × 54 | 15.4 |
-| 2 | Feline / Facts | 162 × 62 | 17.7 |
-| 3 | Problematic / Data | 170 × 70 | 20.0 |
-| 4 | Exuberant / Ideas | 178 × 78 | 22.3 |
-
-* Each box also has text underneath, set in `BOTTOM_TEXT` in `make_model.py`: the
-  recipient's name, then "Chrismukkah 2026", in the same font at 6 mm
-  (`BOTTOM_TEXT_MM` in `model_template.html`) on all four. It is centred on the bottom
-  and reads right way up when you tip the box back to look underneath (front edge at
-  the top), which is also how it shows when you orbit under the box from the front. Like the front text, it is only in the model so far.
-
-| Box | Bottom text | Bottom (mm) |
-|---|---|---|
-| 1 | Ember Barber / Chrismukkah 2026 | 154 × 74 |
-| 2 | Leah Barber / Chrismukkah 2026 | 162 × 89 |
-| 3 | Rina Foygel Barber / Chrismukkah 2026 | 170 × 104 |
-| 4 | Mathew Barber / Chrismukkah 2026 | 178 × 119 |
+* Each box carries its engraved text (section 5) on its front and underneath. The
+  model draws the same outlines as the cut files.
 
 How `make_model.py` builds it:
 
@@ -274,10 +253,61 @@ How `make_model.py` builds it:
 A voxel check at 0.25 mm found no overlap between any two pieces of a box, and none
 between the boxes when nested.
 
+## 5. Engraved text
+
+Each box has text engraved on its front and underneath, in the typewriter face
+[Special Elite](https://fonts.google.com/specimen/Special+Elite). The words and sizes
+are set in `engraving.py`, which turns the text into outlines with the font in
+`fonts/`, so the laser software doesn't need the font installed. The cut files, the
+layout views and the 3D model all use these same outlines.
+
+**Front.** Two lines, centred on the front wall of the box (not the lid), the top of
+the text towards the open top edge. Box 1 gets the largest font size that leaves
+12 mm clear on every side of its 54 mm high front: 15.4 mm. The other boxes scale up
+from it in proportion to the height of their fronts, so the text takes up the same
+share of each front's height.
+
+| Box | Front text | Front (mm) | Font size (mm) |
+|---|---|---|---|
+| 1 | Scientific / Discoveries | 154 × 54 | 15.4 |
+| 2 | Feline / Facts | 162 × 62 | 17.7 |
+| 3 | Problematic / Data | 170 × 70 | 20.0 |
+| 4 | Exuberant / Ideas | 178 × 78 | 22.3 |
+
+**Bottom.** The recipient's name, then "Chrismukkah 2026", at 6 mm on all four
+(capitals about 4.1 mm high), centred. It reads right way up when you tip the box
+back to look underneath, front edge at the top. In the 3D model that is how it shows
+when you orbit under the box from the front.
+
+| Box | Bottom text | Bottom (mm) |
+|---|---|---|
+| 1 | Ember Barber / Chrismukkah 2026 | 154 × 74 |
+| 2 | Leah Barber / Chrismukkah 2026 | 162 × 89 |
+| 3 | Rina Foygel Barber / Chrismukkah 2026 | 170 × 104 |
+| 4 | Mathew Barber / Chrismukkah 2026 | 178 × 119 |
+
+In the cut files the text is green (boxes.py's etching colour), filled outlines inside
+the piece it belongs to. `engrave_boxes.py` adds it to the box SVGs from the generator,
+so it moves with its piece when the sheets are packed. Adding it changed no piece's
+size, so the sheet layouts are the same as before. On those two pieces the red
+"Box N" label moves down, between the text and the piece's lower edge.
+
+* **The engraved face goes outside.** Engrave with the sheet as it lies; when you
+  assemble, turn each engraved piece so its engraved face is outward. Both pieces are
+  symmetric (`engrave_boxes.py` checks this), so that always fits.
+* **The bottom has no fixed front.** Its two long edges are the same, so whichever one
+  the top of the text points to becomes the front edge.
+* **Which panel is the bottom.** Each box has two identical x × y panels, the bottom
+  and the lid top. The engraved one is the bottom.
+
 ## Cutting notes
 
 * Colours follow boxes.py: black is the outline cut, blue the inner cuts (the hinge
-  holes), red is labels only. Set red to engrave or skip.
+  holes), green the engraved text, red labels only. Raster-engrave green (filled, not
+  a vector score: the font's rough outlines make a messy score) and skip red.
+* Engrave before cutting, so the pieces are still held in the sheet. A test on a
+  scrap of the same plywood is worth it: grain and finish change how the 6 mm bottom
+  text comes out.
 * In the multi-sheet files the sheet cut lines come last, so the pieces are cut before
   the sheets come free. If your laser software reorders cuts, make sure the sheet
   lines go last.

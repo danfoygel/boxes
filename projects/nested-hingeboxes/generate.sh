@@ -25,6 +25,9 @@ done <<'SIZES'
 SIZES
 BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 
+# 1b. Engraved text on each box's front and bottom (engraving.py has the words).
+"$PY" engrave_boxes.py "${BOXES[@]}"
+
 # 2. N equal sheets, plus as many spare hinge pieces as fit (runs in parallel).
 #    Sheet sizes are kept from the earlier size search (done for 5-piece hinges)
 #    and grown only where the required pieces no longer fit.  Drop --sheet to

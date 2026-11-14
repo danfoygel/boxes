@@ -46,6 +46,8 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
     Elite.* And: *split the text to two lines, as large as fits with good padding, the
     same size on all four.* Then: *keep box 1's size and scale the others in
     proportion to their sizes.*
+11. *Add text on the bottom of the boxes:* each recipient's name (Ember Barber, Leah
+    Barber, Rina Foygel Barber, Mathew Barber), then "Chrismukkah 2026".
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -243,6 +245,21 @@ from a CDN). Drag to orbit, scroll to zoom, right-drag to pan.
 | 2 | Feline / Facts | 162 × 62 | 17.7 |
 | 3 | Problematic / Data | 170 × 70 | 20.0 |
 | 4 | Exuberant / Ideas | 178 × 78 | 22.3 |
+
+* Each box also has text underneath, set in `BOTTOM_TEXT` in `make_model.py`: the
+  recipient's name, then "Chrismukkah 2026", in the same font. It is centred on the
+  bottom and reads right way up when you tip the box back to look underneath (front
+  edge at the top), which is also how it shows when you orbit under the box from the
+  front. All four use one font size, 14.2 mm: the largest that leaves 12 mm clear on
+  every side of every bottom. "Chrismukkah 2026" on box 1's 154 mm wide bottom sets
+  it. Like the front text, it is only in the model so far.
+
+| Box | Bottom text | Bottom (mm) |
+|---|---|---|
+| 1 | Ember Barber / Chrismukkah 2026 | 154 × 74 |
+| 2 | Leah Barber / Chrismukkah 2026 | 162 × 89 |
+| 3 | Rina Foygel Barber / Chrismukkah 2026 | 170 × 104 |
+| 4 | Mathew Barber / Chrismukkah 2026 | 178 × 119 |
 
 How `make_model.py` builds it:
 

@@ -18,7 +18,8 @@ the material thickness and folded into place:
   using the frame at its pin hole.  The pieces go where the generator cut the
   t x t holes for them in the back walls of box and lid.
 * The page (model_template.html) extrudes each outline with three.js and
-  draws each box's FRONT_TEXT on its front wall.
+  draws each box's FRONT_TEXT on its front wall and BOTTOM_TEXT under its
+  bottom.
 
 World frame of one box: X along the width, Y from front to back, Z up; the
 inner space of the box is [0, x] x [0, y] x [0, h] and the lid sits on top up
@@ -46,6 +47,9 @@ COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#b0367c"]  # as in color_layouts.py
 # now, not on the cut sheets)
 FRONT_TEXT = [("Scientific", "Discoveries"), ("Feline", "Facts"), ("Problematic", "Data"),
               ("Exuberant", "Ideas")]
+# Text on the underside of each box's bottom, likewise
+BOTTOM_TEXT = [(name, "Chrismukkah 2026")
+               for name in ("Ember Barber", "Leah Barber", "Rina Foygel Barber", "Mathew Barber")]
 BEZIER_STEPS = 8
 
 
@@ -250,7 +254,8 @@ def main():
     boxes = []
     for n, (x, y, h) in enumerate(SIZES, 1):
         box = build_box(x, y, h)
-        box.update(name=f"Box {n}", color=COLORS[n - 1], front_text=FRONT_TEXT[n - 1])
+        box.update(name=f"Box {n}", color=COLORS[n - 1], front_text=FRONT_TEXT[n - 1],
+                   bottom_text=BOTTOM_TEXT[n - 1])
         boxes.append(box)
     data = json.dumps({"boxes": boxes}, separators=(",", ":"))
     html = (HERE / "model_template.html").read_text().replace("/*MODEL_DATA*/null", data)

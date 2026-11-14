@@ -69,6 +69,7 @@
   .boxname { font-weight: 500; }
   .front { color: var(--muted); font-family: "Special Elite", "Courier New", Courier, monospace; }
   .front::before { content: "· "; }
+  .under { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
   .dims { display: block; font-family: var(--font-data); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 2px; }
   .reset {
     font: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
@@ -238,7 +239,7 @@ function textBlock(g, lines, px) {
   };
 }
 
-// Largest font size (px) at which the lines fit the front with TEXT_PAD_MM all
+// Largest font size (px) at which the lines fit their face with TEXT_PAD_MM all
 // round.  The block scales with the font size.
 function fitSize({ canvas, lines }) {
   const pad = TEXT_PAD_MM * TEXT_PX_PER_MM;
@@ -246,14 +247,30 @@ function fitSize({ canvas, lines }) {
   return 100 * Math.min((canvas.width - 2 * pad) / b.w, (canvas.height - 2 * pad) / b.h);
 }
 
+// Font size (px) of every label.
+function labelSizes() {
+  const sizes = new Map();
+  // Front: the box with the lowest front gets the largest size that fits it; the
+  // others scale up from it in proportion to their front's height (never past
+  // their own fit).
+  const fronts = textLabels.filter(l => l.face === "front");
+  if (fronts.length) {
+    const ref = fronts.reduce((a, l) => (l.canvas.height < a.canvas.height ? l : a));
+    const refPx = fitSize(ref);
+    for (const l of fronts) sizes.set(l, Math.min(refPx * l.canvas.height / ref.canvas.height, fitSize(l)));
+  }
+  // Bottom: one size for all four, the largest that fits every bottom.
+  const bottoms = textLabels.filter(l => l.face === "bottom");
+  const bottomPx = Math.min(...bottoms.map(fitSize));
+  for (const l of bottoms) sizes.set(l, bottomPx);
+  return sizes;
+}
+
 function drawLabels() {
-  // The box with the lowest front gets the largest size that fits it; the others
-  // scale up from it in proportion to their front's height (never past their own fit).
-  const ref = textLabels.reduce((a, l) => (l.canvas.height < a.canvas.height ? l : a));
-  const refPx = fitSize(ref);
+  const sizes = labelSizes();
   for (const label of textLabels) {
     const { canvas, map, lines } = label;
-    const px = Math.min(refPx * canvas.height / ref.canvas.height, fitSize(label));
+    const px = sizes.get(label);
     const g = canvas.getContext("2d");
     g.clearRect(0, 0, canvas.width, canvas.height);
     const b = textBlock(g, lines, px);
@@ -324,26 +341,33 @@ const boxes = DATA.boxes.map((b, i) => {
     add(g, m, group, "pin", `hinge pin · ${mm(len)} mm × Ø3`);
   }
 
-  // Front text, engraved on the outer face of the box's front wall (y = -t).
-  if (b.front_text) {
+  // Engraved text on an outer face: a w x h area, placed by `matrix` (u reading
+  // direction, v up the text, w out of the face).
+  const addText = (face, lines, w, h, matrix) => {
     const canvas = document.createElement("canvas");
-    canvas.width = Math.round(b.x * TEXT_PX_PER_MM);
-    canvas.height = Math.round(b.h * TEXT_PX_PER_MM);
+    canvas.width = Math.round(w * TEXT_PX_PER_MM);
+    canvas.height = Math.round(h * TEXT_PX_PER_MM);
     const map = new THREE.CanvasTexture(canvas);
     map.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    textLabels.push({ canvas, map, lines: b.front_text });
-    const geom = new THREE.PlaneGeometry(b.x, b.h).translate(b.x / 2, b.h / 2, 0);
+    textLabels.push({ face, canvas, map, lines });
+    const geom = new THREE.PlaneGeometry(w, h).translate(w / 2, h / 2, 0);
     const mat = new THREE.MeshStandardMaterial({
       map, transparent: true, depthWrite: false, roughness: 0.9,
       polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
     });
     const mesh = new THREE.Mesh(geom, mat);
     mesh.matrixAutoUpdate = false;
-    mesh.matrix.copy(basis([1, 0, 0], [0, 0, 1], [0, -1, 0], [0, -t - 0.05, 0]));
-    mesh.userData = { box: i, kind: "text", label: `front text · “${b.front_text.join(" ")}”` };
+    mesh.matrix.copy(matrix);
+    mesh.userData = { box: i, kind: "text", label: `${face} text · “${lines.join(" ")}”` };
     group.add(mesh);
     meshes.push({ mesh, edges: null, kind: "text" });
-  }
+  };
+  // Front: the outer face of the box's front wall (y = -t), the lid not included.
+  if (b.front_text) addText("front", b.front_text, b.x, b.h, basis([1, 0, 0], [0, 0, 1], [0, -1, 0], [0, -t - 0.05, 0]));
+  // Bottom: the underside (z = -t), reading right way up when the box is tipped
+  // back to look underneath (front edge at the top), as when orbiting under it
+  // from the front.
+  if (b.bottom_text) addText("bottom", b.bottom_text, b.x, b.y, basis([1, 0, 0], [0, -1, 0], [0, 0, -1], [0, b.y, -t - 0.05]));
 
   // Extents of the closed box in its own frame (knuckles stick out e behind the back wall).
   const ext = { x0: -t, x1: b.x + t, y0: -t, y1: b.y + t + b.eye, z0: -t, z1: b.h + b.lidheight + t };
@@ -518,6 +542,7 @@ boxes.forEach((bx, i) => {
   li.innerHTML = `<label><input type="checkbox" id="show-${i}" checked>
     <span class="swatch" style="background:${bx.b.color}"></span>
     <span><span class="boxname">${bx.b.name}</span>${bx.b.front_text ? ` <span class="front">${bx.b.front_text.join(" ")}</span>` : ""}
+    ${bx.b.bottom_text ? `<span class="under">Underneath: ${bx.b.bottom_text.join(" · ")}</span>` : ""}
     <span class="dims">${mm(ox)} × ${mm(oy)} × ${mm(oz)} mm</span>
     <span class="dims">${inch(ox)} × ${inch(oy)} × ${inch(oz)} in</span></span></label>`;
   li.querySelector("input").addEventListener("change", e => { state.shown[i] = e.target.checked; refresh(); });

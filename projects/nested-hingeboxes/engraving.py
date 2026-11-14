@@ -9,7 +9,7 @@ Coordinates are mm on the face that carries the text, origin at the top-left
 corner of the face's inner area, x to the right, y down (as in SVG).  The inner
 area of the front wall is x by h, of the bottom x by y.
 """
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 from fontTools.pens.boundsPen import BoundsPen
@@ -31,7 +31,7 @@ LEADING = 1.2       # line pitch, in font sizes
 BOTTOM_SIZE = 6.0   # mm, font size of the bottom text
 
 
-@lru_cache(maxsize=None)
+@cache
 def _font():
     f = TTFont(FONT)
     return f, f.getGlyphSet(), f.getBestCmap(), f["head"].unitsPerEm, _kerning(f)
@@ -75,7 +75,7 @@ def _line(text):
     return out
 
 
-@lru_cache(maxsize=None)
+@cache
 def _glyph_bounds(g):
     _, gs, _, _, _ = _font()
     pen = BoundsPen(gs)

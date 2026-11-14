@@ -67,6 +67,8 @@
   .boxes input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
   .swatch { width: 12px; height: 12px; border-radius: 3px; }
   .boxname { font-weight: 500; }
+  .front { color: var(--muted); }
+  .front::before { content: "· "; }
   .dims { display: block; font-family: var(--font-data); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 2px; }
   .reset {
     font: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
@@ -215,6 +217,26 @@ function size2(outline) {
 }
 const mm = v => (Math.round(v * 10) / 10).toString();
 
+// Front text is drawn white on a transparent canvas and tinted by its material.
+const TEXT_PX_PER_MM = 8;
+const TEXT_FONT = '700 100px "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif';
+const textLabels = [];
+function drawLabels() {
+  for (const { canvas, map, text } of textLabels) {
+    const g = canvas.getContext("2d");
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    g.font = TEXT_FONT;
+    // Fit to 84% of the wall's width, at most 20% of its height.
+    const size = Math.min(100 * 0.84 * canvas.width / g.measureText(text).width, 0.2 * canvas.height);
+    g.font = TEXT_FONT.replace("100px", `${size}px`);
+    g.fillStyle = "#fff";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(text, canvas.width / 2, canvas.height / 2);
+    map.needsUpdate = true;
+  }
+}
+
 const boxes = DATA.boxes.map((b, i) => {
   const t = b.t;
   const group = new THREE.Group();          // frame at the box's inner corner
@@ -271,6 +293,27 @@ const boxes = DATA.boxes.map((b, i) => {
     const m = new THREE.Matrix4().makeTranslation(x0 + len / 2, b.pin.y, b.pin.z)
       .multiply(new THREE.Matrix4().makeRotationZ(Math.PI / 2));
     add(g, m, group, "pin", `hinge pin · ${mm(len)} mm × Ø3`);
+  }
+
+  // Front text, engraved on the outer face of the box's front wall (y = -t).
+  if (b.front_text) {
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(b.x * TEXT_PX_PER_MM);
+    canvas.height = Math.round(b.h * TEXT_PX_PER_MM);
+    const map = new THREE.CanvasTexture(canvas);
+    map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    textLabels.push({ canvas, map, text: b.front_text });
+    const geom = new THREE.PlaneGeometry(b.x, b.h).translate(b.x / 2, b.h / 2, 0);
+    const mat = new THREE.MeshStandardMaterial({
+      map, transparent: true, depthWrite: false, roughness: 0.9,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.matrixAutoUpdate = false;
+    mesh.matrix.copy(basis([1, 0, 0], [0, 0, 1], [0, -1, 0], [0, -t - 0.05, 0]));
+    mesh.userData = { box: i, kind: "text", label: `front text · “${b.front_text}”` };
+    group.add(mesh);
+    meshes.push({ mesh, edges: null, kind: "text" });
   }
 
   // Extents of the closed box in its own frame (knuckles stick out e behind the back wall).
@@ -336,19 +379,23 @@ function applyColors() {
     const base = new THREE.Color(bx.b.color);
     for (const { mesh, edges, kind } of bx.meshes) {
       let c, ec;
-      if (kind === "pin") { c = new THREE.Color(PIN_GREY); ec = c.clone().multiplyScalar(0.6); }
+      if (kind === "text") c = state.color === "wood" ? new THREE.Color(WOOD_EDGE) : base.clone().multiplyScalar(0.5);
+      else if (kind === "pin") { c = new THREE.Color(PIN_GREY); ec = c.clone().multiplyScalar(0.6); }
       else if (state.color === "wood") { c = new THREE.Color(WOOD); ec = new THREE.Color(WOOD_EDGE); }
       else if (kind === "hinge") { c = new THREE.Color(HINGE_GREY).lerp(new THREE.Color("#ffffff"), 0.35); ec = new THREE.Color(HINGE_GREY).multiplyScalar(0.55); }
       else { c = base.clone().lerp(new THREE.Color("#ffffff"), 0.45); ec = base.clone().multiplyScalar(0.62); }
       mesh.material.color.copy(c);
-      edges.material.color.copy(ec);
-      for (const m of [mesh.material, edges.material]) {
-        m.transparent = op < 1;
-        m.opacity = m === edges.material ? Math.min(1, op * 2) : op;
-        m.depthWrite = op === 1;
+      if (edges) edges.material.color.copy(ec);
+      for (const m of [mesh.material, edges && edges.material]) {
+        if (!m) continue;
+        // Edges stay crisper than faces through x-ray; text fades with its wall so
+        // the outer boxes' text doesn't muddle the inner ones'.
+        m.transparent = op < 1 || kind === "text";
+        m.opacity = m === mesh.material ? (kind === "text" && op < 1 ? op * 0.6 : op) : Math.min(1, op * 2);
+        m.depthWrite = op === 1 && kind !== "text";
         m.needsUpdate = true;
       }
-      mesh.castShadow = op === 1;
+      mesh.castShadow = op === 1 && kind !== "text";
     }
   });
 }
@@ -441,7 +488,7 @@ boxes.forEach((bx, i) => {
   const li = document.createElement("li");
   li.innerHTML = `<label><input type="checkbox" id="show-${i}" checked>
     <span class="swatch" style="background:${bx.b.color}"></span>
-    <span><span class="boxname">${bx.b.name}</span>
+    <span><span class="boxname">${bx.b.name}</span>${bx.b.front_text ? ` <span class="front">${bx.b.front_text}</span>` : ""}
     <span class="dims">${mm(ox)} × ${mm(oy)} × ${mm(oz)} mm</span>
     <span class="dims">${inch(ox)} × ${inch(oy)} × ${inch(oz)} in</span></span></label>`;
   li.querySelector("input").addEventListener("change", e => { state.shown[i] = e.target.checked; refresh(); });
@@ -476,6 +523,8 @@ new MutationObserver(applyTheme).observe(document.documentElement, { attributes:
 // ---------------------------------------------------------------- go
 
 resize();
+drawLabels();
+document.fonts.load(TEXT_FONT).then(drawLabels, () => {});
 applyTheme();
 refresh(true);
 fit();

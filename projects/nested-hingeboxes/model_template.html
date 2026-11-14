@@ -363,10 +363,10 @@ const boxes = DATA.boxes.map((b, i) => {
   };
   // Front: the outer face of the box's front wall (y = -t), the lid not included.
   if (b.front_text) addText("front", b.front_text, b.x, b.h, basis([1, 0, 0], [0, 0, 1], [0, -1, 0], [0, -t - 0.05, 0]));
-  // Bottom: the underside (z = -t), reading right way up when the box is turned
-  // upside down with its front towards you (front edge at the bottom), as when
-  // orbiting under it from the back.
-  if (b.bottom_text) addText("bottom", b.bottom_text, b.x, b.y, basis([-1, 0, 0], [0, 1, 0], [0, 0, -1], [b.x, 0, -t - 0.05]));
+  // Bottom: the underside (z = -t), reading right way up when the box is tipped
+  // back to look underneath (front edge at the top), as when orbiting under it
+  // from the front.
+  if (b.bottom_text) addText("bottom", b.bottom_text, b.x, b.y, basis([1, 0, 0], [0, -1, 0], [0, 0, -1], [0, b.y, -t - 0.05]));
 
   // Extents of the closed box in its own frame (knuckles stick out e behind the back wall).
   const ext = { x0: -t, x1: b.x + t, y0: -t, y1: b.y + t + b.eye, z0: -t, z1: b.h + b.lidheight + t };

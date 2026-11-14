@@ -48,7 +48,7 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
     proportion to their sizes.*
 11. *Add text on the bottom of the boxes:* each recipient's name (Ember Barber, Leah
     Barber, Rina Foygel Barber, Mathew Barber), then "Chrismukkah 2026". Then: *try
-    6 mm, and rotate it 180 degrees.*
+    6 mm, and rotate it 180 degrees.* And then: *rotate it 180 degrees* again.
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -250,9 +250,8 @@ from a CDN). Drag to orbit, scroll to zoom, right-drag to pan.
 * Each box also has text underneath, set in `BOTTOM_TEXT` in `make_model.py`: the
   recipient's name, then "Chrismukkah 2026", in the same font at 6 mm
   (`BOTTOM_TEXT_MM` in `model_template.html`) on all four. It is centred on the bottom
-  and reads right way up when you turn the box upside down with its front towards you
-  (front edge at the bottom), which is also how it shows when you orbit under the box
-  from the back. Like the front text, it is only in the model so far.
+  and reads right way up when you tip the box back to look underneath (front edge at
+  the top), which is also how it shows when you orbit under the box from the front. Like the front text, it is only in the model so far.
 
 | Box | Bottom text | Bottom (mm) |
 |---|---|---|

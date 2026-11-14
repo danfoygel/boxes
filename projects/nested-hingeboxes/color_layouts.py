@@ -12,7 +12,7 @@ Colours: blue, orange, aqua (the first three slots of the data-viz reference
 palette) plus plum.  Checked with the palette validator for all pairs (pieces
 of every box sit next to each other): worst colour-blind separation ΔE 9.2,
 worst normal-vision ΔE 20.4.  Every piece also keeps its "Box N" label, so
-colour is never the only cue.
+colour is never the only cue.  Engraved text is shown in dark ink.
 """
 import copy
 import sys
@@ -71,6 +71,10 @@ def convert(src, dst):
         color = COLORS[box]
         for p in el:
             if p.tag != q("path"):
+                continue
+            if p.get("class") == "engraving":       # engraved text
+                p.set("fill", INK)
+                p.set("stroke", "none")
                 continue
             if p.get("stroke") == BLACK:            # outline
                 p.set("fill", tint(color, TINT))

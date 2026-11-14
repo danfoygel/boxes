@@ -177,7 +177,6 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(32, 1, 5, 6000);
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.maxPolarAngle = Math.PI * 0.495;
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f92, 0.75));
 const sun = new THREE.DirectionalLight(0xffffff, 0.75);
@@ -190,6 +189,9 @@ scene.add(sun);
 const fill = new THREE.DirectionalLight(0xffffff, 0.25);
 fill.position.set(-300, 200, -200);
 scene.add(fill);
+const under = new THREE.DirectionalLight(0xffffff, 0.35);  // lights the bottoms when seen from below
+under.position.set(120, -400, 260);
+scene.add(under);
 
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.ShadowMaterial({ opacity: 0.16 }));
 ground.rotation.x = -Math.PI / 2;
@@ -497,6 +499,8 @@ renderer.setAnimationLoop(() => {
   }
   boxes.forEach(bx => bx.group.position.copy(bx.pos));
   controls.update();
+  // Below the ground, drop the mat and its shadows so the bottoms show clearly.
+  ground.visible = grid.visible = camera.position.y > 0.5;
   renderer.render(scene, camera);
 });
 </script>

@@ -42,5 +42,8 @@ wait
 # 3. Independent check of every multi-sheet file.
 "$PY" check_layout.py sheets/sheets*.svg
 
-# 4. Comparison table of all layouts.
+# 4. Colour-coded layout views (layouts/), one per cut file.
+"$PY" color_layouts.py sheets/sheets*.svg
+
+# 5. Comparison table of all layouts.
 "$PY" compare.py

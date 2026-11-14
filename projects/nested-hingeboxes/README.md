@@ -9,11 +9,13 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
 | `generate.sh` | Regenerates every SVG in this folder |
 | `pack_sheets.py` | Packs all pieces onto N equal sheets laid out in a grid, with cut lines between sheets, and fills the leftover space with spare hinge pieces |
 | `check_layout.py` | Checks a multi-sheet file from the SVG alone: every gap ≥ 3 mm, every piece ≥ 5 mm inside its sheet |
+| `color_layouts.py` | Makes the colour-coded layout views in `layouts/` |
 | `compare.py` | Prints the comparison table of all layouts |
 | `render_previews.js` | Renders the SVGs to PNG previews (Playwright + Chromium) |
 | `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges) |
-| `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces |
-| `previews/` | PNG renders of the cut sheets |
+| `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files |
+| `layouts/sheetsN.svg` | The same layouts colour-coded by box, for reading, not cutting |
+| `previews/` | PNG renders of the cut files (`sheetsN.png`) and layout views (`layout-sheetsN.png`) |
 
 ## The requests
 
@@ -33,7 +35,8 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
 7. *Drop the clustered layouts. For the others, fit as many extra hinge pieces as
    possible without making the sheets bigger.*
 8. *Build each hinge from 7 pieces instead of 5 to make it stronger.* Then: *remove
-   the single cutsheet.*
+   the single cutsheet.* And: *make layout SVGs where each piece is colour-coded by
+   box.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -178,6 +181,22 @@ Takeaways:
 * **10 sheets has only 3 spares**, the fewest of any layout.
 * How many spares fit depends on where the packer happens to leave gaps, not just on
   total free area.
+
+### Colour-coded layout views
+
+`layouts/sheetsN.svg` shows each cut file with every piece filled in its box's colour.
+A legend at the top gives each box's size and piece count.
+
+| Box 1 | Box 2 | Box 3 | Box 4 | Hinge pieces |
+|---|---|---|---|---|
+| blue `#2a78d6` | orange `#eb6834` | aqua `#1baf7a` | plum `#b0367c` | grey `#8a8984` |
+
+Pieces are filled with a light tint and outlined in the full colour. Hinge pieces are
+grey because any of them fits any box. Pieces from all four boxes sit next to each
+other, so the four colours were checked as a set, every pair against every other: the
+worst pair is ΔE 20.4 apart for normal colour vision and 9.2 for the common forms of
+colour blindness. Every piece still carries its "Box N" label, so colour is never the
+only cue. These files are for reading the layout; cut from `sheets/`.
 
 ## Cutting notes
 

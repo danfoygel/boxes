@@ -6,7 +6,7 @@ const path = require("path");
 
 const here = __dirname;
 const files = [];
-for (const n of [6, 8, 9, 10, 12]) files.push(`sheets/sheets${n}.svg`);
+for (const n of [6, 8, 9, 10, 12]) files.push(`sheets/sheets${n}.svg`, `layouts/sheets${n}.svg`);
 
 (async () => {
   fs.mkdirSync(path.join(here, "previews"), { recursive: true });
@@ -24,7 +24,8 @@ for (const n of [6, 8, 9, 10, 12]) files.push(`sheets/sheets${n}.svg`);
       s.removeAttribute("height");
       s.style.display = "block";
     });
-    const out = path.join(here, "previews", path.basename(f).replace(/\.svg$/, ".png"));
+    const name = (f.startsWith("layouts/") ? "layout-" : "") + path.basename(f);
+    const out = path.join(here, "previews", name.replace(/\.svg$/, ".png"));
     await page.locator("svg").screenshot({ path: out });
     console.log(out);
   }

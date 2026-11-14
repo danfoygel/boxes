@@ -12,6 +12,8 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
 | `color_layouts.py` | Makes the colour-coded layout views in `layouts/` |
 | `compare.py` | Prints the comparison table of all layouts |
 | `render_previews.js` | Renders the SVGs to PNG previews (Playwright + Chromium) |
+| `make_model.py`, `model_template.html` | Build `model.html`, the interactive 3D model |
+| `model.html` | The four boxes in 3D: open it in a browser to rotate, nest and open them |
 | `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges) |
 | `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files |
 | `layouts/sheetsN.svg` | The same layouts colour-coded by box, for reading, not cutting |
@@ -37,6 +39,7 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
 8. *Build each hinge from 7 pieces instead of 5 to make it stronger.* Then: *remove
    the single cutsheet.* And: *make layout SVGs where each piece is colour-coded by
    box.*
+9. *Generate a 3D model of the box that I can view and rotate in the browser.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -78,19 +81,29 @@ The chosen offsets are **8 mm for x and height, 15 mm for y**. With 3 mm materia
 leaves about 2 mm of play in x and height and 1.5 mm in y. That works for material up
 to about 3.3 mm thick; at that thickness y has no play left.
 
-All boxes use inside dimensions (outside mode off), `--thickness 3`,
-`--lidheight 20` and `--CabinetHinge_eyes_per_hinge 7`. The height is split as h + 20.
+All boxes use outside dimensions, `--thickness 3`, `--lidheight 20` and
+`--CabinetHinge_eyes_per_hinge 7`. Outside mode is HingeBox's default, and
+`generate.sh` leaves it on. The closed height is split as h + 20 (see
+[Outside mode](#outside-mode) for why).
 
-| Box | x | y | height (h + lidheight) | h | x (in) | y (in) | height (in) |
-|---|---|---|---|---|---|---|---|
-| 1 (innermost) | 160 | 80 | 80 | 60 | 6.30 | 3.15 | 3.15 |
-| 2 | 168 | 95 | 88 | 68 | 6.61 | 3.74 | 3.46 |
-| 3 | 176 | 110 | 96 | 76 | 6.93 | 4.33 | 3.78 |
-| 4 (outermost) | 184 | 125 | 104 | 84 | 7.24 | 4.92 | 4.09 |
+Sizes are width × depth × closed height. The outside depth doesn't include the hinge
+knuckles, which stick out another 4.5 mm at the back.
 
-The outermost box takes up about 190 × 135.5 × 110 mm
-(7.48 × 5.33 × 4.33 in). That is 184 + 2t by 125 + 2t + 1.5t (the knuckles) by
-104 + 2t.
+| Box | Outside (mm) | `--h` | Outside (in) | Inside (mm) |
+|---|---|---|---|---|
+| 1 (innermost) | 160 × 80 × 80 | 60 | 6.30 × 3.15 × 3.15 | 154 × 74 × 74 |
+| 2 | 168 × 95 × 88 | 68 | 6.61 × 3.74 × 3.46 | 162 × 89 × 82 |
+| 3 | 176 × 110 × 96 | 76 | 6.93 × 4.33 × 3.78 | 170 × 104 × 90 |
+| 4 (outermost) | 184 × 125 × 104 | 84 | 7.24 × 4.92 × 4.09 | 178 × 119 × 98 |
+
+Inside, each box is 6 mm (2t) smaller than outside in every direction. The inside
+height is the box's h − 6 plus the 20 mm lid, for example 54 + 20 for box 1. Each box's
+outside is 2 mm narrower and 2 mm lower than the next box's inside. In depth it is
+1.5 mm short, once its knuckles (4.5 mm) and the outer box's hinge pieces (3 mm) are
+counted.
+
+With the knuckles, the outermost box takes up 184 × 129.5 × 104 mm
+(7.24 × 5.10 × 4.09 in).
 
 ### Outside mode
 
@@ -116,7 +129,7 @@ surface on the pin from about 16 mm to about 22 mm per hinge.
 
 Nesting is unaffected: the hinge pieces have the same shape and sit in the same
 place, so the knuckle and interior offsets above still hold. The hinges get wider, but
-the 160 mm innermost box still has plenty of room for two of them.
+the innermost box (154 mm wide inside) still has plenty of room for two of them.
 
 ## 3. N equal sheets with spare hinge pieces
 
@@ -197,6 +210,33 @@ other, so the four colours were checked as a set, every pair against every other
 worst pair is ΔE 20.4 apart for normal colour vision and 9.2 for the common forms of
 colour blindness. Every piece still carries its "Box N" label, so colour is never the
 only cue. These files are for reading the layout; cut from `sheets/`.
+
+## 4. 3D model
+
+`model.html` shows all four boxes assembled. Open it in a browser (it loads three.js
+from a CDN). Drag to orbit, scroll to zoom, right-drag to pan.
+
+* **Nested** puts each box inside the next one out, centred, resting on its bottom.
+  The outer boxes can be made see-through. Only the outermost box shown opens, since
+  the inner lids can't swing back inside it.
+* **Side by side** lines the boxes up and opens every lid.
+* The lid slider turns the lids about their hinge pins, 0–110°.
+* Colour by box (the colours above, hinge pieces grey) or as plywood.
+* Hovering a piece names it, with its flat size.
+
+How `make_model.py` builds it:
+
+1. It runs the stock HingeBox generator with the `generate.sh` settings, but with no
+   kerf (`--burn 0`) so the pieces meet exactly.
+2. While each wall is drawn, it records the drawing frame at the wall's inner corner.
+   That turns the wall's paths into wall coordinates, so the outline (finger joints,
+   hinge cut-outs and holes included) is the generator's own, not a redrawing.
+3. Each wall is extruded to 3 mm and folded into place. The hinge pieces go where the
+   generator cut the t × t holes for them in the back walls, and each hinge gets a
+   3 mm pin.
+
+A voxel check at 0.25 mm found no overlap between any two pieces of a box, and none
+between the boxes when nested.
 
 ## Cutting notes
 

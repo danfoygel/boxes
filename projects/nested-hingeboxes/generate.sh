@@ -10,7 +10,8 @@ PY="${PYTHON:-python3}"
 cd "$HERE"
 mkdir -p boxes sheets
 
-# 1. The four boxes: inside dimensions, 3 mm material, lid height 20 mm.
+# 1. The four boxes: outside dimensions (HingeBox's default), 3 mm material,
+#    lid height 20 mm.
 i=1
 while read -r x y h; do
   PYTHONPATH="$ROOT" "$PY" "$ROOT/scripts/boxes" HingeBox --x "$x" --y "$y" --h "$h" \
@@ -47,3 +48,6 @@ wait
 
 # 5. Comparison table of all layouts.
 "$PY" compare.py
+
+# 6. Interactive 3D model of the four boxes (model.html).
+"$PY" make_model.py

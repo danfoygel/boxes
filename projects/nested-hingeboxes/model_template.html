@@ -1,0 +1,494 @@
+<title>Nested HingeBoxes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<!-- Template for make_model.py, which fills in the geometry. Edit this file, not model.html. -->
+<style>
+  /* Layout: a full-height 3D stage on a cutting-mat grid, with a narrow control rail
+     beside it (below it on phones). */
+  :root {
+    --bg: #eef0f1;
+    --rail: #f8f9f9;
+    --ink: #1d2427;
+    --muted: #5d686d;
+    --line: #d5dadc;
+    --accent: #2a6f7f;
+    --stage: #e4e8e9;
+    --grid-major: #c3cacc;
+    --grid-minor: #d6dbdc;
+    --font-ui: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-data: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151a1c; --rail: #1b2124; --ink: #e3e8ea; --muted: #98a4a9; --line: #2e373b;
+      --accent: #6cb8c9; --stage: #1f2629; --grid-major: #39444a; --grid-minor: #2a3236;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151a1c; --rail: #1b2124; --ink: #e3e8ea; --muted: #98a4a9; --line: #2e373b;
+    --accent: #6cb8c9; --stage: #1f2629; --grid-major: #39444a; --grid-minor: #2a3236;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px;
+    overflow: hidden;
+  }
+  .app { display: grid; grid-template-columns: 300px minmax(0, 1fr); height: 100%; }
+  .rail {
+    background: var(--rail); border-right: 1px solid var(--line); overflow-y: auto;
+    padding-block: 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: 16px;
+    display: flex; flex-direction: column; gap: 20px; min-width: 0;
+  }
+  h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  .lede { margin: 6px 0 0; color: var(--muted); line-height: 1.45; }
+  .group { display: flex; flex-direction: column; gap: 8px; }
+  .label {
+    font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+  }
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .seg button {
+    font: inherit; font-size: 13px; padding: 7px 8px; border: 0; background: transparent; color: var(--ink); cursor: pointer;
+  }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--rail); font-weight: 500; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .value { font-family: var(--font-data); font-size: 12px; font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .note { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .switch { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .switch input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+  .boxes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+  .boxes li { border-bottom: 1px solid var(--line); }
+  .boxes label { display: grid; grid-template-columns: 16px 12px 1fr; align-items: center; gap: 10px; padding: 9px 0; cursor: pointer; }
+  .boxes input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; }
+  .boxname { font-weight: 500; }
+  .dims { display: block; font-family: var(--font-data); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .reset {
+    font: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
+    background: transparent; color: var(--ink); cursor: pointer;
+  }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .stage { position: relative; min-width: 0; min-height: 0; background: var(--stage); }
+  .stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .hud {
+    position: absolute; left: 16px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; pointer-events: none;
+    font-size: 12px; color: var(--muted);
+  }
+  .pick { font-family: var(--font-data); color: var(--ink); background: var(--rail); border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px; }
+  .pick[hidden] { display: none !important; }
+  .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+  @media (max-width: 720px) {
+    body { overflow: auto; }
+    .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: 58vh auto; height: auto; }
+    .stage { order: -1; height: 58vh; }
+    .rail { border-right: 0; border-top: 1px solid var(--line); overflow: visible; padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+    .hud .hint { display: none; }
+  }
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div>
+      <h1>Nested HingeBoxes</h1>
+      <p class="lede">Four HingeBoxes in 3 mm stock that pack inside each other. Every piece is the generator's own outline, extruded and folded into place.</p>
+    </div>
+
+    <div class="group">
+      <span class="label" id="view-label">View</span>
+      <div class="seg" role="group" aria-labelledby="view-label">
+        <button id="view-nested" aria-pressed="true">Nested</button>
+        <button id="view-row" aria-pressed="false">Side by side</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="row"><label class="label" for="lid">Lid</label><span class="value" id="lid-value">0°</span></div>
+      <input type="range" id="lid" min="0" max="110" step="1" value="0">
+      <p class="note" id="lid-note">Nested: only the outermost box shown opens. The inner lids can't swing back inside it.</p>
+    </div>
+
+    <label class="switch" id="xray-row"><input type="checkbox" id="xray" checked> See through the outer boxes</label>
+
+    <div class="group">
+      <span class="label" id="color-label">Colour</span>
+      <div class="seg" role="group" aria-labelledby="color-label">
+        <button id="color-box" aria-pressed="true">By box</button>
+        <button id="color-wood" aria-pressed="false">Plywood</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <span class="label">Boxes · outside size, closed</span>
+      <ul class="boxes" id="boxes"></ul>
+      <p class="note" id="knuckle-note"></p>
+    </div>
+
+    <button class="reset" id="reset">Reset view</button>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="loading" id="loading">Loading the model…</div>
+    <div class="hud">
+      <span class="pick" id="pick" hidden></span>
+      <span class="hint">Drag to orbit · scroll to zoom · right-drag to pan</span>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const DATA = /*MODEL_DATA*/null;
+
+const HINGE_GREY = "#8a8984";
+const PIN_GREY = "#b9bec2";
+const WOOD = "#d4b48a";
+const WOOD_EDGE = "#6b4a2e";
+const GAP_ROW = 40;  // mm between boxes side by side
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const state = { view: "nested", lid: 0, xray: true, color: "box", shown: DATA.boxes.map(() => true) };
+
+// ---------------------------------------------------------------- scene
+
+const stage = document.getElementById("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+document.getElementById("loading").remove();
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 5, 6000);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.495;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f92, 0.75));
+const sun = new THREE.DirectionalLight(0xffffff, 0.75);
+sun.position.set(260, 520, 340);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -500, right: 500, top: 500, bottom: -500, near: 10, far: 1600 });
+sun.shadow.bias = -0.0004;
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffffff, 0.25);
+fill.position.set(-300, 200, -200);
+scene.add(fill);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.ShadowMaterial({ opacity: 0.16 }));
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+let grid = null;
+
+// The model is built in the generator's frame (Z up, Y front to back); turn it Y-up.
+const root = new THREE.Group();
+root.rotation.x = -Math.PI / 2;
+scene.add(root);
+
+// ---------------------------------------------------------------- pieces
+
+function shapeOf(outline, holes) {
+  const s = new THREE.Shape(outline.map(([x, y]) => new THREE.Vector2(x, y)));
+  for (const h of holes) s.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));
+  return s;
+}
+function extrude(outline, holes, t) {
+  return new THREE.ExtrudeGeometry(shapeOf(outline, holes), { depth: t, bevelEnabled: false, curveSegments: 1 });
+}
+function basis(u, v, w, o) {
+  return new THREE.Matrix4().set(u[0], v[0], w[0], o[0], u[1], v[1], w[1], o[1], u[2], v[2], w[2], o[2], 0, 0, 0, 1);
+}
+function size2(outline) {
+  const xs = outline.map(p => p[0]), ys = outline.map(p => p[1]);
+  return [Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)];
+}
+const mm = v => (Math.round(v * 10) / 10).toString();
+
+const boxes = DATA.boxes.map((b, i) => {
+  const t = b.t;
+  const group = new THREE.Group();          // frame at the box's inner corner
+  const lidPivot = new THREE.Group();       // turns about the hinge pin
+  lidPivot.position.set(0, b.pin.y, b.pin.z);
+  const lid = new THREE.Group();
+  lid.position.set(0, -b.pin.y, -b.pin.z);
+  lidPivot.add(lid);
+  group.add(lidPivot);
+  root.add(group);
+
+  const meshes = [];
+  const add = (geom, matrix, parent, kind, label) => {
+    const mat = new THREE.MeshStandardMaterial({ roughness: 0.78, metalness: kind === "pin" ? 0.6 : 0 });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.matrixAutoUpdate = false;
+    mesh.matrix.copy(matrix);
+    mesh.castShadow = mesh.receiveShadow = true;
+    mesh.userData = { box: i, kind, label };
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geom, 25), new THREE.LineBasicMaterial());
+    edges.matrixAutoUpdate = false;
+    edges.matrix.copy(matrix);
+    edges.raycast = () => {};
+    parent.add(mesh, edges);
+    meshes.push({ mesh, edges, kind });
+  };
+
+  for (const p of b.pieces) {
+    const [a, c] = size2(p.outline);
+    add(extrude(p.outline, p.holes, t), basis(p.u, p.v, p.w, p.origin), p.group === "lid" ? lid : group,
+        "wall", `${p.name} · ${mm(a)} × ${mm(c)} × ${t} mm`);
+  }
+
+  // Hinge pieces: piece x along Y (0 at the back wall's outer face), piece y away
+  // from the pin into its own wall, thickness along X.
+  const hingeGeom = extrude(b.hinge.outline, b.hinge.holes, t);
+  const [ha, hc] = size2(b.hinge.outline);
+  for (const hp of b.hinges) {
+    const m = basis([0, 1, 0], [0, 0, hp.dir], [1, 0, 0], [hp.x, b.pin.y, b.pin.z]);
+    add(hingeGeom, m, hp.group === "lid" ? lid : group, "hinge",
+        `hinge piece (${hp.group === "lid" ? "lid" : "box"} side) · ${mm(ha)} × ${mm(hc)} × ${t} mm`);
+  }
+
+  // One pin per hinge, across its run of pieces.
+  const xs = b.hinges.map(h => h.x).sort((p, q) => p - q);
+  const runs = [];
+  for (const x of xs) {
+    const run = runs[runs.length - 1];
+    if (run && x - run[1] < 2 * t) run[1] = x; else runs.push([x, x]);
+  }
+  for (const [x0, x1] of runs) {
+    const len = x1 + t - x0;
+    const g = new THREE.CylinderGeometry(b.pin.r * 0.94, b.pin.r * 0.94, len, 20);
+    const m = new THREE.Matrix4().makeTranslation(x0 + len / 2, b.pin.y, b.pin.z)
+      .multiply(new THREE.Matrix4().makeRotationZ(Math.PI / 2));
+    add(g, m, group, "pin", `hinge pin · ${mm(len)} mm × Ø3`);
+  }
+
+  // Extents of the closed box in its own frame (knuckles stick out e behind the back wall).
+  const ext = { x0: -t, x1: b.x + t, y0: -t, y1: b.y + t + b.eye, z0: -t, z1: b.h + b.lidheight + t };
+  const outer = [b.x + 2 * t, b.y + 2 * t, b.h + b.lidheight + 2 * t];
+  return { b, group, lidPivot, meshes, ext, outer, pos: new THREE.Vector3(), target: new THREE.Vector3() };
+});
+
+// ---------------------------------------------------------------- layout
+
+function layoutTargets() {
+  const t = DATA.boxes[0].t;
+  if (state.view === "nested") {
+    // Each box centred in the next one out, resting on its bottom.  In depth the
+    // space runs from the front wall to the outer box's hinge pieces (t inside its back wall).
+    const outer = boxes[boxes.length - 1];
+    outer.target.set(-(outer.ext.x0 + outer.ext.x1) / 2, -(outer.ext.y0 + outer.ext.y1) / 2, t);
+    for (let i = boxes.length - 2; i >= 0; i--) {
+      const inner = boxes[i], o = boxes[i + 1];
+      const dx = (o.b.x - (inner.ext.x1 - inner.ext.x0)) / 2 - inner.ext.x0;
+      const dy = (o.b.y - t - (inner.ext.y1 - inner.ext.y0)) / 2 - inner.ext.y0;
+      inner.target.copy(o.target).add(new THREE.Vector3(dx, dy, t));
+    }
+  } else {
+    const shown = boxes.filter((_, i) => state.shown[i]);
+    const total = shown.reduce((s, bx) => s + bx.ext.x1 - bx.ext.x0, 0) + GAP_ROW * Math.max(0, shown.length - 1);
+    let x = -total / 2;
+    for (const bx of boxes) {
+      bx.target.set(x - bx.ext.x0, -(bx.ext.y0 + bx.ext.y1) / 2, t);
+      if (state.shown[boxes.indexOf(bx)]) x += bx.ext.x1 - bx.ext.x0 + GAP_ROW;
+    }
+  }
+}
+
+let animating = false;
+function applyLayout(instant) {
+  layoutTargets();
+  if (instant || reduceMotion) boxes.forEach(bx => bx.pos.copy(bx.target));
+  animating = true;
+}
+
+function outermostShown() {
+  for (let i = boxes.length - 1; i >= 0; i--) if (state.shown[i]) return i;
+  return -1;
+}
+
+function applyLid() {
+  const top = outermostShown();
+  boxes.forEach((bx, i) => {
+    const open = state.view === "row" || i === top;
+    bx.lidPivot.rotation.x = -(open ? state.lid : 0) * Math.PI / 180;
+  });
+}
+
+// ---------------------------------------------------------------- colour
+
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function applyColors() {
+  boxes.forEach((bx, i) => {
+    // Nested with see-through on: every box with a shown box inside it goes translucent.
+    const op = state.view === "nested" && state.xray && state.shown.slice(0, i).some(Boolean) ? 0.24 : 1;
+    const base = new THREE.Color(bx.b.color);
+    for (const { mesh, edges, kind } of bx.meshes) {
+      let c, ec;
+      if (kind === "pin") { c = new THREE.Color(PIN_GREY); ec = c.clone().multiplyScalar(0.6); }
+      else if (state.color === "wood") { c = new THREE.Color(WOOD); ec = new THREE.Color(WOOD_EDGE); }
+      else if (kind === "hinge") { c = new THREE.Color(HINGE_GREY).lerp(new THREE.Color("#ffffff"), 0.35); ec = new THREE.Color(HINGE_GREY).multiplyScalar(0.55); }
+      else { c = base.clone().lerp(new THREE.Color("#ffffff"), 0.45); ec = base.clone().multiplyScalar(0.62); }
+      mesh.material.color.copy(c);
+      edges.material.color.copy(ec);
+      for (const m of [mesh.material, edges.material]) {
+        m.transparent = op < 1;
+        m.opacity = m === edges.material ? Math.min(1, op * 2) : op;
+        m.depthWrite = op === 1;
+        m.needsUpdate = true;
+      }
+      mesh.castShadow = op === 1;
+    }
+  });
+}
+
+function applyTheme() {
+  scene.background = new THREE.Color(css("--stage"));
+  if (grid) { scene.remove(grid); grid.geometry.dispose(); }
+  // A cutting mat: 10 mm squares, a heavier line every 50 mm.
+  grid = new THREE.Group();
+  const minor = new THREE.GridHelper(1000, 100, css("--grid-minor"), css("--grid-minor"));
+  const major = new THREE.GridHelper(1000, 20, css("--grid-major"), css("--grid-major"));
+  minor.position.y = 0.02; major.position.y = 0.04;
+  grid.add(minor, major);
+  grid.geometry = { dispose() { minor.geometry.dispose(); major.geometry.dispose(); } };
+  scene.add(grid);
+}
+
+// ---------------------------------------------------------------- visibility
+
+function applyVisibility() {
+  boxes.forEach((bx, i) => { bx.group.visible = state.shown[i]; });
+}
+
+function refresh(instantLayout) {
+  applyVisibility();
+  applyLayout(instantLayout);
+  applyLid();
+  applyColors();
+  document.getElementById("lid-note").hidden = state.view !== "nested";
+  document.getElementById("xray-row").hidden = state.view !== "nested";
+}
+
+// ---------------------------------------------------------------- camera
+
+function fit() {
+  layoutTargets();
+  const box = new THREE.Box3();
+  boxes.forEach((bx, i) => {
+    if (!state.shown[i]) return;
+    const e = bx.ext, p = bx.target;
+    // generator frame -> three.js frame: (x, y, z) -> (x, z, -y)
+    box.expandByPoint(new THREE.Vector3(p.x + e.x0, p.z + e.z0, -(p.y + e.y0)));
+    box.expandByPoint(new THREE.Vector3(p.x + e.x1, p.z + e.z1, -(p.y + e.y1)));
+  });
+  if (box.isEmpty()) box.set(new THREE.Vector3(-100, 0, -100), new THREE.Vector3(100, 100, 100));
+  const centre = box.getCenter(new THREE.Vector3());
+  const r = box.getSize(new THREE.Vector3()).length() / 2;
+  const dist = r / Math.sin((camera.fov * Math.PI / 180) / 2) * (camera.aspect < 1 ? 1.5 : 1.05);
+  const dir = new THREE.Vector3(0.62, 0.52, 0.86).normalize();
+  controls.target.copy(centre);
+  camera.position.copy(centre).addScaledVector(dir, dist);
+  controls.update();
+}
+
+function resize() {
+  const { clientWidth: w, clientHeight: h } = stage;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / Math.max(1, h);
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+
+// ---------------------------------------------------------------- picking
+
+const ray = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const pick = document.getElementById("pick");
+renderer.domElement.addEventListener("pointermove", ev => {
+  if (ev.buttons) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  pointer.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(pointer, camera);
+  // Skip see-through boxes so the pieces inside them can be picked.
+  const hit = ray.intersectObjects(boxes.filter((_, i) => state.shown[i]).map(bx => bx.group), true)
+    .find(h => h.object.isMesh && h.object.material.opacity === 1);
+  if (hit) {
+    const { box, label } = hit.object.userData;
+    pick.textContent = `${DATA.boxes[box].name} · ${label}`;
+    pick.hidden = false;
+  } else pick.hidden = true;
+});
+renderer.domElement.addEventListener("pointerleave", () => { pick.hidden = true; });
+
+// ---------------------------------------------------------------- controls
+
+const list = document.getElementById("boxes");
+boxes.forEach((bx, i) => {
+  const [ox, oy, oz] = bx.outer;
+  const inch = v => (v / 25.4).toFixed(2);
+  const li = document.createElement("li");
+  li.innerHTML = `<label><input type="checkbox" id="show-${i}" checked>
+    <span class="swatch" style="background:${bx.b.color}"></span>
+    <span><span class="boxname">${bx.b.name}</span>
+    <span class="dims">${mm(ox)} × ${mm(oy)} × ${mm(oz)} mm</span>
+    <span class="dims">${inch(ox)} × ${inch(oy)} × ${inch(oz)} in</span></span></label>`;
+  li.querySelector("input").addEventListener("change", e => { state.shown[i] = e.target.checked; refresh(); });
+  list.append(li);
+});
+document.getElementById("knuckle-note").textContent =
+  `Width × depth × height. The hinge knuckles stick out another ${mm(DATA.boxes[0].eye)} mm at the back.`;
+
+function seg(ids, key, values) {
+  ids.forEach((id, k) => document.getElementById(id).addEventListener("click", () => {
+    state[key] = values[k];
+    ids.forEach((other, j) => document.getElementById(other).setAttribute("aria-pressed", String(j === k)));
+    refresh();
+    if (key === "view") fit();
+  }));
+}
+seg(["view-nested", "view-row"], "view", ["nested", "row"]);
+seg(["color-box", "color-wood"], "color", ["box", "wood"]);
+
+const lidInput = document.getElementById("lid");
+lidInput.addEventListener("input", () => {
+  state.lid = +lidInput.value;
+  document.getElementById("lid-value").textContent = `${state.lid}°`;
+  applyLid();
+});
+document.getElementById("xray").addEventListener("change", e => { state.xray = e.target.checked; applyColors(); });
+document.getElementById("reset").addEventListener("click", fit);
+
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+// ---------------------------------------------------------------- go
+
+resize();
+applyTheme();
+refresh(true);
+fit();
+
+renderer.setAnimationLoop(() => {
+  if (animating) {
+    let moving = false;
+    for (const bx of boxes) {
+      bx.pos.lerp(bx.target, 0.16);
+      if (bx.pos.distanceTo(bx.target) > 0.05) moving = true; else bx.pos.copy(bx.target);
+    }
+    animating = moving;
+  }
+  boxes.forEach(bx => bx.group.position.copy(bx.pos));
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>

@@ -246,15 +246,22 @@ function textBlock(g, lines, px) {
   };
 }
 
-function drawLabels() {
-  // One font size for every box: the largest at which each box's text fits inside
-  // its front with TEXT_PAD_MM all round.  The block scales with the font size.
+// Largest font size (px) at which the lines fit the front with TEXT_PAD_MM all
+// round.  The block scales with the font size.
+function fitSize({ canvas, lines }) {
   const pad = TEXT_PAD_MM * TEXT_PX_PER_MM;
-  const px = Math.min(...textLabels.map(({ canvas, lines }) => {
-    const b = textBlock(canvas.getContext("2d"), lines, 100);
-    return 100 * Math.min((canvas.width - 2 * pad) / b.w, (canvas.height - 2 * pad) / b.h);
-  }));
-  for (const { canvas, map, lines } of textLabels) {
+  const b = textBlock(canvas.getContext("2d"), lines, 100);
+  return 100 * Math.min((canvas.width - 2 * pad) / b.w, (canvas.height - 2 * pad) / b.h);
+}
+
+function drawLabels() {
+  // The box with the lowest front gets the largest size that fits it; the others
+  // scale up from it in proportion to their front's height (never past their own fit).
+  const ref = textLabels.reduce((a, l) => (l.canvas.height < a.canvas.height ? l : a));
+  const refPx = fitSize(ref);
+  for (const label of textLabels) {
+    const { canvas, map, lines } = label;
+    const px = Math.min(refPx * canvas.height / ref.canvas.height, fitSize(label));
     const g = canvas.getContext("2d");
     g.clearRect(0, 0, canvas.width, canvas.height);
     const b = textBlock(g, lines, px);

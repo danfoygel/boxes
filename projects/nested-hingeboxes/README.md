@@ -43,7 +43,8 @@ sizing analysis, the scripts that lay the pieces out, and the cut files they pro
    *let me look under the boxes.*
 10. *Add text to the front of each box, in the 3D viewer only for now:* Scientific
     Discoveries, Feline Facts, Problematic Data, Exuberant Ideas. Then: *use Special
-    Elite.*
+    Elite.* And: *split the text to two lines, as large as fits with good padding, the
+    same size on all four.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -228,16 +229,19 @@ from a CDN). Drag to orbit, scroll to zoom, right-drag to pan.
 * Colour by box (the colours above, hinge pieces grey) or as plywood.
 * Hovering a piece names it, with its flat size.
 * Each box has text on its front, set in `FRONT_TEXT` in `make_model.py`, in the
-  typewriter face [Special Elite](https://fonts.google.com/specimen/Special+Elite). It is
-  scaled to 84% of the front's width, at most 20% of its height, and centred. The
-  text is only in the model so far, not on the cut sheets.
+  typewriter face [Special Elite](https://fonts.google.com/specimen/Special+Elite). The
+  text is on two lines, centred on the front wall of the box (not the lid). All four
+  boxes use the same font size: the largest that leaves at least 12 mm clear on every
+  side on each front. That comes to 15.4 mm, set by box 1's 54 mm high front, so box 1
+  has 12 mm above and below its text and the bigger boxes have more. The text is only
+  in the model so far, not on the cut sheets.
 
 | Box | Front text |
 |---|---|
-| 1 | Scientific Discoveries |
-| 2 | Feline Facts |
-| 3 | Problematic Data |
-| 4 | Exuberant Ideas |
+| 1 | Scientific / Discoveries |
+| 2 | Feline / Facts |
+| 3 | Problematic / Data |
+| 4 | Exuberant / Ideas |
 
 How `make_model.py` builds it:
 

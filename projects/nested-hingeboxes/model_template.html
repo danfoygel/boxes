@@ -220,19 +220,41 @@ const mm = v => (Math.round(v * 10) / 10).toString();
 // Front text is drawn white on a transparent canvas and tinted by its material.
 const TEXT_PX_PER_MM = 8;
 const TEXT_FONT = '400 100px "Special Elite", "Courier New", Courier, monospace';
+const TEXT_PAD_MM = 12;    // clear space around the text on every side
+const TEXT_LEADING = 1.2;  // line pitch, in font sizes
 const textLabels = [];
+const fontAt = px => TEXT_FONT.replace("100px", `${px}px`);
+
+// Inked extent of the lines at a given font size: widest line, and from the top
+// of the first line to the bottom of the last.
+function textBlock(g, lines, px) {
+  g.font = fontAt(px);
+  const m = lines.map(l => g.measureText(l));
+  const ascent = m[0].actualBoundingBoxAscent;
+  return {
+    w: Math.max(...m.map(x => x.actualBoundingBoxLeft + x.actualBoundingBoxRight)),
+    h: ascent + (lines.length - 1) * TEXT_LEADING * px + m[m.length - 1].actualBoundingBoxDescent,
+    ascent,
+  };
+}
+
 function drawLabels() {
-  for (const { canvas, map, text } of textLabels) {
+  // One font size for every box: the largest at which each box's text fits inside
+  // its front with TEXT_PAD_MM all round.  The block scales with the font size.
+  const pad = TEXT_PAD_MM * TEXT_PX_PER_MM;
+  const px = Math.min(...textLabels.map(({ canvas, lines }) => {
+    const b = textBlock(canvas.getContext("2d"), lines, 100);
+    return 100 * Math.min((canvas.width - 2 * pad) / b.w, (canvas.height - 2 * pad) / b.h);
+  }));
+  for (const { canvas, map, lines } of textLabels) {
     const g = canvas.getContext("2d");
     g.clearRect(0, 0, canvas.width, canvas.height);
-    g.font = TEXT_FONT;
-    // Fit to 84% of the wall's width, at most 20% of its height.
-    const size = Math.min(100 * 0.84 * canvas.width / g.measureText(text).width, 0.2 * canvas.height);
-    g.font = TEXT_FONT.replace("100px", `${size}px`);
+    const b = textBlock(g, lines, px);
     g.fillStyle = "#fff";
     g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.fillText(text, canvas.width / 2, canvas.height / 2);
+    g.textBaseline = "alphabetic";
+    const top = (canvas.height - b.h) / 2;
+    lines.forEach((l, k) => g.fillText(l, canvas.width / 2, top + b.ascent + k * TEXT_LEADING * px));
     map.needsUpdate = true;
   }
 }
@@ -302,7 +324,7 @@ const boxes = DATA.boxes.map((b, i) => {
     canvas.height = Math.round(b.h * TEXT_PX_PER_MM);
     const map = new THREE.CanvasTexture(canvas);
     map.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    textLabels.push({ canvas, map, text: b.front_text });
+    textLabels.push({ canvas, map, lines: b.front_text });
     const geom = new THREE.PlaneGeometry(b.x, b.h).translate(b.x / 2, b.h / 2, 0);
     const mat = new THREE.MeshStandardMaterial({
       map, transparent: true, depthWrite: false, roughness: 0.9,
@@ -311,7 +333,7 @@ const boxes = DATA.boxes.map((b, i) => {
     const mesh = new THREE.Mesh(geom, mat);
     mesh.matrixAutoUpdate = false;
     mesh.matrix.copy(basis([1, 0, 0], [0, 0, 1], [0, -1, 0], [0, -t - 0.05, 0]));
-    mesh.userData = { box: i, kind: "text", label: `front text · “${b.front_text}”` };
+    mesh.userData = { box: i, kind: "text", label: `front text · “${b.front_text.join(" ")}”` };
     group.add(mesh);
     meshes.push({ mesh, edges: null, kind: "text" });
   }
@@ -488,7 +510,7 @@ boxes.forEach((bx, i) => {
   const li = document.createElement("li");
   li.innerHTML = `<label><input type="checkbox" id="show-${i}" checked>
     <span class="swatch" style="background:${bx.b.color}"></span>
-    <span><span class="boxname">${bx.b.name}</span>${bx.b.front_text ? ` <span class="front">${bx.b.front_text}</span>` : ""}
+    <span><span class="boxname">${bx.b.name}</span>${bx.b.front_text ? ` <span class="front">${bx.b.front_text.join(" ")}</span>` : ""}
     <span class="dims">${mm(ox)} × ${mm(oy)} × ${mm(oz)} mm</span>
     <span class="dims">${inch(ox)} × ${inch(oy)} × ${inch(oz)} in</span></span></label>`;
   li.querySelector("input").addEventListener("change", e => { state.shown[i] = e.target.checked; refresh(); });

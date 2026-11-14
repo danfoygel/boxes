@@ -42,8 +42,10 @@ LIDHEIGHT = 20.0
 EYES = 7
 SIZES = [(160, 80, 60), (168, 95, 68), (176, 110, 76), (184, 125, 84)]  # x, y, h as in generate.sh
 COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#b0367c"]  # as in color_layouts.py
-# Text on the front of each box (3D model only for now, not on the cut sheets)
-FRONT_TEXT = ["Scientific Discoveries", "Feline Facts", "Problematic Data", "Exuberant Ideas"]
+# Text on the front of each box, one tuple of lines per box (3D model only for
+# now, not on the cut sheets)
+FRONT_TEXT = [("Scientific", "Discoveries"), ("Feline", "Facts"), ("Problematic", "Data"),
+              ("Exuberant", "Ideas")]
 BEZIER_STEPS = 8
 
 

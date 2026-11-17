@@ -444,8 +444,8 @@ ink.append(dot(*ATOM, 1.4))
 ink.append(dot(ATOM[0] + 7.6, ATOM[1], 0.75))
 
 # lower right: a paper plane taking off, its trail dashed behind it
-T, W1, N, W2 = [(137 + 0.75 * (x - 137), 81 + 0.75 * (y - 81))
-                for x, y in ((148, 70), (124, 80.5), (132, 83.5), (135, 92.5))]
+T, W1, N, W2 = ((137 + 0.75 * (x - 137), 81 + 0.75 * (y - 81))
+                for x, y in ((148, 70), (124, 80.5), (132, 83.5), (135, 92.5)))
 ink.append(stroke(Polygon([T, W1, N, W2]), BOLD))
 ink.append(Polygon([N, T, (137 + 0.75 * (133.6 - 137), 81 + 0.75 * (87.6 - 81))]).buffer(0.25))          # the shaded keel
 trail = LineString(spline([(125.5, 83.5), (121.5, 86), (119, 90), (116.5, 93.5)]))

@@ -25,8 +25,8 @@ done <<'SIZES'
 SIZES
 BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 
-# 1b. Box 3's lid art, the broken charts, drawn into art/ (the other lid art
-#     there is converted stock artwork).
+# 1b. Box 3's lid art, the broken charts, drawn into art/ (boxes 1 and 2's are
+#     converted stock artwork; box 4's is drawn by art/draw_ideas.py, run by hand).
 mkdir -p previews
 "$PY" lid_charts.py
 
@@ -37,9 +37,11 @@ mkdir -p previews
 # 2. N equal sheets, plus as many spare hinge pieces as fit (runs in parallel).
 #    Sheet sizes are kept from the earlier size search (done for 5-piece hinges)
 #    and grown only where the required pieces no longer fit.  Drop --sheet to
-#    run the size search from scratch.
+#    run the size search from scratch.  If only the engraving has changed, each
+#    sheet file keeps its layout and just gets the new engraving; set REPACK=1
+#    to pack from scratch anyway.
 while read -r n size; do
-  "$PY" pack_sheets.py --sheet "$size" "$n" "sheets/sheets$n.svg" "${BOXES[@]}" &
+  "$PY" pack_sheets.py --sheet "$size" ${REPACK:+--repack} "$n" "sheets/sheets$n.svg" "${BOXES[@]}" &
 done <<'SHEETS'
 6 278x255
 8 188x285

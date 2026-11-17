@@ -150,8 +150,9 @@ hinge pieces, 75.6% utilization. Cut file:
     dots more random.* And: *make it a wider aspect ratio.* Then: *add it, the same
     way as the lid art on boxes 1 and 2.* Then the scatter became Anscombe's fourth
     dataset (*let's do something like this*), with *the loop and arrow end a little
-    closer to the origin*, *the fit line dashed instead of solid*, and the points as
-    hollow circles.
+    closer to the origin*, *the fit line dashed instead of solid*, the points as
+    X's, *the y axis the same length as the x axis*, *the actual fit line*, and the
+    dashes kept clear of the points, with *the far point moved towards the origin*.
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -465,7 +466,7 @@ one outlier alone sets the slope of a confident, dashed fit line.
 ![Box 3's lid art, as it might look engraved](previews/lid-box3.png)
 
 `lid_charts.py` draws them with shapely as filled outlines (0.8 mm data lines, 0.7 mm
-axes, 2.6 mm hollow circles with 0.7 mm rims, 2.4 mm dashes with 1.4 mm gaps) on a
+axes, 1.8 mm X's of 0.8 mm strokes, 2.4 mm dashes with 1.4 mm gaps) on a
 170 × 104 mm face, box 3's lid top, and writes `art/broken-charts.svg` and the
 preview. The charts sit in a row, each with 45 × 45 mm axes. Their ink is drawn just inside the 8 mm pad, so `engraving.py` puts them on at
 full size. The fit line is the true least-squares line for the points, which runs

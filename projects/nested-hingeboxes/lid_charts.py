@@ -34,8 +34,7 @@ TICK = 1.5                 # mm, length of the axis ticks
 AXIS = 0.7                 # mm, line widths
 DATA = 0.8
 THIN = 0.6
-DOT = 1.3                  # mm, outer radius of the scatter points, hollow circles
-RIM = 0.7                  # mm, their rim
+DOT = 1.3                  # mm, from a scatter point's centre to the tips of its X
 GREEN, RED = "rgb(0,255,0)", "rgb(255,0,0)"
 
 
@@ -49,9 +48,11 @@ def stroke(pts, w=DATA):
     return LineString(mm(pts)).buffer(w / 2, quad_segs=8, cap_style="round", join_style="round")
 
 
-def dot(x, y, r=DOT):
-    c = Point(U * x, UY * y)
-    return c.buffer(r, quad_segs=8).difference(c.buffer(r - RIM, quad_segs=8))
+def dot(x, y, r=DOT / math.sqrt(2)):
+    """A scatter point, drawn as an X."""
+    cx, cy = U * x, UY * y
+    return unary_union([LineString([(cx - r, cy - r * s), (cx + r, cy + r * s)]).buffer(DATA / 2, quad_segs=8)
+                        for s in (1, -1)])
 
 
 def smooth(pts, n=4):

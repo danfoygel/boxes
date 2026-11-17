@@ -426,7 +426,7 @@ drawn by `lid_charts.py` (see [below](#box-3-broken-charts)).
 |---|---|---|---|
 | 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 154 × 74 | 100.3 × 58.0 |
 | 2 | Black cat silhouettes in 15 poses (`AdobeStock_939770434.svg`) | 162 × 89 | 146.0 × 55.0 |
-| 3 | Three broken charts (`broken-charts.svg`) | 170 × 104 | 154.0 × 37.2 |
+| 3 | Three broken charts (`broken-charts.svg`) | 170 × 104 | 154.0 × 50.3 |
 
 `engraving.py` scales each piece of art to the largest size that leaves 8 mm clear on
 the lid top, centred. Like the text, it is green filled outlines in the lid top's
@@ -467,7 +467,7 @@ one outlier alone sets the slope of a confident, dashed fit line.
 `lid_charts.py` draws them with shapely as filled outlines (0.8 mm data lines, 0.7 mm
 axes, 2.6 mm hollow circles with 0.7 mm rims, 2.4 mm dashes with 1.4 mm gaps) on a
 170 × 104 mm face, box 3's lid top, and writes `art/broken-charts.svg` and the
-preview. The charts sit in a row, each with 45 × 32 mm axes. Their ink is drawn just inside the 8 mm pad, so `engraving.py` puts them on at
+preview. The charts sit in a row, each with 45 × 45 mm axes. Their ink is drawn just inside the 8 mm pad, so `engraving.py` puts them on at
 full size. The fit line is the true least-squares line for the points, which runs
 through the outlier and the column's mean.
 

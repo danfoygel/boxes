@@ -28,7 +28,7 @@ from shapely.ops import substring, unary_union
 import engraving
 
 W, H = 170.0, 104.0        # mm, inner face of box 3's lid top (176 x 110 less 2t)
-U, UY = 1.5, 0.95          # mm per chart unit across and up: each chart's axes are 30 x 34 units
+U, UY = 1.5, 45 / 34       # mm per chart unit across and up: each chart's axes are 30 x 34 units, 45 mm square
 GAP = 8.4                  # mm between one chart's axes and the next
 TICK = 1.5                 # mm, length of the axis ticks
 AXIS = 0.7                 # mm, line widths
@@ -107,10 +107,11 @@ def lone_outlier():
     one point alone sets the slope of a confident fit line."""
     col, ys = 12, [5, 8.5, 11.5, 15, 18.3, 21.5, 25]
     out = (28, 31)
-    my = sum(ys) / len(ys)
-    slope = (out[1] - my) / (out[0] - col)                     # least squares: through the column's mean and the outlier
-    fit = [(x, my + slope * (x - col)) for x in (0.8, 30)]
-    return axes() + [dot(col, y) for y in ys] + [dot(*out)] + dashes(fit)
+    pts = [(col, y) for y in ys] + [out]
+    mx, my = (sum(c) / len(pts) for c in zip(*pts))             # ordinary least squares over all the points
+    slope = sum((x - mx) * (y - my) for x, y in pts) / sum((x - mx) ** 2 for x, _ in pts)
+    fit = [(x, my + slope * (x - mx)) for x in (0.8, 30)]
+    return axes() + [dot(x, y) for x, y in pts] + dashes(fit)
 
 
 CHARTS = [runaway_line, crooked_bars, lone_outlier]

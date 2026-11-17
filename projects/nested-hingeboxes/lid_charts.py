@@ -34,7 +34,8 @@ TICK = 1.5                 # mm, length of the axis ticks
 AXIS = 0.7                 # mm, line widths
 DATA = 0.8
 THIN = 0.6
-DOT = 1.3                  # mm, radius of the scatter points
+DOT = 1.3                  # mm, outer radius of the scatter points, hollow circles
+RIM = 0.7                  # mm, their rim
 GREEN, RED = "rgb(0,255,0)", "rgb(255,0,0)"
 
 
@@ -49,7 +50,8 @@ def stroke(pts, w=DATA):
 
 
 def dot(x, y, r=DOT):
-    return Point(U * x, UY * y).buffer(r, quad_segs=8)
+    c = Point(U * x, UY * y)
+    return c.buffer(r, quad_segs=8).difference(c.buffer(r - RIM, quad_segs=8))
 
 
 def smooth(pts, n=4):

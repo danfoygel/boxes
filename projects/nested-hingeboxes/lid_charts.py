@@ -64,11 +64,25 @@ def smooth(pts, n=4):
     return pts
 
 
-def dashes(pts, dash=2.4, gap=1.4, w=DATA):
-    """A dashed stroke, dash and gap in mm along the line, square-ended."""
+def dashes(pts, dash=2.4, gap=1.4, w=DATA, clear=()):
+    """A dashed stroke, dash and gap in mm along the line, square-ended.  The
+    dashes stop a gap short of any dot in `clear` the line runs through, and
+    each free stretch between them is stretched to start and end on a dash."""
     line = LineString(mm(pts))
-    return [substring(line, a, min(a + dash, line.length)).buffer(w / 2, quad_segs=8, cap_style="flat")
-            for a in [i * (dash + gap) for i in range(int(line.length // (dash + gap)) + 1)] if a < line.length]
+    cuts = []
+    for c in mm(clear):
+        d, r = line.distance(Point(c)), DOT + gap + w / 2
+        if d < r:
+            t, half = line.project(Point(c)), math.sqrt(r * r - d * d)
+            cuts.append((t - half, t + half))
+    edges = [0.0] + [e for cut in sorted(cuts) for e in cut] + [line.length]
+    parts = []
+    for a, b in zip(edges[::2], edges[1::2]):
+        n = max(1, round((b - a + gap) / (dash + gap)))
+        k = (b - a) / (n * dash + (n - 1) * gap)
+        parts += [substring(line, a + i * k * (dash + gap), a + i * k * (dash + gap) + k * dash)
+                  .buffer(w / 2, quad_segs=8, cap_style="flat") for i in range(n) if b - a > dash / 2]
+    return parts
 
 
 def axes(w=30, h=34, ticks=4):
@@ -106,12 +120,12 @@ def lone_outlier():
     """Anscombe's fourth dataset: every point but one shares the same x, and that
     one point alone sets the slope of a confident fit line."""
     col, ys = 12, [5, 8.5, 11.5, 15, 18.3, 21.5, 25]
-    out = (28, 31)
+    out = (26, 29)
     pts = [(col, y) for y in ys] + [out]
     mx, my = (sum(c) / len(pts) for c in zip(*pts))             # ordinary least squares over all the points
     slope = sum((x - mx) * (y - my) for x, y in pts) / sum((x - mx) ** 2 for x, _ in pts)
     fit = [(x, my + slope * (x - mx)) for x in (0.8, 30)]
-    return axes() + [dot(x, y) for x, y in pts] + dashes(fit)
+    return axes() + [dot(x, y) for x, y in pts] + dashes(fit, clear=pts)
 
 
 CHARTS = [runaway_line, crooked_bars, lone_outlier]

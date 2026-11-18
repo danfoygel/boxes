@@ -7,14 +7,14 @@ confetti.  No text.
 
 Everything is built as shapely shapes in mm on a 160 x 100 canvas (y down) and
 written out as black filled outlines, one path per piece, outline anticlockwise
-and holes clockwise on screen, which is what engraving.art expects.  Outlines are
-drawn at an even weight; inner detail is drawn with a brush that tapers, so it
-reads as inked by hand.  The brain is in true side-view proportion with its
+and holes clockwise on screen, which is what engraving.lid_art expects.
+Outlines are drawn at an even weight; inner detail is drawn with a brush that
+tapers, so it reads as inked by hand.  The brain is in true side-view proportion with its
 main grooves where they are on a real brain; the smaller folds are grown from
 the notches in its outline and then into whatever room is left, from a fixed
 random seed, so the drawing comes out the same every run.
 
-Run it again after changing anything here, then rerun generate.sh.
+generate.sh runs it, before it engraves the boxes.
 """
 import math
 import random

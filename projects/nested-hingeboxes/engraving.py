@@ -50,9 +50,9 @@ CANDLE_LINE = 0.55  # mm, line width of the candles
 # Artwork on the lid top, one SVG (or None) per box.  Only its filled shapes are
 # engraved: unfilled paths, such as a stock file's corner marks, are left out,
 # and white shapes are bare wood, cut out of whatever is painted below them.
+# Box 3's is drawn by lid_charts.py, box 4's by art/draw_ideas.py.
 LID_ART = [HERE / "art" / "AdobeStock_2095995062.svg", HERE / "art" / "AdobeStock_939770434.svg",
            HERE / "art" / "broken-charts.svg", HERE / "art" / "ideas.svg"]
-                                                # box 3's is drawn by lid_charts.py, box 4's by art/draw_ideas.py
 LID_PAD = 8.0       # mm clear around the lid artwork
 LID_TOLERANCE = 0.02  # mm, how far flattened curves may stray, for art with white shapes
 WHITE = ("#ffffff", "#fff", "white")
@@ -318,6 +318,12 @@ def lid_art(src, w, h, at=(0.0, 0.0), pad=LID_PAD):
         dark = dark.difference(r) if white else dark.union(r)
     polys = getattr(dark, "geoms", [dark])
     return [_path(q) for q in polys if q.geom_type == "Polygon" and not q.is_empty], ink
+
+
+def filled(ds):
+    """The area the path data strings `ds` (from lid_art) fill, as one shapely
+    shape, curves flattened to LID_TOLERANCE."""
+    return unary_union([_region(parse_path(d)) for d in ds])
 
 
 def box_text(faces_front, faces_bottom, faces_lid):

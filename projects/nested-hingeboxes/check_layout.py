@@ -15,7 +15,6 @@ from shapely.strtree import STRtree
 from svgpathtools import parse_path
 
 GAP, EDGE, TOL = 3.0, 5.0, 0.05
-BLACK = "rgb(0,0,0)"
 
 
 def apply_transform(poly, t):
@@ -49,7 +48,7 @@ def check(f):
         if not g.tag.endswith("g") or g.get("id") == "sheet-cut-lines":
             continue
         for p in g:
-            if p.tag.endswith("path") and p.get("stroke") == BLACK:
+            if p.tag.endswith("path") and p.get("class") == "outline":
                 pieces.append(apply_transform(outline(p.get("d")), g.get("transform", "")))
     problems = []
     for i, poly in enumerate(pieces):

@@ -5,7 +5,7 @@
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Misc - FingerBurnTest</dc:title>
-<dc:date>2026-11-17 18:08:50</dc:date>
+<dc:date>2026-11-17 18:12:22</dc:date>
 <dc:source>boxes FingerBurnTest --thickness 3.0 --burn 0.1 --reference 0 --labels 0 --output finger-test.svg</dc:source>
 <dc:description>
 

@@ -31,7 +31,7 @@ from burn_test import HERE, Engraved
 # top-left corner of the art's ink box on the lid: the shapes wholly inside it, or
 # with clip=True (box 3's charts are a single shape), all the art cut to it.
 LID_SAMPLES = [
-    ("heart", (-0.4, 1.2, 16.1, 23.2), False),
+    ("heart", (4.0, -0.4, 21.6, 23.3), False),
     ("cat", (20.9, 26.7, 46.9, 42.7), False),
     ("corner of the scatter chart", (104.9, 21.9, 131.4, 50.5), True),
     ("light bulb", (22.9, 5.9, 56.9, 43.9), False),

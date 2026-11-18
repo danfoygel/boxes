@@ -37,10 +37,10 @@ usage: pack_sheets.py [--sheet WxH] [--repack] N OUT.svg BOX1.svg [BOX2.svg ...]
   closest to square.  Neighbouring sheets share one cut line.  The sheet cut
   lines come last in the file so they are cut after the parts.
 * Cut colours follow the cutting order, one colour per laser operation: the
-  hinge pieces first (blue), then the other pieces (black), then the sheet cut
-  lines (magenta).  A piece's holes are the same colour as its outline, so the
-  laser software must cut inner shapes first; each cut path is marked
-  class="outline" or class="hole" for the scripts that read the file.
+  holes in every piece first (orange), so no piece is cut free before its
+  holes, then the hinge pieces' outlines (blue), then the other pieces'
+  outlines (black), then the sheet cut lines (magenta).  Each cut path is also
+  marked class="outline" or class="hole" for the scripts that read the file.
 * Labels are red (boxes.py annotation colour, not meant to be cut): "Box N" on
   each box part and "Sheet N" in each sheet's top-left frame.  On a part with
   engraved text (green, from engrave_boxes.py) the label sits below the text.
@@ -72,8 +72,9 @@ GAP = 3.0     # min distance part -> part
 RES = 0.25    # shape-filling grid (mm)
 BLACK = "rgb(0,0,0)"     # boxes.py: outer cut (piece outline)
 BLUE = "rgb(0,0,255)"    # boxes.py: inner cut (hole)
-HINGE_CUT = "rgb(0,0,255)"     # cut first: the hinge pieces
-PIECE_CUT = "rgb(0,0,0)"       # cut second: every other piece
+HOLE_CUT = "rgb(255,128,0)"    # cut first: the holes in every piece
+HINGE_CUT = "rgb(0,0,255)"     # cut second: the hinge pieces' outlines
+PIECE_CUT = "rgb(0,0,0)"       # cut third: every other piece's outline
 SHEET_CUT = "rgb(255,0,255)"   # cut last: the sheet cut lines
 
 ALGOS = [rectpack.MaxRectsBssf, rectpack.MaxRectsBaf, rectpack.MaxRectsBl, rectpack.MaxRectsBlsf,
@@ -365,8 +366,12 @@ def fill_piece(ng, p):
     for c in p["g"]:
         c = copy.deepcopy(c)
         if c.get("stroke") in (BLACK, BLUE):   # recolour by cutting order
-            c.set("class", "outline" if c.get("stroke") == BLACK else "hole")
-            c.set("stroke", HINGE_CUT if p["box"] is None else PIECE_CUT)
+            if c.get("stroke") == BLUE:
+                c.set("class", "hole")
+                c.set("stroke", HOLE_CUT)
+            else:
+                c.set("class", "outline")
+                c.set("stroke", HINGE_CUT if p["box"] is None else PIECE_CUT)
         ng.append(c)
     if p["box"] is None:
         return

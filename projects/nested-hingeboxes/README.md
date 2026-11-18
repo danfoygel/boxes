@@ -164,6 +164,10 @@ hinge pieces, 75.6% utilization. Cut file:
 19. *On the cut lists, give different colors to the hinge pieces, the other pieces,
     and the cutlines between the sheets - I'll cut them in that order.* Then: *give
     another color to any internal holes in any of the pieces.*
+20. *The lid art on box 1 doesn't have the right aspect ratio. Move around the
+    different elements in the SVG, without modifying them, to spread it out and get
+    closer to matching the shape of the lid.*
+    Then: *there's an empty spot here* (between the heart and the microscope).
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -454,7 +458,7 @@ drawing, made for this lid.
 
 | Box | Artwork | Lid top (mm) | Engraved (mm) |
 |---|---|---|---|
-| 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 154 × 74 | 100.3 × 58.0 |
+| 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 154 × 74 | 138.0 × 57.7 |
 | 2 | Black cat silhouettes in 15 poses (`AdobeStock_939770434.svg`) | 162 × 89 | 146.0 × 55.0 |
 | 3 | Three broken charts (`broken-charts.svg`) | 170 × 104 | 154.0 × 50.3 |
 | 4 | A brain bursting with ideas, no text (`ideas.svg`) | 178 × 119 | 162.0 × 101.5 |
@@ -478,6 +482,16 @@ piece. To change the art or put art on another lid, set `LID_ART` in `engraving.
   Engraving the white too would fill the cats in solid. So `engraving.py` works out
   the painted area in paint order (black shapes added, white ones cut out, curves
   flattened to within 0.02 mm), giving 36 outlines with the white left unengraved.
+* **Box 1's layout.** The stock file was about 1.7 : 1, so on the 2.4 : 1 lid it
+  left a wide bare strip at each end. Its 27 separate drawings (heart, microscope,
+  DNA strands, molecules, glassware, cells, brain) have been moved apart, each
+  unchanged: only each path's `transform` and the canvas size differ from the
+  converted stock file. They're spread across by about 1.3 and drawn together
+  down by about 0.9, then nudged apart until every drawing is about 2 mm or more from
+  its neighbours. A search then moved drawings one at a time into the largest empty
+  spot, keeping that spacing, until no gap is much bigger than the rest. The
+  largest gap is now about half as wide as before this step. The art now fills
+  the lid at 2.39 : 1 and comes out about 8% larger than before.
 * **Which panel is the lid top.** On every box the two x × y panels are no longer
   the same: the one with the artwork is the lid top, the one with the name is the
   bottom.

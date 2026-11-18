@@ -720,9 +720,13 @@ again (`burn-test.svg` and `finger-test.svg` on their own).
 
 ## Cutting notes
 
-* Colours follow boxes.py: black is the outline cut, blue the inner cuts (the hinge
-  holes), green the engraved text, red labels only. Raster-engrave green (filled, not
-  a vector score: the font's rough outlines make a messy score) and skip red.
+* In the multi-sheet files, cut orange (holes), then blue (hinge pieces), then black
+  (the other pieces), then magenta (sheet cut lines), as in [Cut colours](#cut-colours).
+  The box SVGs and the test files keep boxes.py's colours instead: black is the
+  outline cut and blue the inner cuts (the hinge holes and pin holes), so set up the
+  layers again for each kind of file. Green is the engraving and red is labels only in
+  all of them. Raster-engrave green (filled, not a vector score: the font's rough
+  outlines make a messy score) and skip red.
 * Engrave before cutting, so the pieces are still held in the sheet. A test on a
   scrap of the same plywood is worth it: grain and finish change how the 6 mm bottom
   text, the menorah's small flames (about 1.3 × 1.9 mm) and the fine lines of the lid

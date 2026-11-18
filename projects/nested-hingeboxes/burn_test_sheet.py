@@ -3,7 +3,7 @@
 and loose hinge pieces, each hinge cut at a different burn value, to find the
 value that fits best.
 
-usage: burn_test.py [OUT.svg]      (default: burn-test.svg next to this script)
+usage: burn_test_sheet.py [OUT.svg]      (default: burn-test.svg next to this script)
 
 The hinges are drawn by boxes.py itself, with the generate.sh settings (3 mm,
 the default "inside" CabinetHinge), so they are the ones in the boxes, cut down
@@ -68,8 +68,8 @@ class HingeRow(edges.BaseEdge):
 
 
 class Engraved(Boxes):
-    """Boxes with engraving, for the test sheets (finger_test.py and engrave_test.py
-    use it too)."""
+    """Boxes with engraving, for the test sheets (finger_test_sheet.py and
+    engrave_test_sheet.py use it too)."""
 
     def engrave_path(self, d, x=0.0, y=0.0, angle=0):
         """SVG path data `d` (y down, as in engraving.py) in the etching colour, its

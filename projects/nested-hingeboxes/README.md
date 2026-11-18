@@ -47,8 +47,9 @@ all four boxes plus as many spare hinge pieces as fit. Every piece is at least 3
 from its neighbours and 5 mm inside its sheet's cut line. The pictures below are the
 colour-coded views from `layouts/`: blue is box 1, orange box 2, aqua box 3, plum box 4,
 and grey the hinge pieces, which fit any box. Cut from the files in `sheets/`, which
-have the same layout in boxes.py's cut colours. [Section 3](#comparison-of-all-options)
-compares the options in full.
+have the same layout coloured by cutting order: holes orange, hinge pieces blue, the
+other pieces black, the sheet cut lines magenta ([cut colours](#cut-colours)).
+[Section 3](#comparison-of-all-options) compares the options in full.
 
 ### 6 sheets
 
@@ -106,7 +107,7 @@ hinge pieces, 75.6% utilization. Cut file:
 | `make_model.py`, `model_template.html` | Build `model.html`, the interactive 3D model |
 | `model.html` | The four boxes in 3D: open it in a browser to rotate, nest and open them |
 | `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges), plus their engraved text and lid artwork |
-| `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files |
+| `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files, coloured by cutting order |
 | `layouts/sheetsN.svg` | The same layouts colour-coded by box, for reading, not cutting |
 | `previews/` | PNG renders of the cut files (`sheetsN.png`), layout views (`layout-sheetsN.png`), 3D model (`model.png`) and boxes 3 and 4's lid tops as they might look engraved (`lid-box3.png`, `lid-box4.png`, from `engrave_boxes.py`) |
 
@@ -160,6 +161,15 @@ hinge pieces, 75.6% utilization. Cut file:
     closer to the origin*, *the fit line dashed instead of solid*, the points as
     X's, *the y axis the same length as the x axis*, *the actual fit line*, and the
     dashes kept clear of the points, with *the far point moved towards the origin*.
+19. *On the cut lists, give different colors to the hinge pieces, the other pieces,
+    and the cutlines between the sheets - I'll cut them in that order.* Then: *give
+    another color to any internal holes in any of the pieces.*
+20. *The lid art on box 1 doesn't have the right aspect ratio. Move around the
+    different elements in the SVG, without modifying them, to spread it out and get
+    closer to matching the shape of the lid.*
+    Then: *there's an empty spot here* (between the heart and the microscope).
+21. *Remove the separate adobe stock files - but you can leave them in the layouts /
+    3d model.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -284,6 +294,23 @@ Spare pieces are unlabelled like the other hinge pieces. Cut them all; any 14 ma
 box's hinges (2 hinges × 7 pieces).
 
 All of this is heuristic: these are the best layouts found, not proven optima.
+
+### Cut colours
+
+The cut files have one colour per laser operation, in cutting order:
+
+| Order | What | Colour |
+|---|---|---|
+| 1 | Holes in every piece: hinge pieces' pin holes, box pieces' square hinge holes | orange `rgb(255,128,0)` |
+| 2 | Hinge pieces' outlines | blue `rgb(0,0,255)` |
+| 3 | Every other piece's outline | black `rgb(0,0,0)` |
+| 4 | Sheet cut lines | magenta `rgb(255,0,255)` |
+
+The holes go first, so no piece is cut free and shifts before its holes are cut.
+Engraving is green `rgb(0,255,0)`, as in boxes.py. The "Box N" and "Sheet N" labels
+are red `rgb(255,0,0)` and are not for cutting. In the SVG each cut path also has
+`class="outline"` or `class="hole"`, which `check_layout.py`, `compare.py` and
+`color_layouts.py` read.
 
 ### Comparison of all options
 
@@ -437,7 +464,7 @@ drawing, made for this lid.
 
 | Box | Artwork | Lid top (mm) | Engraved (mm) |
 |---|---|---|---|
-| 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 154 × 74 | 100.3 × 58.0 |
+| 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 154 × 74 | 138.0 × 57.7 |
 | 2 | Black cat silhouettes in 15 poses (`AdobeStock_939770434.svg`) | 162 × 89 | 146.0 × 55.0 |
 | 3 | Three broken charts (`broken-charts.svg`) | 170 × 104 | 154.0 × 50.3 |
 | 4 | A brain bursting with ideas, no text (`ideas.svg`) | 178 × 119 | 162.0 × 101.5 |
@@ -461,6 +488,18 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
   Engraving the white too would fill the cats in solid. So `engraving.py` works out
   the painted area in paint order (black shapes added, white ones cut out, curves
   flattened to within 0.02 mm), giving 36 outlines with the white left unengraved.
+* **Box 1's layout.** The stock file was about 1.7 : 1, so on the 2.4 : 1 lid it
+  left a wide bare strip at each end. Its 27 separate drawings (heart, microscope,
+  DNA strands, molecules, glassware, cells, brain) have been moved apart, each
+  unchanged: only each path's `transform` and the canvas size differ from the
+  converted stock file. They're spread across by about 1.3 and drawn together
+  down by about 0.9, then nudged apart until every drawing is about 2 mm or more from
+  its neighbours. A search then moved drawings one at a time into the largest empty
+  spot, keeping that spacing, until no gap is much bigger than the rest. The
+  largest gap is now about half as wide as before this step. The art now fills
+  the lid at 2.39 : 1 and comes out about 8% larger than before. The SVG to keep in
+  `art/` is this rearranged one: a fresh conversion of the stock file would bring
+  back the old layout.
 * **Which panel is the lid top.** On every box the two x × y panels are no longer
   the same: the one with the artwork is the lid top, the one with the name is the
   bottom.

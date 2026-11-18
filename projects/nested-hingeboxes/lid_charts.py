@@ -2,8 +2,7 @@
 """Line art for the lid top of box 3 ("Problematic Data"): three charts, each
 broken in its own way.
 
-usage: lid_charts.py [OUT.svg [PREVIEW.png]]
-       (default art/broken-charts.svg and previews/lid-box3.png)
+usage: lid_charts.py [OUT.svg]      (default art/broken-charts.svg)
 
 The SVG is the lid top's inner face, 170 x 104 mm (box 3's x by y panel less
 t all round), with the art as filled outlines in boxes.py's etching colour
@@ -20,9 +19,8 @@ import math
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw
 from shapely import affinity
-from shapely.geometry import LineString, MultiPolygon, Point, Polygon, box
+from shapely.geometry import LineString, Point, Polygon, box
 from shapely.ops import substring, unary_union
 
 import engraving
@@ -141,7 +139,7 @@ def art():
     x0, y0, x1, y1 = g.bounds
     g = affinity.translate(g, (W - x0 - x1) / 2, (H - y0 - y1) / 2)
     x0, y0, x1, y1 = g.bounds
-    assert x0 >= 5 and y0 >= 5 and x1 <= W - 5 and y1 <= H - 5, f"art runs off the face: {g.bounds}"
+    assert min(x0, y0) >= engraving.LID_PAD - 0.05, f"art closer than LID_PAD to the edge, would be shrunk: {g.bounds}"
     return g
 
 
@@ -155,24 +153,10 @@ def write_svg(g, path):
         f'stroke-width="0.01" fill-rule="evenodd"/>\n</svg>\n')
 
 
-def write_png(g, path, px_per_mm=10):
-    img = Image.new("RGB", (round(W * px_per_mm), round(H * px_per_mm)), (226, 196, 150))   # plywood
-    draw = ImageDraw.Draw(img)
-    s = lambda ring: [(x * px_per_mm, y * px_per_mm) for x, y in ring.coords]  # noqa: E731
-    # containers first, so a shape inside another's hole isn't painted over
-    for p in sorted(g.geoms if isinstance(g, MultiPolygon) else [g], key=lambda p: -p.envelope.area):
-        draw.polygon(s(p.exterior), fill=(92, 58, 30))
-        for hole in p.interiors:
-            draw.polygon(s(hole), fill=(226, 196, 150))
-    img.save(path)
-
-
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "art/broken-charts.svg"
-    png = sys.argv[2] if len(sys.argv) > 2 else "previews/lid-box3.png"
     g = art()
     write_svg(g, out)
-    write_png(g, png)
     x0, y0, x1, y1 = g.bounds
-    print(f"{out}, {png}: {len(CHARTS)} charts, ink {x1 - x0:.1f} x {y1 - y0:.1f} mm, "
+    print(f"{out}: {len(CHARTS)} charts, ink {x1 - x0:.1f} x {y1 - y0:.1f} mm, "
           f"clear {x0:.1f} mm left/right, {y0:.1f} mm top/bottom")

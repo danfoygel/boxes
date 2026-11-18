@@ -99,7 +99,7 @@ hinge pieces, 75.6% utilization. Cut file:
 | `compare.py` | Prints the comparison table of all layouts |
 | `render_previews.js` | Renders the SVGs to PNG previews and screenshots the 3D model (Playwright + Chromium) |
 | `engraving.py` | The engraving: the words, their sizes, and their outlines in Special Elite, the tree and menorah beside the bottom text, and the lid artwork scaled to fit |
-| `engrave_boxes.py` | Adds the engraving to the box SVGs |
+| `engrave_boxes.py` | Adds the engraving to the box SVGs, and renders each lid top to `previews/` |
 | `fonts/` | Special Elite (`SpecialElite-Regular.ttf`, from Google Fonts) and its licence (Apache 2.0) |
 | `art/` | The lid artwork: the Adobe Stock Illustrator EPS files converted to SVG, 2095995062 (box 1) and 939770434 (box 2), the broken charts (`broken-charts.svg`, box 3), drawn by `lid_charts.py`, and `ideas.svg` (box 4), drawn by `draw_ideas.py` |
 | `lid_charts.py` | Draws box 3's broken charts into `art/` |
@@ -108,7 +108,7 @@ hinge pieces, 75.6% utilization. Cut file:
 | `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges), plus their engraved text and lid artwork |
 | `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files |
 | `layouts/sheetsN.svg` | The same layouts colour-coded by box, for reading, not cutting |
-| `previews/` | PNG renders of the cut files (`sheetsN.png`), layout views (`layout-sheetsN.png`), 3D model (`model.png`) and box 3's lid art (`lid-box3.png`) |
+| `previews/` | PNG renders of the cut files (`sheetsN.png`), layout views (`layout-sheetsN.png`), 3D model (`model.png`) and each lid top as it might look engraved (`lid-boxN.png`, from `engrave_boxes.py`) |
 
 ## The requests
 
@@ -411,8 +411,9 @@ the ornaments filled. The menorah is 16.5 × 20.4 mm and the tree 13.5 × 20.1 m
 In the cut files the text and art are green (boxes.py's etching colour), filled outlines inside
 the piece it belongs to. `engrave_boxes.py` adds it to the box SVGs from the generator,
 so it moves with its piece when the sheets are packed. Adding it changed no piece's
-size, so the sheet layouts are the same as before. On those two pieces the red
-"Box N" label moves down, between the engraving and the piece's lower edge.
+size, so the sheet layouts are the same as before. On the engraved pieces (front,
+bottom and lid top) the red "Box N" label moves down, between the engraving and the
+piece's lower edge.
 
 * **The engraved face goes outside.** Engrave with the sheet as it lies; when you
   assemble, turn each engraved piece so its engraved face is outward. Both pieces are
@@ -440,6 +441,13 @@ drawing, made for this lid.
 `engraving.py` scales each piece of art to the largest size that leaves 8 mm clear on
 the lid top, centred. Like the text, it is green filled outlines in the lid top's
 piece. To change the art or put art on another lid, set `LID_ART` in `engraving.py`.
+`engrave_boxes.py` also renders each lid top, as it might look engraved, to
+`previews/lid-boxN.png`:
+
+| | |
+|---|---|
+| ![Box 1's lid top, as it might look engraved](previews/lid-box1.png) | ![Box 2's lid top, as it might look engraved](previews/lid-box2.png) |
+| ![Box 3's lid top, as it might look engraved](previews/lid-box3.png) | ![Box 4's lid top, as it might look engraved](previews/lid-box4.png) |
 
 * **Only filled shapes.** Unfilled paths, such as the 4 corner marks in box 1's file,
   are left out.
@@ -480,7 +488,7 @@ piece. To change the art or put art on another lid, set `LID_ART` in `engraving.
     there is room.
   * Shapes are built with shapely and written out as black filled outlines, one path
     per piece, so `engraving.py` takes them as they are. To change the drawing, edit
-    and run `draw_ideas.py`, then `generate.sh`.
+    `draw_ideas.py` and run `generate.sh`, which runs it.
 * **Licence.** Boxes 1 and 2's artwork comes from licensed stock images. Check that the licence allows
   publishing them, here and in the published 3D model, before pushing them to a public
   repository. Boxes 3 and 4's art is drawn here.
@@ -492,12 +500,9 @@ off the chart, a bar chart whose bars lean, bend and wobble, and a scatter plot 
 the fourth of Anscombe's quartet (1973): every point but one shares the same x, so that
 one outlier alone sets the slope of a confident, dashed fit line.
 
-![Box 3's lid art, as it might look engraved](previews/lid-box3.png)
-
 `lid_charts.py` draws them with shapely as filled outlines (0.8 mm data lines, 0.7 mm
 axes, 2.6 mm X's of 0.8 mm strokes, 2.4 mm dashes with 1.4 mm gaps) on a
-170 × 104 mm face, box 3's lid top, and writes `art/broken-charts.svg` and the
-preview. The charts sit in a row, each with 45 × 45 mm axes. Their ink is drawn just
+170 × 104 mm face, box 3's lid top, and writes `art/broken-charts.svg`. The charts sit in a row, each with 45 × 45 mm axes. Their ink is drawn just
 inside the 8 mm pad, so `engraving.py` puts them on at full size. The fit line is the true least-squares line for the points, which runs
 through the outlier and the column's mean.
 

@@ -22,7 +22,6 @@ from pathlib import Path
 SVG_NS = "http://www.w3.org/2000/svg"
 ET.register_namespace("", SVG_NS)
 HERE = Path(__file__).resolve().parent
-BLACK = "rgb(0,0,0)"
 BOX_SIZES = {1: "160 × 80 × 80", 2: "168 × 95 × 88", 3: "176 × 110 × 96", 4: "184 × 125 × 104"}
 COLORS = {1: "#2a78d6", 2: "#eb6834", 3: "#1baf7a", 4: "#b0367c", None: "#8a8984"}
 TINT = 0.45          # share of the colour in the fill (rest is white)
@@ -76,7 +75,7 @@ def convert(src, dst):
                 p.set("fill", INK)
                 p.set("stroke", "none")
                 continue
-            if p.get("stroke") == BLACK:            # outline
+            if p.get("class") == "outline":         # outline
                 p.set("fill", tint(color, TINT))
             else:                                   # holes
                 p.set("fill", "#ffffff")

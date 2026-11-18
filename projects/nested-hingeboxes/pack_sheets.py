@@ -36,6 +36,11 @@ usage: pack_sheets.py [--sheet WxH] [--repack] N OUT.svg BOX1.svg [BOX2.svg ...]
 * The grid (cols x rows) is the factorisation of N whose overall panel is
   closest to square.  Neighbouring sheets share one cut line.  The sheet cut
   lines come last in the file so they are cut after the parts.
+* Cut colours follow the cutting order, one colour per laser operation: the
+  hinge pieces first (blue), then the other pieces (black), then the sheet cut
+  lines (magenta).  A piece's holes are the same colour as its outline, so the
+  laser software must cut inner shapes first; each cut path is marked
+  class="outline" or class="hole" for the scripts that read the file.
 * Labels are red (boxes.py annotation colour, not meant to be cut): "Box N" on
   each box part and "Sheet N" in each sheet's top-left frame.  On a part with
   engraved text (green, from engrave_boxes.py) the label sits below the text.
@@ -65,7 +70,11 @@ from boxes.svgmerge import SvgMerge, SVG_NS  # noqa: E402
 EDGE = 5.0    # min distance part -> sheet cut line
 GAP = 3.0     # min distance part -> part
 RES = 0.25    # shape-filling grid (mm)
-BLACK = "rgb(0,0,0)"
+BLACK = "rgb(0,0,0)"     # boxes.py: outer cut (piece outline)
+BLUE = "rgb(0,0,255)"    # boxes.py: inner cut (hole)
+HINGE_CUT = "rgb(0,0,255)"     # cut first: the hinge pieces
+PIECE_CUT = "rgb(0,0,0)"       # cut second: every other piece
+SHEET_CUT = "rgb(255,0,255)"   # cut last: the sheet cut lines
 
 ALGOS = [rectpack.MaxRectsBssf, rectpack.MaxRectsBaf, rectpack.MaxRectsBl, rectpack.MaxRectsBlsf,
          rectpack.SkylineMwfl, rectpack.SkylineBl, rectpack.GuillotineBssfSas]
@@ -354,7 +363,11 @@ def fill_piece(ng, p):
     """Put piece p's contents into its group ng on the sheet, with its label."""
     x0, y0, x1, y1 = p["bbox"]
     for c in p["g"]:
-        ng.append(copy.deepcopy(c))
+        c = copy.deepcopy(c)
+        if c.get("stroke") in (BLACK, BLUE):   # recolour by cutting order
+            c.set("class", "outline" if c.get("stroke") == BLACK else "hole")
+            c.set("stroke", HINGE_CUT if p["box"] is None else PIECE_CUT)
+        ng.append(c)
     if p["box"] is None:
         return
     # The label goes in the middle of the piece, or, on a piece with engraved
@@ -373,7 +386,7 @@ def fill_piece(ng, p):
 def reengrave(out, parts, fp):
     """If `out` was packed from these same pieces with the same settings (its
     fingerprint is fp), refill every piece in it, which brings the engraving and
-    labels up to date and keeps the layout, and return True.  Otherwise leave
+    labels (and the cut colours) up to date and keeps the layout, and return True.  Otherwise leave
     it alone and return False."""
     try:
         tree = ET.parse(out)
@@ -386,6 +399,8 @@ def reengrave(out, parts, fp):
             for c in list(ng):
                 ng.remove(c)
             fill_piece(ng, parts[int(ng.get("data-part"))])
+        elif ng.get("id") == "sheet-cut-lines":
+            ng[0].set("stroke", SHEET_CUT)
     tree.write(out, encoding="utf-8", xml_declaration=True)
     return True
 
@@ -414,7 +429,7 @@ def write_svg(out, n_sheets, W, H, placed, parts, fp):
     d += [f"M {c * W} 0 V {TH}" for c in range(1, cols)]
     d += [f"M 0 {r * H} H {TW}" for r in range(1, rows)]
     ET.SubElement(svg, f"{{{SVG_NS}}}g", {"id": "sheet-cut-lines"}).append(
-        ET.Element(f"{{{SVG_NS}}}path", {"d": " ".join(d), "stroke": BLACK, "fill": "none",
+        ET.Element(f"{{{SVG_NS}}}path", {"d": " ".join(d), "stroke": SHEET_CUT, "fill": "none",
                                           "stroke-width": "0.2"}))
     ET.ElementTree(svg).write(out, encoding="utf-8", xml_declaration=True)
     return cols, rows, TW, TH

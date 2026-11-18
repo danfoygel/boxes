@@ -8,8 +8,8 @@ x by y panels, which becomes the bottom.  If the box has lid artwork
 (engraving.LID_ART), it goes on the other x by y panel, which becomes the lid
 top.  Everything is filled outlines in boxes.py's etching colour (green), inside
 the piece's group, so it moves with the piece when the sheets are packed.
-Each lid with artwork also gets a preview, previews/lid-boxN.png: its lid top
-as it might look engraved.
+Each lid with artwork drawn here (not engraving.STOCK_ART) also gets a
+preview, previews/lid-boxN.png: its lid top as it might look engraved.
 
 The pieces are symmetric (checked here), so either face can go outside: the
 engraved face is the outside.  On the front wall the top of the text faces the
@@ -142,11 +142,12 @@ def main(files):
         if "lid" in t:
             x0, y0, x1, y1 = t["lid"]["ink"]
             msg += f", lid {t['lid']['art']} {x1 - x0:.1f} × {y1 - y0:.1f} mm"
-            lx, ly, lw, lh = lid[1]
-            png = PREVIEWS / f"lid-box{n}.png"
-            PREVIEWS.mkdir(exist_ok=True)
-            write_preview(affinity.translate(engraving.filled(t["lid"]["d"]), -lx, -ly), lw, lh, png)
-            msg += f" (preview {png.relative_to(PREVIEWS.parent)})"
+            if engraving.LID_ART[n - 1] not in engraving.STOCK_ART:
+                lx, ly, lw, lh = lid[1]
+                png = PREVIEWS / f"lid-box{n}.png"
+                PREVIEWS.mkdir(exist_ok=True)
+                write_preview(affinity.translate(engraving.filled(t["lid"]["d"]), -lx, -ly), lw, lh, png)
+                msg += f" (preview {png.relative_to(PREVIEWS.parent)})"
         print(msg)
 
 

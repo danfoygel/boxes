@@ -30,6 +30,11 @@ The project covers:
 * **Engraved text** on the front and bottom of each box, with a tree and a menorah
   beside the bottom text, and **artwork** on the lid of every box, in the cut
   files and the model ([section 5](#5-engraved-text)).
+* **Burn tests** of the hinges and of the finger joints at 11 burn values, to pick
+  the kerf compensation before cutting the boxes ([section 6](#6-burn-tests)), and an
+  **engraving test** with samples of the artwork and text, to tune the engraving
+  settings ([section 7](#7-engraving-test)). A fourth file has all three on one sheet,
+  and [section 8](#8-the-order-of-the-tests) gives the order to cut them in.
 
 ## 3D model
 
@@ -108,6 +113,10 @@ hinge pieces, 75.6% utilization. Cut file:
 | `model.html` | The four boxes in 3D: open it in a browser to rotate, nest and open them |
 | `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges), plus their engraved text and lid artwork |
 | `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files, coloured by cutting order |
+| `burn_test_sheet.py`, `burn-test.svg` | The hinge burn test: a strip with a row of 11 one-hole hinges, and a hinge piece for each, at 11 burn values ([section 6](#6-burn-tests)) |
+| `finger_test_sheet.py`, `finger-test.svg` | The finger joint burn test: a pair of meshing pieces at each of the 11 burn values ([section 6](#6-burn-tests)) |
+| `engrave_test_sheet.py`, `engrave-test.svg` | The engraving test: one element of each lid's artwork, box 1's bottom and box 1's front text, each on a small piece ([section 7](#7-engraving-test)) |
+| `all_tests.py`, `all-tests.svg` | All three tests on one sheet, for one laser job ([section 8](#8-the-order-of-the-tests)) |
 | `layouts/sheetsN.svg` | The same layouts colour-coded by box, for reading, not cutting |
 | `previews/` | PNG renders of the cut files (`sheetsN.png`), layout views (`layout-sheetsN.png`), 3D model (`model.png`) and each lid top as it might look engraved (`lid-boxN.png`, from `engrave_boxes.py`) |
 
@@ -168,6 +177,24 @@ hinge pieces, 75.6% utilization. Cut file:
     different elements in the SVG, without modifying them, to spread it out and get
     closer to matching the shape of the lid.*
     Then: *there's an empty spot here* (between the heart and the microscope).
+21. *Make a test piece using the same design as the nested boxes to test burn,* with
+    the hinges, since they're small: *a rectangle with a bunch of openings for hinges,
+    and a bunch of matching hinge pieces, that test various burn values, maybe 0.075,
+    0.08, …, 0.125 mm.* Then: *the holes need to look like the hinges on the boxes, so
+    I can actually test the hinge pieces, arranged around the outside of the big
+    piece.* And: *I just need one hinge piece and one hinge hole for each size.*
+    Then: *make the big piece more compact … long/skinny and line everything up
+    along one side.*
+22. *Make a separate cutsheet that tests the mesh between teeth (same teeth
+    design/size as the boxes) with the same range of burn values.* Then: *make the
+    pieces a bit longer - 5 teeth.*
+23. *Make a third cutsheet that tests the raster part of the design to optimize laser
+    settings. One small square for each of the lid tops that includes one
+    representative element from the SVG - for example, one cat. And then one
+    rectangle that tests the tree/menorah and name. And one more rectangle that tests
+    the text from the box front (at the size from box 1).*
+24. *Make another cutfile that has all three combined. Update README with
+    information about the order of testing prints.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -541,6 +568,148 @@ axes, 2.6 mm X's of 0.8 mm strokes, 2.4 mm dashes with 1.4 mm gaps) on a
 inside the 8 mm pad, so `engraving.py` puts them on at full size. The fit line is the true least-squares line for the points, which runs
 through the outlier and the column's mean.
 
+## 6. Burn tests
+
+Two small cut files test the burn (kerf compensation) before cutting the boxes, one
+for the hinges and one for the finger joints between the walls. Both use 11 burn
+values from 0.075 to 0.125 mm in steps of 0.005 mm. The burn values are engraved as
+".075" for 0.075 mm.
+
+### Hinges
+
+`burn-test.svg` (a 94 × 28 mm strip plus pieces, 96 × 60 mm in all, drawn by
+`burn_test_sheet.py`) tests the hinges. It has the same hinges as the boxes, drawn by
+boxes.py with the `generate.sh` settings but cut down to one eye each, at 11 burn
+values from 0.075 to 0.125 mm in steps of 0.005 mm:
+
+* **A strip with a row of 11 hinges along one long edge**, 8 mm apart. Each one is
+  the box side of a one-eye hinge, as on a box's back wall: the slot in the edge for
+  the eye and one 3 × 3 mm hole for a hinge piece. Each hinge is cut at its own burn
+  value, engraved above it (".075" is 0.075 mm), from 0.075 at the left to 0.125 at
+  the right.
+* **Below it, one hinge piece per burn value**, in the same order, nested in pairs
+  the way boxes.py lays hinge pieces out, with the value engraved on each.
+
+Each burn value changes only its own hinge and piece. The rest of the strip's
+outline is cut at 0.1 mm. boxes.py runs the cutting path outside a part by the burn
+value, so where the value changes, the path steps sideways by the difference (at
+most 0.025 mm, on the straight edge between two hinges), and each hinge is the one a
+box cut at that value would have. (With 7 eyes, these hinges matched a stock HingeBox's
+to within 0.01 mm.)
+
+A bigger value makes the holes smaller and the pieces bigger:
+
+| | Drawn size | At 0.075 | At 0.1 | At 0.125 |
+|---|---|---|---|---|
+| Hinge hole | 3 − 2 × burn | 2.85 mm | 2.80 mm | 2.75 mm |
+| Neck of a piece (goes through the hole) | 3 + 2 × burn | 3.15 mm | 3.20 mm | 3.25 mm |
+| Notch in a piece (takes the 3 mm wall) | 3 − 2 × burn | 2.85 mm | 2.80 mm | 2.75 mm |
+| Pin hole | 3.2 − 2 × burn | 3.05 mm | 3.00 mm | 2.95 mm |
+
+To read it, fit each piece into the hole with its own value, as on a box. The best
+value is the smallest one where the piece holds without glue and its notch grips the
+strip. Above it the fit is too tight; below it, loose. The pin holes change too: try
+a hinge pin in each piece.
+
+A piece also fits holes with other values. The fit depends on the sum of the two
+values, so a piece one step up in a hole one step down fits like the value between
+them. Choose by matching values, though, because the boxes cut the holes and the
+pieces at the same burn value.
+
+### Finger joints
+
+`finger-test.svg` (206 × 114 mm, drawn by `finger_test_sheet.py`) tests the finger joints
+that hold every corner of the boxes together. They are boxes.py's default joint,
+which `generate.sh` keeps: 6 mm (2t) fingers and 6 mm spaces, with no play. For
+each burn value there is a pair of pieces, 66 mm long and engraved with the value:
+
+* **An "f" piece**, with five fingers along its bottom edge.
+* **Below it, the matching "F" piece**, with the gaps for those fingers along its
+  top edge. On a box, this is the other wall at the corner.
+
+The pairs run left to right, top row first. Both pieces of a pair are cut at that
+pair's burn value, so a bigger value makes the fingers wider and the gaps narrower:
+
+| | Drawn size | At 0.075 | At 0.1 | At 0.125 |
+|---|---|---|---|---|
+| Finger | 6 + 2 × burn | 6.15 mm | 6.20 mm | 6.25 mm |
+| Gap | 6 − 2 × burn | 5.85 mm | 5.80 mm | 5.75 mm |
+
+To read it, push each pair together at a right angle, as at a box corner. The best
+value is the smallest one where the joint holds without glue. As with the hinges,
+the fit depends on the sum of the two pieces' values, and the boxes cut both at
+the same value. The fingers are 3 mm deep, the drawn thickness, so plywood that is
+thicker or thinner than 3 mm leaves them sunk or standing proud at the corner.
+
+### Using the results
+
+The boxes cut everything at one burn value, so pick one that suits both the hinges
+and the finger joints. Then set `--burn` in step 1 of `generate.sh` and `BURN` in
+`engrave_boxes.py` to it, and rerun `generate.sh`. Both tests use 3 mm for the wall
+thickness, so the plywood's real thickness affects how they fit too. Check that
+thickness, and change `--thickness` as well if it is far from 3 mm.
+
+## 7. Engraving test
+
+`engrave-test.svg` (147 × 114 mm, drawn by `engrave_test_sheet.py`) tests the engraving
+settings before the real job. It has six pieces, each a plain cut rectangle with
+4 mm clear round its engraving:
+
+| Piece | Engraving | Piece size (mm) |
+|---|---|---|
+| Box 1 lid | The heart (fine lines) | 31 × 31 |
+| Box 2 lid | A lying cat (solid fill, with its eyes left bare) | 28.5 × 28.5 |
+| Box 3 lid | The corner of the scatter chart: axes, ticks, X's and dashes | 36 × 36 |
+| Box 4 lid | The light bulb and its rays | 40 × 40 |
+| Box 1 bottom | The tree, "Ember Barber", "Chrismukkah 2026" and the menorah | 105 × 28 |
+| Box 1 front | "Scientific Discoveries" at 15.4 mm | 103 × 38 |
+
+The engraving is the boxes' own, at the same size: `engrave_test_sheet.py` lays it out
+with `engraving.py` on the faces of the box SVGs, as `engrave_boxes.py` does, and
+moves the samples onto the test pieces. They match the boxes to within 0.001 mm.
+Each lid sample is the shapes of one element of its artwork. Box 3's charts are a
+single shape, so its sample is the art cut to a rectangle at the chart's corner,
+which cuts only the axes.
+
+Engrave it on a scrap of the same plywood, at the settings you plan to use, and
+change them until the cat's eyes stay open, the heart's and the bulb's fine lines
+come out clean, and the letters are crisp without burning at the edges.
+
+## 8. The order of the tests
+
+Cut the tests one at a time, in this order, on scraps of the plywood for the boxes:
+
+1. **The engraving test** (`engrave-test.svg`, [section 7](#7-engraving-test)).
+   Settle the engraving settings, and the cut settings too: its pieces are plain
+   rectangles, so they show whether the cut goes cleanly through the plywood
+   without charring it. The burn tests depend on both. The kerf changes with the cut
+   settings (power, speed, focus and passes), and the burn values on the burn
+   tests are engraved small (2.4–3 mm), so they read best at good settings.
+2. **The hinge burn test** (`burn-test.svg`, [section 6](#hinges)), at the cut
+   settings from step 1. It is the smallest test (96 × 60 mm) and gives a first
+   burn value.
+3. **The finger joint test** (`finger-test.svg`, [section 6](#finger-joints)), at
+   the same settings. It checks that value on the corners of the boxes. Choose one
+   value that suits both, as in [Using the results](#using-the-results).
+4. **The boxes.** Set the burn value in `generate.sh` and `engrave_boxes.py`, rerun
+   `generate.sh`, and cut the sheets at the same settings as the tests.
+
+If you change the cut settings after the burn tests, cut the burn tests again: the
+kerf, and with it the best burn value, changes with them.
+
+### All three on one sheet
+
+`all-tests.svg` (248 × 233 mm, drawn by `all_tests.py`) has the three tests on one
+sheet, for one laser job: the engraving test at the top left, the hinge test beside
+it and the finger test below, 5 mm apart. Each is drawn by its own script, exactly
+as in its own file, and only moved; the paths are plain, with no transforms.
+
+It suits plywood whose settings you already know, or a recheck on a new batch,
+where a single job saves setting up three. It skips the order above: the burn
+tests are cut before the engraving test shows whether the cut and engraving
+settings are right. If they turn out wrong, change them and cut the burn tests
+again (`burn-test.svg` and `finger-test.svg` on their own).
+
 ## Cutting notes
 
 * Colours follow boxes.py: black is the outline cut, blue the inner cuts (the hinge
@@ -549,11 +718,15 @@ through the outlier and the column's mean.
 * Engrave before cutting, so the pieces are still held in the sheet. A test on a
   scrap of the same plywood is worth it: grain and finish change how the 6 mm bottom
   text, the menorah's small flames (about 1.3 × 1.9 mm) and the fine lines of the lid
-  artwork come out.
+  artwork come out. `engrave-test.svg` has samples of all of them
+  ([section 7](#7-engraving-test)).
 * In the multi-sheet files the sheet cut lines come last, so the pieces are cut before
   the sheets come free. If your laser software reorders cuts, make sure the sheet
   lines go last.
-* Kerf compensation is the boxes.py default (`--burn 0.1`).
+* Kerf compensation is the boxes.py default (`--burn 0.1`). Cut `burn-test.svg`
+  and `finger-test.svg` first to check it ([section 6](#6-burn-tests)), after
+  `engrave-test.svg` ([section 8](#8-the-order-of-the-tests) gives the order), or
+  `all-tests.svg` with all three at once.
 * Each box needs two metal hinge pins about 3 mm thick, for example cut-off nails; the
   holes are 3.2 mm. With 7 pieces per hinge each pin spans about 22 mm of hinge
   pieces (7 × 3.15 mm). Cut the pins to that length: they are captured once the hinge

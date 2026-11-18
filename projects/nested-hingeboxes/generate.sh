@@ -25,13 +25,14 @@ done <<'SIZES'
 SIZES
 BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 
-# 1b. Box 3's lid art, the broken charts, drawn into art/ (boxes 1 and 2's are
-#     converted stock artwork; box 4's is drawn by art/draw_ideas.py, run by hand).
-mkdir -p previews
+# 1b. The lid art that is drawn here: box 3's broken charts and box 4's brain,
+#     into art/ (boxes 1 and 2's are converted stock artwork).
 "$PY" lid_charts.py
+"$PY" art/draw_ideas.py
 
 # 1c. Engraved text on each box's front and bottom, and the lid art
-#     (engraving.py has the words and which art goes on which lid).
+#     (engraving.py has the words and which art goes on which lid), plus a
+#     preview of each lid top in previews/.
 "$PY" engrave_boxes.py "${BOXES[@]}"
 
 # 2. N equal sheets, plus as many spare hinge pieces as fit (runs in parallel).

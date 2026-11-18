@@ -63,3 +63,14 @@ wait
 
 # 6. Interactive 3D model of the four boxes (model.html).
 "$PY" make_model.py
+
+# 7. Burn tests at a range of burn values: hinge holes and hinge pieces, and
+#    finger joints.
+"$PY" burn_test_sheet.py
+"$PY" finger_test_sheet.py
+
+# 8. Engraving test: samples of the lid art, a bottom and a front, from the box SVGs.
+"$PY" engrave_test_sheet.py
+
+# 9. All three tests on one sheet, for one laser job.
+"$PY" all_tests.py

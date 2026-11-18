@@ -30,7 +30,7 @@ done <<'SIZES'
 SIZES
 BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 
-# 1b. The lid art that is drawn here: box 3's broken charts and box 4's brain,
+# 1b. The lid art that is drawn here: box 3's Anscombe's quartet and box 4's brain,
 #     into art/ (boxes 1 and 2's are converted stock artwork).
 "$PY" lid_charts.py
 "$PY" art/draw_ideas.py

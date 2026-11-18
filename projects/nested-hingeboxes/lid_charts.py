@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Line art for the lid top of box 3 ("Problematic Data"): three charts, each
-broken in its own way.
+"""Line art for the lid top of box 3 ("Problematic Data"): Anscombe's quartet.
 
-usage: lid_charts.py [OUT.svg]      (default art/broken-charts.svg)
+usage: lid_charts.py [OUT.svg]      (default art/anscombes-quartet.svg)
 
 The SVG is the lid top's inner face, 170 x 104 mm (box 3's x by y panel less
 t all round), with the art as filled outlines in boxes.py's etching colour
@@ -11,29 +10,42 @@ engraving.lid_art leaves it out.  engraving.LID_ART puts the art on box 3's
 lid, where it is scaled to leave LID_PAD clear: drawn just inside that, so
 it goes on at very nearly full size.
 
-The charts, left to right: a line that loops and runs off its axes; bars that
-lean, bend and wobble; a column of points and one outlier, whose fit line
-follows the outlier alone.
+The charts, in Anscombe's (1973) order, I and II across the top, III and IV
+below: four datasets of 11 points with the same means, variances, correlation
+and least-squares line, y = 3 + x / 2, and nothing else alike.  Each chart
+has the same axes and its own fit line, worked out from its points.
 """
 import math
 import sys
 from pathlib import Path
 
 from shapely import affinity
-from shapely.geometry import LineString, Point, Polygon, box
-from shapely.ops import substring, unary_union
+from shapely.geometry import LineString
+from shapely.ops import unary_union
 
 import engraving
 
 W, H = 170.0, 104.0        # mm, inner face of box 3's lid top (176 x 110 less 2t)
-U, UY = 1.5, 45 / 34       # mm per chart unit across and up: each chart's axes are 30 x 34 units, 45 mm square
-GAP = 8.4                  # mm between one chart's axes and the next
+XMAX, YMAX = 20, 14        # chart units: each chart's axes run 0-20 across and 0-14 up
+U, UY = 3.51, 2.725        # mm per chart unit across and up: the four charts' ink fills 154 x 88 mm
+TICKS_X, TICKS_Y = (5, 10, 15), (4, 8, 12)
+GAP_X, GAP_Y = 10.0, 8.0   # mm between one chart's axes and the next
 TICK = 1.5                 # mm, length of the axis ticks
 AXIS = 0.7                 # mm, line widths
-DATA = 0.8
+DATA = 0.7
+FIT = 0.5
 THIN = 0.6
-DOT = 1.3                  # mm, from a scatter point's centre to the tips of its X
+DOT = 1.1                  # mm, from a scatter point's centre to the tips of its X
 GREEN, RED = "rgb(0,255,0)", "rgb(255,0,0)"
+
+# Anscombe, "Graphs in Statistical Analysis", The American Statistician 27 (1973).
+X123 = [10, 8, 13, 9, 11, 14, 6, 4, 12, 7, 5]
+QUARTET = [
+    list(zip(X123, [8.04, 6.95, 7.58, 8.81, 8.33, 9.96, 7.24, 4.26, 10.84, 4.82, 5.68])),
+    list(zip(X123, [9.14, 8.14, 8.74, 8.77, 9.26, 8.10, 6.13, 3.10, 9.13, 7.26, 4.74])),
+    list(zip(X123, [7.46, 6.77, 12.74, 7.11, 7.81, 8.84, 6.08, 5.39, 8.15, 6.42, 5.73])),
+    list(zip([8] * 7 + [19] + [8] * 3, [6.58, 5.76, 7.71, 8.84, 8.47, 7.04, 5.25, 12.50, 5.56, 7.91, 6.89])),
+]
 
 
 # Charts are drawn in chart units with y up, the axes' corner at (0, 0).
@@ -53,88 +65,30 @@ def dot(x, y, r=DOT / math.sqrt(2)):
                         for s in (1, -1)])
 
 
-def smooth(pts, n=4):
-    """Chaikin corner cutting, keeping the end points."""
-    for _ in range(n):
-        out = [pts[0]]
-        for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
-            out += [(0.75 * x0 + 0.25 * x1, 0.75 * y0 + 0.25 * y1), (0.25 * x0 + 0.75 * x1, 0.25 * y0 + 0.75 * y1)]
-        pts = out + [pts[-1]]
-    return pts
-
-
-def dashes(pts, dash=2.4, gap=1.4, w=DATA, clear=()):
-    """A dashed stroke, dash and gap in mm along the line, square-ended.  The
-    dashes stop a gap short of any dot in `clear` the line runs through, and
-    each free stretch between them is stretched to start and end on a dash."""
-    line = LineString(mm(pts))
-    cuts = []
-    for c in mm(clear):
-        d, r = line.distance(Point(c)), DOT + gap + w / 2
-        if d < r:
-            t, half = line.project(Point(c)), math.sqrt(r * r - d * d)
-            cuts.append((t - half, t + half))
-    edges = [0.0] + [e for cut in sorted(cuts) for e in cut] + [line.length]
-    parts = []
-    for a, b in zip(edges[::2], edges[1::2]):
-        n = max(1, round((b - a + gap) / (dash + gap)))
-        k = (b - a) / (n * dash + (n - 1) * gap)
-        parts += [substring(line, a + i * k * (dash + gap), a + i * k * (dash + gap) + k * dash)
-                  .buffer(w / 2, quad_segs=8, cap_style="flat") for i in range(n) if b - a > dash / 2]
+def axes():
+    parts = [stroke([(0, YMAX), (0, 0), (XMAX, 0)], AXIS)]
+    parts += [stroke([(0, y), (-TICK / U, y)], THIN) for y in TICKS_Y]
+    parts += [stroke([(x, 0), (x, -TICK / UY)], THIN) for x in TICKS_X]
     return parts
 
 
-def axes(w=30, h=34, ticks=4):
-    parts = [stroke([(0, h), (0, 0), (w, 0)], AXIS)]
-    parts += [stroke([(0, k * h / (ticks + 0.5)), (-TICK / U, k * h / (ticks + 0.5))], THIN) for k in range(1, ticks + 1)]
-    parts += [stroke([(k * w / (ticks + 0.5), 0), (k * w / (ticks + 0.5), -TICK / UY)], THIN) for k in range(1, ticks + 1)]
-    return parts
-
-
-def runaway_line():
-    """A line that starts out well enough, loops, and leaves the chart."""
-    pts = mm(smooth([(1, 5), (5, 9), (9, 7), (13, 12), (17, 10), (20.5, 14.5), (24, 18), (27, 20.5), (28, 25),
-                     (24.5, 27.5), (21.5, 24), (24.5, 19.8), (28, 23.5), (29, 29), (29, 35)]))
-    (xa, ya), (xb, yb) = pts[-2], pts[-1]
-    a = math.atan2(yb - ya, xb - xa)
-    tip = (xb + 2.2 * math.cos(a), yb + 2.2 * math.sin(a))
-    head = Polygon([tip] + [(xb + 1.7 * math.cos(a + s * math.pi / 2), yb + 1.7 * math.sin(a + s * math.pi / 2))
-                            for s in (1, -1)])
-    line = LineString(pts).buffer(DATA / 2, quad_segs=8, cap_style="round", join_style="round")
-    return axes() + [line, head]
-
-
-def crooked_bars():
-    """Bars that lean, bend and wobble."""
-    bars = [[(6, -3), (5.3, 8), (3.6, 16)],                        # leans left
-            [(11, -3), (11.3, 9), (13.2, 17), (17, 24)],           # bends right
-            [(20.5, -3), (21.8, 5), (19.8, 11), (21.6, 18)],       # wobbles
-            [(26.5, -3), (27.6, 12), (29.6, 29)]]                  # leans right
-    parts = [LineString(mm(smooth(b, 3))).buffer(1.8 * U, quad_segs=8, cap_style="flat", join_style="round")
-             .intersection(box(0, 0, 40 * U, 40 * UY)) for b in bars]
-    return axes() + parts
-
-
-def lone_outlier():
-    """Anscombe's fourth dataset: every point but one shares the same x, and that
-    one point alone sets the slope of a confident fit line."""
-    col, ys = 12, [5, 8.5, 11.5, 15, 18.3, 21.5, 25]
-    out = (26, 29)
-    pts = [(col, y) for y in ys] + [out]
-    mx, my = (sum(c) / len(pts) for c in zip(*pts))             # ordinary least squares over all the points
+def fit_line(pts):
+    """The ordinary least-squares line through `pts`, across the chart."""
+    mx, my = (sum(c) / len(pts) for c in zip(*pts))
     slope = sum((x - mx) * (y - my) for x, y in pts) / sum((x - mx) ** 2 for x, _ in pts)
-    fit = [(x, my + slope * (x - mx)) for x in (0.8, 30)]
-    return axes() + [dot(x, y) for x, y in pts] + dashes(fit, clear=pts)
+    return stroke([(x, my + slope * (x - mx)) for x in (1, XMAX - 0.5)], FIT)
 
 
-CHARTS = [runaway_line, crooked_bars, lone_outlier]
+def scatter(pts):
+    return axes() + [fit_line(pts)] + [dot(x, y) for x, y in pts]
 
 
 def art():
-    """The charts side by side as one shape, in mm on the face, y down: axes
-    on one baseline, GAP apart, centred on the face by ink."""
-    g = unary_union([affinity.translate(unary_union(chart()), i * (30 * U + GAP), 0)
-                     for i, chart in enumerate(CHARTS)])
+    """The four charts in a 2 x 2 grid as one shape, in mm on the face, y down:
+    axes GAP_X and GAP_Y apart, centred on the face by ink."""
+    step_x, step_y = XMAX * U + TICK + GAP_X, YMAX * UY + TICK + GAP_Y
+    g = unary_union([affinity.translate(unary_union(scatter(pts)), (i % 2) * step_x, -(i // 2) * step_y)
+                     for i, pts in enumerate(QUARTET)])
     g = affinity.scale(g, 1, -1, origin=(0, 0)).simplify(0.02)   # well under the laser's resolution
     x0, y0, x1, y1 = g.bounds
     g = affinity.translate(g, (W - x0 - x1) / 2, (H - y0 - y1) / 2)
@@ -154,9 +108,9 @@ def write_svg(g, path):
 
 
 if __name__ == "__main__":
-    out = sys.argv[1] if len(sys.argv) > 1 else "art/broken-charts.svg"
+    out = sys.argv[1] if len(sys.argv) > 1 else "art/anscombes-quartet.svg"
     g = art()
     write_svg(g, out)
     x0, y0, x1, y1 = g.bounds
-    print(f"{out}: {len(CHARTS)} charts, ink {x1 - x0:.1f} x {y1 - y0:.1f} mm, "
+    print(f"{out}: {len(QUARTET)} charts, ink {x1 - x0:.1f} x {y1 - y0:.1f} mm, "
           f"clear {x0:.1f} mm left/right, {y0:.1f} mm top/bottom")

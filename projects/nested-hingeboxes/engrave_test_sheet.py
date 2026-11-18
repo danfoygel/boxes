@@ -32,7 +32,7 @@ from burn_test_sheet import HERE, Engraved
 LID_SAMPLES = [
     ("heart", (4.0, -0.4, 21.6, 23.3), False),
     ("cat", (20.9, 26.7, 46.9, 42.7), False),
-    ("corner of the scatter chart", (104.9, 21.9, 131.4, 50.5), True),
+    ("corner of chart III", (0.0, 62.0, 26.0, 88.0), True),
     ("light bulb", (22.9, 5.9, 56.9, 43.9), False),
 ]
 MARGIN = 4.0              # mm, piece edge to its engraving

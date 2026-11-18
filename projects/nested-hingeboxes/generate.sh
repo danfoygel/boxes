@@ -10,6 +10,11 @@ PY="${PYTHON:-python3}"
 cd "$HERE"
 mkdir -p boxes sheets
 
+# 0. Boxes 1 and 2's lid art is licensed stock art, kept out of the repository:
+#    stop before touching anything if it isn't in art/ (see the README).
+"$PY" -c 'import sys, engraving; m = [str(f) for f in engraving.LID_ART if f and not f.exists()]
+sys.exit("missing lid art, see the README (Lid artwork): " + ", ".join(m) if m else 0)'
+
 # 1. The four boxes: outside dimensions (HingeBox's default), 3 mm material,
 #    lid height 20 mm.
 i=1

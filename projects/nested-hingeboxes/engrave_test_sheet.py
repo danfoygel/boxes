@@ -31,7 +31,7 @@ from burn_test_sheet import HERE, Engraved
 # with clip=True (box 3's charts are a single shape), all the art cut to it.
 LID_SAMPLES = [
     ("heart", (4.0, -0.4, 21.6, 23.3), False),
-    ("cat", (20.9, 26.7, 46.9, 42.7), False),
+    ("cat", (-3.0, 24.2, 22.2, 41.7), False),
     ("corner of chart III", (0.0, 62.0, 26.0, 88.0), True),
     ("light bulb", (22.9, 5.9, 56.9, 43.9), False),
 ]

@@ -3,11 +3,11 @@
 pieces per burn value, one with each half of the joint, to find the value that
 fits best.
 
-usage: finger_test.py [OUT.svg]      (default: finger-test.svg next to this script)
+usage: finger_test_sheet.py [OUT.svg]      (default: finger-test.svg next to this script)
 
 The joints are drawn by boxes.py itself, with the generate.sh settings (3 mm and
 the default finger joint, as on every corner of the boxes: 2t fingers and spaces,
-no play), at the burn values of the hinge test (burn_test.py):
+no play), at the burn values of the hinge test (burn_test_sheet.py):
 
 * For each burn value, a piece with an "f" edge (FingerJointEdge in
   boxes/edges.py) above a piece with the matching "F" edge
@@ -20,7 +20,7 @@ engraving's font.
 import sys
 from pathlib import Path
 
-from burn_test import BURN, BURNS, HERE, T, Engraved, label
+from burn_test_sheet import BURN, BURNS, HERE, T, Engraved, label
 
 FINGERS = 5               # fingers on the "f" piece: the joint is 2t fingers and 2t spaces
 LENGTH = (2 * FINGERS + 1) * 2 * T   # mm, the joint's length: FINGERS fingers, 2t spare at each end

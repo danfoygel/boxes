@@ -2,7 +2,7 @@
 """Engraving test: small pieces with samples of the boxes' engraving, at the same
 size as on the boxes, to tune the laser's engraving settings before the real job.
 
-usage: engrave_test.py [OUT.svg]      (default: engrave-test.svg next to this script)
+usage: engrave_test_sheet.py [OUT.svg]      (default: engrave-test.svg next to this script)
 
 The engraving comes from engraving.box_text on the faces of the box SVGs in boxes/
 (as engrave_boxes.py finds them), so it is exactly what the boxes get:
@@ -18,14 +18,13 @@ after generate.sh's step 1 (the box SVGs) and lid_charts.py (box 3's art).
 import sys
 from pathlib import Path
 
-from shapely import affinity
 from shapely.geometry import box
 from shapely.ops import unary_union
 from svgpathtools import parse_path
 
 import engrave_boxes
 import engraving
-from burn_test import HERE, Engraved
+from burn_test_sheet import HERE, Engraved
 
 # One element of each lid's artwork, by a rectangle (x0, y0, x1, y1) in mm from the
 # top-left corner of the art's ink box on the lid: the shapes wholly inside it, or

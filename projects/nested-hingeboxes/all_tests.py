@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""All three test sheets on one: the hinge burn test (burn_test.py), the finger
-joint burn test (finger_test.py) and the engraving test (engrave_test.py), for one
-laser job.
+"""All three test sheets on one: the hinge burn test (burn_test_sheet.py), the
+finger joint burn test (finger_test_sheet.py) and the engraving test
+(engrave_test_sheet.py), for one laser job.
 
 usage: all_tests.py [OUT.svg]      (default: all-tests.svg next to this script)
 
@@ -18,9 +18,9 @@ from pathlib import Path
 
 from svgpathtools import parse_path
 
-from burn_test import HERE, HingeBurnTest
-from engrave_test import EngraveTest
-from finger_test import FingerBurnTest
+from burn_test_sheet import HERE, HingeBurnTest
+from engrave_test_sheet import EngraveTest
+from finger_test_sheet import FingerBurnTest
 
 SVG = "{http://www.w3.org/2000/svg}"
 GAP = 5.0                 # mm between the tests

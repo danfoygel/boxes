@@ -113,9 +113,9 @@ hinge pieces, 75.6% utilization. Cut file:
 | `model.html` | The four boxes in 3D: open it in a browser to rotate, nest and open them |
 | `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges), plus their engraved text and lid artwork |
 | `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files, coloured by cutting order |
-| `burn_test.py`, `burn-test.svg` | The hinge burn test: a strip with a row of 11 one-hole hinges, and a hinge piece for each, at 11 burn values ([section 6](#6-burn-tests)) |
-| `finger_test.py`, `finger-test.svg` | The finger joint burn test: a pair of meshing pieces at each of the 11 burn values ([section 6](#6-burn-tests)) |
-| `engrave_test.py`, `engrave-test.svg` | The engraving test: one element of each lid's artwork, box 1's bottom and box 1's front text, each on a small piece ([section 7](#7-engraving-test)) |
+| `burn_test_sheet.py`, `burn-test.svg` | The hinge burn test: a strip with a row of 11 one-hole hinges, and a hinge piece for each, at 11 burn values ([section 6](#6-burn-tests)) |
+| `finger_test_sheet.py`, `finger-test.svg` | The finger joint burn test: a pair of meshing pieces at each of the 11 burn values ([section 6](#6-burn-tests)) |
+| `engrave_test_sheet.py`, `engrave-test.svg` | The engraving test: one element of each lid's artwork, box 1's bottom and box 1's front text, each on a small piece ([section 7](#7-engraving-test)) |
 | `all_tests.py`, `all-tests.svg` | All three tests on one sheet, for one laser job ([section 8](#8-the-order-of-the-tests)) |
 | `layouts/sheetsN.svg` | The same layouts colour-coded by box, for reading, not cutting |
 | `previews/` | PNG renders of the cut files (`sheetsN.png`), layout views (`layout-sheetsN.png`), 3D model (`model.png`) and each lid top as it might look engraved (`lid-boxN.png`, from `engrave_boxes.py`) |
@@ -578,9 +578,9 @@ values from 0.075 to 0.125 mm in steps of 0.005 mm. The burn values are engraved
 ### Hinges
 
 `burn-test.svg` (a 94 × 28 mm strip plus pieces, 96 × 60 mm in all, drawn by
-`burn_test.py`) tests the hinges. It has the same hinges as the boxes, drawn by boxes.py with the `generate.sh`
-settings but cut down to one eye each, at 11 burn values from 0.075 to 0.125 mm in
-steps of 0.005 mm:
+`burn_test_sheet.py`) tests the hinges. It has the same hinges as the boxes, drawn by
+boxes.py with the `generate.sh` settings but cut down to one eye each, at 11 burn
+values from 0.075 to 0.125 mm in steps of 0.005 mm:
 
 * **A strip with a row of 11 hinges along one long edge**, 8 mm apart. Each one is
   the box side of a one-eye hinge, as on a box's back wall: the slot in the edge for
@@ -618,7 +618,7 @@ pieces at the same burn value.
 
 ### Finger joints
 
-`finger-test.svg` (206 × 114 mm, drawn by `finger_test.py`) tests the finger joints
+`finger-test.svg` (206 × 114 mm, drawn by `finger_test_sheet.py`) tests the finger joints
 that hold every corner of the boxes together. They are boxes.py's default joint,
 which `generate.sh` keeps: 6 mm (2t) fingers and 6 mm spaces, with no play. For
 each burn value there is a pair of pieces, 66 mm long and engraved with the value:
@@ -651,7 +651,7 @@ thickness, and change `--thickness` as well if it is far from 3 mm.
 
 ## 7. Engraving test
 
-`engrave-test.svg` (147 × 114 mm, drawn by `engrave_test.py`) tests the engraving
+`engrave-test.svg` (147 × 114 mm, drawn by `engrave_test_sheet.py`) tests the engraving
 settings before the real job. It has six pieces, each a plain cut rectangle with
 4 mm clear round its engraving:
 
@@ -664,7 +664,7 @@ settings before the real job. It has six pieces, each a plain cut rectangle with
 | Box 1 bottom | The tree, "Ember Barber", "Chrismukkah 2026" and the menorah | 105 × 28 |
 | Box 1 front | "Scientific Discoveries" at 15.4 mm | 103 × 38 |
 
-The engraving is the boxes' own, at the same size: `engrave_test.py` lays it out
+The engraving is the boxes' own, at the same size: `engrave_test_sheet.py` lays it out
 with `engraving.py` on the faces of the box SVGs, as `engrave_boxes.py` does, and
 moves the samples onto the test pieces. They match the boxes to within 0.001 mm.
 Each lid sample is the shapes of one element of its artwork. Box 3's charts are a

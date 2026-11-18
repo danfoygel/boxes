@@ -47,8 +47,8 @@ all four boxes plus as many spare hinge pieces as fit. Every piece is at least 3
 from its neighbours and 5 mm inside its sheet's cut line. The pictures below are the
 colour-coded views from `layouts/`: blue is box 1, orange box 2, aqua box 3, plum box 4,
 and grey the hinge pieces, which fit any box. Cut from the files in `sheets/`, which
-have the same layout coloured by cutting order: hinge pieces blue, the other pieces
-black, the sheet cut lines magenta ([cut colours](#cut-colours)).
+have the same layout coloured by cutting order: holes orange, hinge pieces blue, the
+other pieces black, the sheet cut lines magenta ([cut colours](#cut-colours)).
 [Section 3](#comparison-of-all-options) compares the options in full.
 
 ### 6 sheets
@@ -162,7 +162,8 @@ hinge pieces, 75.6% utilization. Cut file:
     X's, *the y axis the same length as the x axis*, *the actual fit line*, and the
     dashes kept clear of the points, with *the far point moved towards the origin*.
 19. *On the cut lists, give different colors to the hinge pieces, the other pieces,
-    and the cutlines between the sheets - I'll cut them in that order.*
+    and the cutlines between the sheets - I'll cut them in that order.* Then: *give
+    another color to any internal holes in any of the pieces.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -294,16 +295,16 @@ The cut files have one colour per laser operation, in cutting order:
 
 | Order | What | Colour |
 |---|---|---|
-| 1 | Hinge pieces, outlines and pin holes | blue `rgb(0,0,255)` |
-| 2 | Every other piece, outlines and holes | black `rgb(0,0,0)` |
-| 3 | Sheet cut lines | magenta `rgb(255,0,255)` |
+| 1 | Holes in every piece: hinge pieces' pin holes, box pieces' square hinge holes | orange `rgb(255,128,0)` |
+| 2 | Hinge pieces' outlines | blue `rgb(0,0,255)` |
+| 3 | Every other piece's outline | black `rgb(0,0,0)` |
+| 4 | Sheet cut lines | magenta `rgb(255,0,255)` |
 
+The holes go first, so no piece is cut free and shifts before its holes are cut.
 Engraving is green `rgb(0,255,0)`, as in boxes.py. The "Box N" and "Sheet N" labels
-are red `rgb(255,0,0)` and are not for cutting. Within each colour a piece's holes
-share its outline's colour, so set the laser software to cut inner shapes first
-(LightBurn: *Cut inner shapes first* in Optimization Settings). In the SVG each cut
-path has `class="outline"` or `class="hole"`, which `check_layout.py`, `compare.py`
-and `color_layouts.py` read.
+are red `rgb(255,0,0)` and are not for cutting. In the SVG each cut path also has
+`class="outline"` or `class="hole"`, which `check_layout.py`, `compare.py` and
+`color_layouts.py` read.
 
 ### Comparison of all options
 

@@ -8,7 +8,7 @@ a metal pin each. The front of each box is engraved with a title in the typewrit
 face Special Elite, and the bottom with the recipient's name and "Chrismukkah 2026"
 between a small Christmas tree and a menorah. Box 1's lid top also carries an
 ink-sketch science illustration (microscope, DNA, heart, brain and lab glassware),
-box 2's a row of black cat silhouettes, box 3's three deliberately broken charts, and
+box 2's a row of black cat silhouettes, box 3's Anscombe's quartet, and
 box 4's a brain bursting with ideas.
 
 | Box | Outside (mm) | Front | Bottom |
@@ -107,8 +107,8 @@ hinge pieces, 75.6% utilization. Cut file:
 | `engraving.py` | The engraving: the words, their sizes, and their outlines in Special Elite, the tree and menorah beside the bottom text, and the lid artwork scaled to fit |
 | `engrave_boxes.py` | Adds the engraving to the box SVGs, and renders each lid top to `previews/` |
 | `fonts/` | Special Elite (`SpecialElite-Regular.ttf`, from Google Fonts) and its licence (Apache 2.0) |
-| `art/` | The lid artwork drawn here: the broken charts (`broken-charts.svg`, box 3), drawn by `lid_charts.py`, and `ideas.svg` (box 4), drawn by `draw_ideas.py` |
-| `lid_charts.py` | Draws box 3's broken charts into `art/` |
+| `art/` | The lid artwork drawn here: Anscombe's quartet (`anscombes-quartet.svg`, box 3), drawn by `lid_charts.py`, and `ideas.svg` (box 4), drawn by `draw_ideas.py` |
+| `lid_charts.py` | Draws box 3's Anscombe's quartet into `art/` |
 | `make_model.py`, `model_template.html` | Build `model.html`, the interactive 3D model |
 | `model.html` | The four boxes in 3D: open it in a browser to rotate, nest and open them |
 | `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges), plus their engraved text and lid artwork |
@@ -170,6 +170,7 @@ hinge pieces, 75.6% utilization. Cut file:
     closer to the origin*, *the fit line dashed instead of solid*, the points as
     X's, *the y axis the same length as the x axis*, *the actual fit line*, and the
     dashes kept clear of the points, with *the far point moved towards the origin*.
+    Later replaced (request 26).
 19. *On the cut lists, give different colors to the hinge pieces, the other pieces,
     and the cutlines between the sheets - I'll cut them in that order.* Then: *give
     another color to any internal holes in any of the pieces.*
@@ -197,6 +198,7 @@ hinge pieces, 75.6% utilization. Cut file:
     information about the order of testing prints.*
 25. *Remove the separate adobe stock files - but you can leave them in the layouts /
     3d model.*
+26. *New design for box 3 lid - draw Anscombe's quartet.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -485,15 +487,15 @@ Ghostscript and then into an SVG in `art/` with PyMuPDF. The stock files are lic
 so they aren't in the repository: the artwork is published only as it is engraved, in
 the cut files, layouts and 3D model. To regenerate, put the two SVGs in `art/` under
 the names in the table (`.gitignore` keeps them local); without them `generate.sh`
-stops at the engraving step. Box 3's lid gets three charts
-drawn by `lid_charts.py` (see [below](#box-3-broken-charts)). Box 4's is an original
+stops at the engraving step. Box 3's lid gets Anscombe's quartet,
+drawn by `lid_charts.py` (see [below](#box-3-anscombes-quartet)). Box 4's is an original
 drawing, made for this lid.
 
 | Box | Artwork | Lid top (mm) | Engraved (mm) |
 |---|---|---|---|
 | 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 154 × 74 | 138.0 × 57.7 |
 | 2 | Black cat silhouettes in 15 poses (`AdobeStock_939770434.svg`) | 162 × 89 | 146.0 × 55.0 |
-| 3 | Three broken charts (`broken-charts.svg`) | 170 × 104 | 154.0 × 50.3 |
+| 3 | Anscombe's quartet (`anscombes-quartet.svg`) | 170 × 104 | 154.0 × 87.9 |
 | 4 | A brain bursting with ideas, no text (`ideas.svg`) | 178 × 119 | 162.0 × 101.5 |
 
 `engraving.py` scales each piece of art to the largest size that leaves 8 mm clear on
@@ -563,18 +565,22 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
   source files are kept out of the repository; it is published only engraved on the
   lids, in the cut files, layouts and 3D model. Boxes 3 and 4's art is drawn here.
 
-#### Box 3: broken charts
+#### Box 3: Anscombe's quartet
 
-Three small charts, each broken in its own way: a line graph whose line loops and runs
-off the chart, a bar chart whose bars lean, bend and wobble, and a scatter plot after
-the fourth of Anscombe's quartet (1973): every point but one shares the same x, so that
-one outlier alone sets the slope of a confident, dashed fit line.
+The four datasets of Anscombe's quartet (F. J. Anscombe, "Graphs in Statistical
+Analysis", 1973), in his order: I and II across the top, III and IV below. Each is 11
+points with the same means, variances and correlation, and the same least-squares line,
+y = 3 + x/2, but they look nothing alike: a loose cloud, a smooth curve, a straight
+line with one outlier, and a single column with one far point that sets the slope.
 
-`lid_charts.py` draws them with shapely as filled outlines (0.8 mm data lines, 0.7 mm
-axes, 2.6 mm X's of 0.8 mm strokes, 2.4 mm dashes with 1.4 mm gaps) on a
-170 × 104 mm face, box 3's lid top, and writes `art/broken-charts.svg`. The charts sit in a row, each with 45 × 45 mm axes. Their ink is drawn just
-inside the 8 mm pad, so `engraving.py` puts them on at full size. The fit line is the true least-squares line for the points, which runs
-through the outlier and the column's mean.
+`lid_charts.py` draws them with shapely as filled outlines (0.7 mm axes, 0.5 mm fit
+lines, 2.2 mm X's of 0.7 mm strokes) on a 170 × 104 mm face, box 3's lid top, and
+writes `art/anscombes-quartet.svg`. The charts share one scale, x 0–20 and y 0–14 on
+70 × 38 mm axes, ticks at x = 5, 10, 15 and y = 4, 8, 12, with no labels. Each fit
+line is worked out from that chart's own points. Their ink is drawn just inside the
+8 mm pad, so `engraving.py` puts them on at full size. In chart IV the column's
+points are as close as 0.4 mm apart, so their X's run together, as in Anscombe's
+own plot.
 
 ## 6. Burn tests
 
@@ -667,7 +673,7 @@ settings before the real job. It has six pieces, each a plain cut rectangle with
 |---|---|---|
 | Box 1 lid | The heart (fine lines) | 31 × 31 |
 | Box 2 lid | A lying cat (solid fill, with its eyes left bare) | 28.5 × 28.5 |
-| Box 3 lid | The corner of the scatter chart: axes, ticks, X's and dashes | 36 × 36 |
+| Box 3 lid | The corner of chart III: axes, ticks, X's and the fit line | 34 × 34 |
 | Box 4 lid | The light bulb and its rays | 40 × 40 |
 | Box 1 bottom | The tree, "Ember Barber", "Chrismukkah 2026" and the menorah | 105 × 28 |
 | Box 1 front | "Scientific Discoveries" at 15.4 mm | 103 × 38 |
@@ -676,8 +682,8 @@ The engraving is the boxes' own, at the same size: `engrave_test_sheet.py` lays 
 with `engraving.py` on the faces of the box SVGs, as `engrave_boxes.py` does, and
 moves the samples onto the test pieces. They match the boxes to within 0.001 mm.
 Each lid sample is the shapes of one element of its artwork. Box 3's charts are a
-single shape, so its sample is the art cut to a rectangle at the chart's corner,
-which cuts only the axes.
+single shape, so its sample is the art cut to a rectangle at chart III's corner,
+which cuts only the axes and the fit line.
 
 Engrave it on a scrap of the same plywood, at the settings you plan to use, and
 change them until the cat's eyes stay open, the heart's and the bulb's fine lines

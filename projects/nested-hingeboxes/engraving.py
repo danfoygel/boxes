@@ -52,7 +52,7 @@ CANDLE_LINE = 0.55  # mm, line width of the candles
 # and white shapes are bare wood, cut out of whatever is painted below them.
 # Box 3's is drawn by lid_charts.py, box 4's by art/draw_ideas.py.
 LID_ART = [HERE / "art" / "AdobeStock_2095995062.svg", HERE / "art" / "AdobeStock_939770434.svg",
-           HERE / "art" / "broken-charts.svg", HERE / "art" / "ideas.svg"]
+           HERE / "art" / "anscombes-quartet.svg", HERE / "art" / "ideas.svg"]
 # Boxes 1 and 2's art is licensed Adobe Stock artwork, not in the repository: to
 # regenerate, put the SVGs in art/ (see README).  It is published only engraved
 # on its lid, so engrave_boxes.py makes no standalone preview of it.

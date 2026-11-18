@@ -15,7 +15,8 @@ from shapely.geometry import Polygon
 from svgpathtools import parse_path
 
 HERE = Path(__file__).resolve().parent
-BLACK, BLUE = "rgb(0,0,0)", "rgb(0,0,255)"
+BLACK = "rgb(0,0,0)"            # piece outline in the box SVGs
+HINGE_CUT = "rgb(0,0,255)"      # hinge pieces' cut colour in the cut files
 
 
 def path_area(d):
@@ -34,16 +35,12 @@ def file_info(f):
         if not g.tag.endswith("g") or g.get("id") == "sheet-cut-lines":
             continue
         paths = [el for el in g.iter() if el.tag.endswith("path")]
-        black = sum(el.get("stroke") == BLACK for el in paths)
-        has_text = any(el.tag.endswith("text") for el in g)
-        if black > 1:              # a cluster of hinge pieces
-            hinges += black
-        elif black == 1 and not has_text:
-            hinges += 1            # a single (unlabelled) hinge piece
-        for el in paths:           # outlines add, holes (blue) take away; engraving doesn't count
-            if el.get("stroke") in (BLACK, BLUE):
+        hinges += sum(el.get("class") == "outline" and el.get("stroke") == HINGE_CUT
+                      for el in paths)
+        for el in paths:           # outlines add, holes take away; engraving doesn't count
+            if el.get("class") in ("outline", "hole"):
                 a = path_area(el.get("d"))
-                area += a if el.get("stroke") == BLACK else -a
+                area += a if el.get("class") == "outline" else -a
     return root, area, hinges
 
 

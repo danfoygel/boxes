@@ -8,6 +8,8 @@ x by y panels, which becomes the bottom.  If the box has lid artwork
 (engraving.LID_ART), it goes on the other x by y panel, which becomes the lid
 top.  Everything is filled outlines in boxes.py's etching colour (green), inside
 the piece's group, so it moves with the piece when the sheets are packed.
+Each lid with artwork also gets a preview, previews/lid-boxN.png: its lid top
+as it might look engraved.
 
 The pieces are symmetric (checked here), so either face can go outside: the
 engraved face is the outside.  On the front wall the top of the text faces the
@@ -18,9 +20,11 @@ Running it again replaces the text it added before.
 """
 import sys
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
+from PIL import Image, ImageDraw
 from shapely import affinity
-from shapely.geometry import Polygon
+from shapely.geometry import MultiPolygon, Polygon
 from svgpathtools import parse_path
 
 import engraving
@@ -29,6 +33,8 @@ T = 3.0       # --thickness in generate.sh
 BURN = 0.1    # boxes.py's default kerf allowance, which generate.sh keeps
 BLACK, BLUE = "rgb(0,0,0)", "rgb(0,0,255)"
 GREEN = "rgb(0,255,0)"   # boxes.py Color.ETCHING
+PREVIEWS = Path(__file__).resolve().parent / "previews"
+PLYWOOD, BURNT = (226, 196, 150), (92, 58, 30)
 SVG_NS = "http://www.w3.org/2000/svg"
 NAMESPACES = {"": SVG_NS, "cc": "http://creativecommons.org/ns#", "dc": "http://purl.org/dc/elements/1.1/",
               "inkscape": "http://www.inkscape.org/namespaces/inkscape",
@@ -102,10 +108,23 @@ def engrave(path):
     return tree, (front[0], front_face), (bottom[0], bottom_face), (lid[0], lid_face)
 
 
+def write_preview(g, w, h, path, px_per_mm=10):
+    """A w x h mm face with the shape g (mm, y down) burnt into plywood, as a PNG."""
+    img = Image.new("RGB", (round(w * px_per_mm), round(h * px_per_mm)), PLYWOOD)
+    draw = ImageDraw.Draw(img)
+    s = lambda ring: [(x * px_per_mm, y * px_per_mm) for x, y in ring.coords]  # noqa: E731
+    # containers first, so a shape inside another's hole isn't painted over
+    for p in sorted(g.geoms if isinstance(g, MultiPolygon) else [g], key=lambda p: -p.envelope.area):
+        draw.polygon(s(p.exterior), fill=BURNT)
+        for hole in p.interiors:
+            draw.polygon(s(hole), fill=PLYWOOD)
+    img.save(path)
+
+
 def main(files):
     jobs = [engrave(f) for f in files]
     text = engraving.box_text(*([j[k][1] for j in jobs] for k in (1, 2, 3)))
-    for f, (tree, front, bottom, lid), t in zip(files, jobs, text):
+    for n, (f, (tree, front, bottom, lid), t) in enumerate(zip(files, jobs, text), 1):
         # coordinates written out in full (no transform): SvgMerge's bounding
         # boxes, which pack_sheets.py uses, ignore transforms.  The artwork is
         # one path per shape (see engraving.lid_art).
@@ -123,6 +142,11 @@ def main(files):
         if "lid" in t:
             x0, y0, x1, y1 = t["lid"]["ink"]
             msg += f", lid {t['lid']['art']} {x1 - x0:.1f} × {y1 - y0:.1f} mm"
+            lx, ly, lw, lh = lid[1]
+            png = PREVIEWS / f"lid-box{n}.png"
+            PREVIEWS.mkdir(exist_ok=True)
+            write_preview(affinity.translate(engraving.filled(t["lid"]["d"]), -lx, -ly), lw, lh, png)
+            msg += f" (preview {png.relative_to(PREVIEWS.parent)})"
         print(msg)
 
 

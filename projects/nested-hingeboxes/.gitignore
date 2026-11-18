@@ -1,2 +1,5 @@
 # The repository-wide .gitignore ignores *.svg; keep the generated cut files here.
 !*.svg
+# Boxes 1 and 2's lid art is licensed Adobe Stock artwork: keep the source files
+# local (it is only published engraved, in the cut files and the 3D model).
+art/AdobeStock_*

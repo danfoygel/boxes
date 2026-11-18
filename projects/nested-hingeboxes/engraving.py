@@ -53,6 +53,10 @@ CANDLE_LINE = 0.55  # mm, line width of the candles
 # Box 3's is drawn by lid_charts.py, box 4's by art/draw_ideas.py.
 LID_ART = [HERE / "art" / "AdobeStock_2095995062.svg", HERE / "art" / "AdobeStock_939770434.svg",
            HERE / "art" / "broken-charts.svg", HERE / "art" / "ideas.svg"]
+# Boxes 1 and 2's art is licensed Adobe Stock artwork, not in the repository: to
+# regenerate, put the SVGs in art/ (see README).  It is published only engraved
+# on its lid, so engrave_boxes.py makes no standalone preview of it.
+STOCK_ART = set(LID_ART[:2])
 LID_PAD = 8.0       # mm clear around the lid artwork
 LID_TOLERANCE = 0.02  # mm, how far flattened curves may stray, for art with white shapes
 WHITE = ("#ffffff", "#fff", "white")
@@ -249,6 +253,9 @@ def _art_shapes(src):
     """The filled shapes of an SVG in paint order, as (svgpathtools path in its user
     units with the path's own transform applied, True if white), plus the ink box
     of the shapes that aren't white."""
+    if not src.exists():
+        raise FileNotFoundError(f"{src} is missing: the licensed stock art is kept out of the "
+                                "repository, see the README's 'Lid artwork' section")
     root = ET.parse(src).getroot()
     shapes = []
     for el in root.iter(f"{{{SVG_NS}}}path"):

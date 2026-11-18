@@ -107,7 +107,7 @@ hinge pieces, 75.6% utilization. Cut file:
 | `engraving.py` | The engraving: the words, their sizes, and their outlines in Special Elite, the tree and menorah beside the bottom text, and the lid artwork scaled to fit |
 | `engrave_boxes.py` | Adds the engraving to the box SVGs, and renders each lid top to `previews/` |
 | `fonts/` | Special Elite (`SpecialElite-Regular.ttf`, from Google Fonts) and its licence (Apache 2.0) |
-| `art/` | The lid artwork: the Adobe Stock Illustrator EPS files converted to SVG, 2095995062 (box 1) and 939770434 (box 2), the broken charts (`broken-charts.svg`, box 3), drawn by `lid_charts.py`, and `ideas.svg` (box 4), drawn by `draw_ideas.py` |
+| `art/` | The lid artwork drawn here: the broken charts (`broken-charts.svg`, box 3), drawn by `lid_charts.py`, and `ideas.svg` (box 4), drawn by `draw_ideas.py` |
 | `lid_charts.py` | Draws box 3's broken charts into `art/` |
 | `make_model.py`, `model_template.html` | Build `model.html`, the interactive 3D model |
 | `model.html` | The four boxes in 3D: open it in a browser to rotate, nest and open them |
@@ -118,7 +118,7 @@ hinge pieces, 75.6% utilization. Cut file:
 | `engrave_test_sheet.py`, `engrave-test.svg` | The engraving test: one element of each lid's artwork, box 1's bottom and box 1's front text, each on a small piece ([section 7](#7-engraving-test)) |
 | `all_tests.py`, `all-tests.svg` | All three tests on one sheet, for one laser job ([section 8](#8-the-order-of-the-tests)) |
 | `layouts/sheetsN.svg` | The same layouts colour-coded by box, for reading, not cutting |
-| `previews/` | PNG renders of the cut files (`sheetsN.png`), layout views (`layout-sheetsN.png`), 3D model (`model.png`) and each lid top as it might look engraved (`lid-boxN.png`, from `engrave_boxes.py`) |
+| `previews/` | PNG renders of the cut files (`sheetsN.png`), layout views (`layout-sheetsN.png`), 3D model (`model.png`) and boxes 3 and 4's lid tops as they might look engraved (`lid-box3.png`, `lid-box4.png`, from `engrave_boxes.py`) |
 
 ## The requests
 
@@ -195,6 +195,8 @@ hinge pieces, 75.6% utilization. Cut file:
     the text from the box front (at the size from box 1).*
 24. *Make another cutfile that has all three combined. Update README with
     information about the order of testing prints.*
+25. *Remove the separate adobe stock files - but you can leave them in the layouts /
+    3d model.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -479,7 +481,11 @@ piece's lower edge.
 
 The lid tops of boxes 1 and 2 are engraved with Adobe Stock illustrations. Both stock
 files are Illustrator EPS with a `.ai` extension. Each was turned into a PDF with
-Ghostscript and then into an SVG in `art/` with PyMuPDF. Box 3's lid gets three charts
+Ghostscript and then into an SVG in `art/` with PyMuPDF. The stock files are licensed,
+so they aren't in the repository: the artwork is published only as it is engraved, in
+the cut files, layouts and 3D model. To regenerate, put the two SVGs in `art/` under
+the names in the table (`.gitignore` keeps them local); without them `generate.sh`
+stops at the engraving step. Box 3's lid gets three charts
 drawn by `lid_charts.py` (see [below](#box-3-broken-charts)). Box 4's is an original
 drawing, made for this lid.
 
@@ -493,12 +499,12 @@ drawing, made for this lid.
 `engraving.py` scales each piece of art to the largest size that leaves 8 mm clear on
 the lid top, centred. Like the text, it is green filled outlines in the lid top's
 piece. To change the art or put art on another lid, set `LID_ART` in `engraving.py`.
-`engrave_boxes.py` also renders each lid top, as it might look engraved, to
-`previews/lid-boxN.png`:
+`engrave_boxes.py` also renders the lid tops of boxes 3 and 4, as they might look
+engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
+`STOCK_ART` in `engraving.py`):
 
 | | |
 |---|---|
-| ![Box 1's lid top, as it might look engraved](previews/lid-box1.png) | ![Box 2's lid top, as it might look engraved](previews/lid-box2.png) |
 | ![Box 3's lid top, as it might look engraved](previews/lid-box3.png) | ![Box 4's lid top, as it might look engraved](previews/lid-box4.png) |
 
 * **Only filled shapes.** Unfilled paths, such as the 4 corner marks in box 1's file,
@@ -518,7 +524,9 @@ piece. To change the art or put art on another lid, set `LID_ART` in `engraving.
   its neighbours. A search then moved drawings one at a time into the largest empty
   spot, keeping that spacing, until no gap is much bigger than the rest. The
   largest gap is now about half as wide as before this step. The art now fills
-  the lid at 2.39 : 1 and comes out about 8% larger than before.
+  the lid at 2.39 : 1 and comes out about 8% larger than before. The SVG to keep in
+  `art/` is this rearranged one: a fresh conversion of the stock file would bring
+  back the old layout.
 * **Which panel is the lid top.** On every box the two x × y panels are no longer
   the same: the one with the artwork is the lid top, the one with the name is the
   bottom.
@@ -551,9 +559,9 @@ piece. To change the art or put art on another lid, set `LID_ART` in `engraving.
   * Shapes are built with shapely and written out as black filled outlines, one path
     per piece, so `engraving.py` takes them as they are. To change the drawing, edit
     `draw_ideas.py` and run `generate.sh`, which runs it.
-* **Licence.** Boxes 1 and 2's artwork comes from licensed stock images. Check that the licence allows
-  publishing them, here and in the published 3D model, before pushing them to a public
-  repository. Boxes 3 and 4's art is drawn here.
+* **Licence.** Boxes 1 and 2's artwork comes from licensed stock images, so their
+  source files are kept out of the repository; it is published only engraved on the
+  lids, in the cut files, layouts and 3D model. Boxes 3 and 4's art is drawn here.
 
 #### Box 3: broken charts
 

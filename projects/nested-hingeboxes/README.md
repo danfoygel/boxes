@@ -8,7 +8,7 @@ a metal pin each. The front of each box is engraved with a title in the typewrit
 face Special Elite, and the bottom with the recipient's name and "Chrismukkah 2026"
 between a small Christmas tree and a menorah. Box 1's lid top also carries an
 ink-sketch science illustration (microscope, DNA, heart, brain and lab glassware),
-box 2's a row of black cat silhouettes, box 3's Anscombe's quartet, and
+box 2's three rows of black cat silhouettes, box 3's Anscombe's quartet, and
 box 4's a brain bursting with ideas.
 
 | Box | Outside (mm) | Front | Bottom |
@@ -199,6 +199,9 @@ hinge pieces, 75.6% utilization. Cut file:
 25. *Remove the separate adobe stock files - but you can leave them in the layouts /
     3d model.*
 26. *New design for box 3 lid - draw Anscombe's quartet.*
+27. *Modify the box 2 design to space out the cats vertically. Show me some options
+    side-by-side.* Then: *I like option D* (three rows of 5, 5 and 4). *Move this
+    cat a little bit to the left* (the ball cat at the end of the middle row).
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -494,7 +497,7 @@ drawing, made for this lid.
 | Box | Artwork | Lid top (mm) | Engraved (mm) |
 |---|---|---|---|
 | 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 154 × 74 | 138.0 × 57.7 |
-| 2 | Black cat silhouettes in 15 poses (`AdobeStock_939770434.svg`) | 162 × 89 | 146.0 × 55.0 |
+| 2 | Black cat silhouettes in 14 poses (`AdobeStock_939770434.svg`) | 162 × 89 | 146.0 × 73.0 |
 | 3 | Anscombe's quartet (`anscombes-quartet.svg`) | 170 × 104 | 154.0 × 87.9 |
 | 4 | A brain bursting with ideas, no text (`ideas.svg`) | 178 × 119 | 162.0 × 101.5 |
 
@@ -529,6 +532,17 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
   the lid at 2.39 : 1 and comes out about 8% larger than before. The SVG to keep in
   `art/` is this rearranged one: a fresh conversion of the stock file would bring
   back the old layout.
+* **Box 2's layout.** The stock file has its 14 cats in two loose rows, about
+  2.65 : 1, so on the 2.0 : 1 lid it engraved at 146.0 × 55.0 mm and left a bare
+  strip above and below. The cats are now in three rows of 5, 5 and 4, each cat
+  unchanged: as for box 1, only each path's `transform` and the canvas size differ
+  from the converted stock file. The rows were picked to let the cats be as large as
+  possible with at least 2 mm between them. Each row keeps its cats in their old
+  left-to-right order and is spread across the full width, and the rows are spread
+  evenly down the lid. The ball cat at the end of the middle row sits 4 mm in from
+  the right edge, under the round cat above it. The art now fills the lid at
+  2.0 : 1, 146.0 × 73.0 mm, with the cats at 94% of their old size and the closest
+  two about 3.4 mm apart. Again, the SVG to keep in `art/` is the rearranged one.
 * **Which panel is the lid top.** On every box the two x × y panels are no longer
   the same: the one with the artwork is the lid top, the one with the name is the
   bottom.
@@ -665,14 +679,14 @@ thickness, and change `--thickness` as well if it is far from 3 mm.
 
 ## 7. Engraving test
 
-`engrave-test.svg` (147 × 114 mm, drawn by `engrave_test_sheet.py`) tests the engraving
+`engrave-test.svg` (143 × 114 mm, drawn by `engrave_test_sheet.py`) tests the engraving
 settings before the real job. It has six pieces, each a plain cut rectangle with
 4 mm clear round its engraving:
 
 | Piece | Engraving | Piece size (mm) |
 |---|---|---|
 | Box 1 lid | The heart (fine lines) | 31 × 31 |
-| Box 2 lid | A lying cat (solid fill, with its eyes left bare) | 28.5 × 28.5 |
+| Box 2 lid | A lying cat (solid fill, with its eyes left bare) | 27 × 27 |
 | Box 3 lid | The corner of chart III: axes, ticks, X's and the fit line | 34 × 34 |
 | Box 4 lid | The light bulb and its rays | 40 × 40 |
 | Box 1 bottom | The tree, "Ember Barber", "Chrismukkah 2026" and the menorah | 105 × 28 |
@@ -713,7 +727,7 @@ kerf, and with it the best burn value, changes with them.
 
 ### All three on one sheet
 
-`all-tests.svg` (248 × 233 mm, drawn by `all_tests.py`) has the three tests on one
+`all-tests.svg` (245 × 233 mm, drawn by `all_tests.py`) has the three tests on one
 sheet, for one laser job: the engraving test at the top left, the hinge test beside
 it and the finger test below, 5 mm apart. Each is drawn by its own script, exactly
 as in its own file, and only moved; the paths are plain, with no transforms.

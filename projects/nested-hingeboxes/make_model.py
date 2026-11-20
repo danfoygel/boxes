@@ -40,7 +40,7 @@ from boxes.generators.hingebox import HingeBox  # noqa: E402
 
 import engraving  # noqa: E402
 
-T = 3.0
+T = 3.2
 LIDHEIGHT = 20.0
 EYES = 7
 SIZES = [(160, 80, 60), (168, 95, 68), (176, 110, 76), (184, 125, 84)]  # x, y, h as in generate.sh

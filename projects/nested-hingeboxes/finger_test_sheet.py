@@ -5,7 +5,7 @@ fits best.
 
 usage: finger_test_sheet.py [OUT.svg]      (default: finger-test.svg next to this script)
 
-The joints are drawn by boxes.py itself, with the generate.sh settings (3 mm and
+The joints are drawn by boxes.py itself, with the generate.sh settings (3.2 mm and
 the default finger joint, as on every corner of the boxes: 2t fingers and spaces,
 no play), at the burn values of the hinge test (burn_test_sheet.py):
 
@@ -14,8 +14,8 @@ no play), at the burn values of the hinge test (burn_test_sheet.py):
   (FingerJointEdgeCounterPart), facing each other, both cut at that value and
   engraved with it.  The pairs are in order, left to right and top row first.
 
-The engraving is filled outlines in boxes.py's etching colour (green), in the box
-engraving's font.
+The labels are single-line text in a Hershey font, engraved as lines (see
+burn_test_sheet.py).
 """
 import sys
 from pathlib import Path
@@ -27,7 +27,7 @@ LENGTH = (2 * FINGERS + 1) * 2 * T   # mm, the joint's length: FINGERS fingers, 
 HEIGHT = 9.0              # mm, each piece's height besides the joint
 COLS = 3                  # pairs per row
 GAP = 2.0                 # mm between pairs, beyond boxes.py's spacing
-LABEL = 3.0               # mm, font size of the labels
+LABEL = 3.0               # mm, digit height of the labels
 
 
 class FingerBurnTest(Engraved):

@@ -3,7 +3,7 @@
 A set of four laser-cut wooden boxes, each one sized to fit inside the next, made as
 Chrismukkah 2026 gifts. Each box is a stock boxes.py
 [HingeBox](https://boxes.hackerspace-bamberg.de/HingeBox) (`boxes/generators/hingebox.py`)
-in 3 mm plywood, with a lid on two wooden hinges built from 7 interlocking pieces and
+in 3.2 mm plywood, with a lid on two wooden hinges built from 7 interlocking pieces and
 a metal pin each. The front of each box is engraved with a title in the typewriter
 face Special Elite, and the bottom with the recipient's name and "Chrismukkah 2026"
 between a small Christmas tree and a menorah. Box 1's lid top also carries an
@@ -60,38 +60,38 @@ other pieces black, the sheet cut lines magenta ([cut colours](#cut-colours)).
 
 ### 6 sheets
 
-278 × 255 mm (10.94 × 10.04 in) each, in a 2 × 3 grid (559 × 771 mm overall). 18 spare
-hinge pieces, 79.3% utilization. Uses the least material. Cut file:
+280 × 255 mm (11.02 × 10.04 in) each, in a 2 × 3 grid (563 × 771 mm overall). 30 spare
+hinge pieces, 79.0% utilization. Uses the least material. Cut file:
 [`sheets/sheets6.svg`](sheets/sheets6.svg).
 
 ![6-sheet layout, colour-coded by box](previews/layout-sheets6.png)
 
 ### 8 sheets
 
-190 × 287 mm (7.48 × 11.30 in) each, in a 4 × 2 grid (769 × 577 mm overall). 19 spare
-hinge pieces, 77.3% utilization. Cut file: [`sheets/sheets8.svg`](sheets/sheets8.svg).
+190 × 287 mm (7.48 × 11.30 in) each, in a 4 × 2 grid (769 × 577 mm overall). 15 spare
+hinge pieces, 77.2% utilization. Cut file: [`sheets/sheets8.svg`](sheets/sheets8.svg).
 
 ![8-sheet layout, colour-coded by box](previews/layout-sheets8.png)
 
 ### 9 sheets
 
-256 × 189 mm (10.08 × 7.44 in) each, in a 3 × 3 grid (774 × 573 mm overall). 15 spare
-hinge pieces, 77.4% utilization. Cut file: [`sheets/sheets9.svg`](sheets/sheets9.svg).
+258 × 189 mm (10.16 × 7.44 in) each, in a 3 × 3 grid (780 × 573 mm overall). 6 spare
+hinge pieces, 76.4% utilization. Cut file: [`sheets/sheets9.svg`](sheets/sheets9.svg).
 
 ![9-sheet layout, colour-coded by box](previews/layout-sheets9.png)
 
 ### 10 sheets
 
-222 × 197 mm (8.74 × 7.76 in) each, in a 2 × 5 grid (447 × 997 mm overall). 3 spare
-hinge pieces, 76.7% utilization. Cut file:
+226 × 197 mm (8.90 × 7.76 in) each, in a 2 × 5 grid (455 × 997 mm overall). 17 spare
+hinge pieces, 75.7% utilization. Cut file:
 [`sheets/sheets10.svg`](sheets/sheets10.svg).
 
 ![10-sheet layout, colour-coded by box](previews/layout-sheets10.png)
 
 ### 12 sheets
 
-188 × 198 mm (7.40 × 7.80 in) each, in a 4 × 3 grid (761 × 600 mm overall). 22 spare
-hinge pieces, 75.6% utilization. Cut file:
+190 × 198 mm (7.48 × 7.80 in) each, in a 4 × 3 grid (769 × 600 mm overall). 33 spare
+hinge pieces, 75.1% utilization. Cut file:
 [`sheets/sheets12.svg`](sheets/sheets12.svg).
 
 ![12-sheet layout, colour-coded by box](previews/layout-sheets12.png)
@@ -108,7 +108,8 @@ hinge pieces, 75.6% utilization. Cut file:
 | `render_previews.js` | Renders the SVGs to PNG previews and screenshots the 3D model (Playwright + Chromium) |
 | `engraving.py` | The engraving: the words, their sizes, and their outlines in Special Elite, the tree and menorah beside the bottom text, and the lid artwork scaled to fit |
 | `engrave_boxes.py` | Adds the engraving to the box SVGs, and renders each lid top to `previews/` |
-| `fonts/` | Special Elite (`SpecialElite-Regular.ttf`, from Google Fonts) and its licence (Apache 2.0) |
+| `hershey.py` | Single-line text in the Hershey font, for the burn tests' labels |
+| `fonts/` | Special Elite (`SpecialElite-Regular.ttf`, from Google Fonts) and its licence (Apache 2.0); the Hershey Roman Simplex single-line font (`futural.jhf`) and its terms (`HERSHEY-LICENSE.txt`) |
 | `art/` | The lid artwork drawn here: Anscombe's quartet (`anscombes-quartet.svg`, box 3), drawn by `lid_charts.py`, and `ideas.svg` (box 4), drawn by `draw_ideas.py` |
 | `lid_charts.py` | Draws box 3's Anscombe's quartet into `art/` |
 | `make_model.py`, `model_template.html` | Build `model.html`, the interactive 3D model |
@@ -214,7 +215,9 @@ hinge pieces, 75.6% utilization. Cut file:
     bottom right*, their trails *left-right symmetric*, with chess and karaoke, and
     *the chess pieces a little bit smaller*. Light bulbs in the gaps were tried and
     dropped for *sparkles of various sizes*.
-29. *Change the cutting process so that I can cut one sheet at a time: replace the
+29. *Update all measurements/designs for my material - I measured it to be 3.2mm
+    thick.*
+30. *Change the cutting process so that I can cut one sheet at a time: replace the
     dividing lines between sheets with a separate rectangle around each sheet, and
     a small gap between them.*
 
@@ -237,11 +240,11 @@ From the HingeBox generator code (`CabinetHingeEdge` in `boxes/edges.py`, defaul
 
 Minimum offsets for the next smaller box (same thickness t, default hinge settings):
 
-| Dimension | Inner box | t = 3 mm |
+| Dimension | Inner box | t = 3.2 mm |
 |---|---|---|
-| x | X − 2t − gap | X − 6 − gap |
-| y | Y − 2t − 1.5t − 1t − gap = Y − 4.5t − gap | Y − 13.5 − gap |
-| h + lidheight | H + LH − 2t − gap | H + LH − 6 − gap |
+| x | X − 2t − gap | X − 6.4 − gap |
+| y | Y − 2t − 1.5t − 1t − gap = Y − 4.5t − gap | Y − 14.4 − gap |
+| h + lidheight | H + LH − 2t − gap | H + LH − 6.4 − gap |
 
 In y, 2t is the inner box's walls, 1.5t its knuckles and 1t the outer box's hinge
 pieces.
@@ -254,33 +257,33 @@ pieces.
 
 ## 2. The four boxes
 
-The chosen offsets are **8 mm for x and height, 15 mm for y**. With 3 mm material that
-leaves about 2 mm of play in x and height and 1.5 mm in y. That works for material up
-to about 3.3 mm thick; at that thickness y has no play left.
+The chosen offsets are **8 mm for x and height, 15 mm for y**. The plywood measures
+3.2 mm, which leaves 1.6 mm of play in x and height and 0.6 mm in y. That works for
+material up to about 3.3 mm thick; at that thickness y has no play left.
 
-All boxes use outside dimensions, `--thickness 3`, `--lidheight 20` and
+All boxes use outside dimensions, `--thickness 3.2`, `--lidheight 20` and
 `--CabinetHinge_eyes_per_hinge 7`. Outside mode is HingeBox's default, and
 `generate.sh` leaves it on. The closed height is split as h + 20 (see
 [Outside mode](#outside-mode) for why).
 
 Sizes are width × depth × closed height. The outside depth doesn't include the hinge
-knuckles, which stick out another 4.5 mm at the back.
+knuckles, which stick out another 4.8 mm at the back.
 
 | Box | Outside (mm) | `--h` | Outside (in) | Inside (mm) |
 |---|---|---|---|---|
-| 1 (innermost) | 160 × 80 × 80 | 60 | 6.30 × 3.15 × 3.15 | 154 × 74 × 74 |
-| 2 | 168 × 95 × 88 | 68 | 6.61 × 3.74 × 3.46 | 162 × 89 × 82 |
-| 3 | 176 × 110 × 96 | 76 | 6.93 × 4.33 × 3.78 | 170 × 104 × 90 |
-| 4 (outermost) | 184 × 125 × 104 | 84 | 7.24 × 4.92 × 4.09 | 178 × 119 × 98 |
+| 1 (innermost) | 160 × 80 × 80 | 60 | 6.30 × 3.15 × 3.15 | 153.6 × 73.6 × 73.6 |
+| 2 | 168 × 95 × 88 | 68 | 6.61 × 3.74 × 3.46 | 161.6 × 88.6 × 81.6 |
+| 3 | 176 × 110 × 96 | 76 | 6.93 × 4.33 × 3.78 | 169.6 × 103.6 × 89.6 |
+| 4 (outermost) | 184 × 125 × 104 | 84 | 7.24 × 4.92 × 4.09 | 177.6 × 118.6 × 97.6 |
 
-Inside, each box is 6 mm (2t) smaller than outside in every direction. The inside
-height is the box's h − 6 plus the 20 mm lid, for example 54 + 20 for box 1. Each box's
-outside is 2 mm narrower and 2 mm lower than the next box's inside. In depth it is
-1.5 mm short, once its knuckles (4.5 mm) and the outer box's hinge pieces (3 mm) are
-counted.
+Inside, each box is 6.4 mm (2t) smaller than outside in every direction. The inside
+height is the box's h − 6.4 plus the 20 mm lid, for example 53.6 + 20 for box 1. Each
+box's outside is 1.6 mm narrower and 1.6 mm lower than the next box's inside. In depth
+it is 0.6 mm short, once its knuckles (4.8 mm) and the outer box's hinge pieces
+(3.2 mm) are counted.
 
-With the knuckles, the outermost box takes up 184 × 129.5 × 104 mm
-(7.24 × 5.10 × 4.09 in).
+With the knuckles, the outermost box takes up 184 × 129.8 × 104 mm
+(7.24 × 5.11 × 4.09 in).
 
 ### Outside mode
 
@@ -301,12 +304,12 @@ Each box has 2 hinges, and each hinge is now built from 7 pieces instead of the
 generator's default 5: 4 attached to the box's back wall and 3 to the lid's, alternating
 on one pin. So each box has 14 hinge pieces, 56 for all four. The pieces themselves are
 unchanged. The back walls get 4 t × t holes per hinge (lid walls 3), and each hinge's
-cut-out in the wall edge is 2 × (t + play) = 6.3 mm wider. That widens the bearing
-surface on the pin from about 16 mm to about 22 mm per hinge.
+cut-out in the wall edge is 2 × (t + play) = 6.72 mm wider. That widens the bearing
+surface on the pin from about 17 mm to about 23.5 mm per hinge.
 
 Nesting is unaffected: the hinge pieces have the same shape and sit in the same
 place, so the knuckle and interior offsets above still hold. The hinges get wider, but
-the innermost box (154 mm wide inside) still has plenty of room for two of them.
+the innermost box (153.6 mm wide inside) still has plenty of room for two of them.
 
 ## 3. N equal sheets with spare hinge pieces
 
@@ -323,7 +326,8 @@ How `pack_sheets.py` builds a layout:
    piece's bounding box. It ran with the 5-piece hinges, and those sizes are kept
    (`--sheet` in `generate.sh`). A sheet grows, in 2 mm steps and smallest area
    first, only if the required pieces no longer fit. With 7-piece hinges, only the
-   8-sheet layout had to grow, from 188 × 285 to 190 × 287 mm.
+   8-sheet layout had to grow, from 188 × 285 to 190 × 287 mm. With 3.2 mm plywood
+   the other four grew too (see the takeaways below).
 2. **Spare hinge pieces at that fixed size.** The hinge pieces are identical for all
    four boxes, so any spare fits any box. Each layout is tried both ways:
    * **A:** the box pieces plus k hinge pieces are packed as rectangles, then more
@@ -357,7 +361,8 @@ The cut files have one colour per laser operation, in cutting order:
 | 4 | Sheet cut lines, one rectangle per sheet | magenta `rgb(255,0,255)` |
 
 The holes go first, so no piece is cut free and shifts before its holes are cut.
-Engraving is green `rgb(0,255,0)`, as in boxes.py. The "Box N" and "Sheet N" labels
+Engraving is green `rgb(0,255,0)`, as in boxes.py. (Only the burn tests have cyan
+`rgb(0,255,255)`, their labels, engraved as lines: see [section 6](#6-burn-tests).) The "Box N" and "Sheet N" labels
 are red `rgb(255,0,0)` and are not for cutting. In the SVG each cut path also has
 `class="outline"` or `class="hole"`, which `check_layout.py`, `compare.py` and
 `color_layouts.py` read.
@@ -372,24 +377,25 @@ table is the output of `compare.py`.
 
 | Sheets | Sheet (mm) | Sheet (in) | Grid | Overall (mm) | Overall (in) | Material (m²) | vs best | Hinge pieces | Utilization |
 |---|---|---|---|---|---|---|---|---|---|
-| **6** | **278 × 255** | **10.94 × 10.04** | **2 × 3** | **559 × 771** | **22.01 × 30.35** | **0.425** | **best** | **74 (+18 spare)** | **79.3%** |
-| 8 | 190 × 287 | 7.48 × 11.30 | 4 × 2 | 769 × 577 | 30.28 × 22.72 | 0.436 | +2.6% | 75 (+19 spare) | 77.3% |
-| 9 | 256 × 189 | 10.08 × 7.44 | 3 × 3 | 774 × 573 | 30.47 × 22.56 | 0.435 | +2.4% | 71 (+15 spare) | 77.4% |
-| 10 | 222 × 197 | 8.74 × 7.76 | 2 × 5 | 447 × 997 | 17.60 × 39.25 | 0.437 | +2.8% | 59 (+3 spare) | 76.7% |
-| 12 | 188 × 198 | 7.40 × 7.80 | 4 × 3 | 761 × 600 | 29.96 × 23.62 | 0.447 | +5.0% | 78 (+22 spare) | 75.6% |
+| **6** | **280 × 255** | **11.02 × 10.04** | **2 × 3** | **563 × 771** | **22.17 × 30.35** | **0.428** | **best** | **86 (+30 spare)** | **79.0%** |
+| 8 | 190 × 287 | 7.48 × 11.30 | 4 × 2 | 769 × 577 | 30.28 × 22.72 | 0.436 | +1.8% | 71 (+15 spare) | 77.2% |
+| 9 | 258 × 189 | 10.16 × 7.44 | 3 × 3 | 780 × 573 | 30.71 × 22.56 | 0.439 | +2.4% | 62 (+6 spare) | 76.4% |
+| 10 | 226 × 197 | 8.90 × 7.76 | 2 × 5 | 455 × 997 | 17.91 × 39.25 | 0.445 | +3.9% | 73 (+17 spare) | 75.7% |
+| 12 | 190 × 198 | 7.48 × 7.80 | 4 × 3 | 769 × 600 | 30.28 × 23.62 | 0.451 | +5.4% | 89 (+33 spare) | 75.1% |
 
 56 hinge pieces are needed (4 boxes × 2 hinges × 7).
 
 Takeaways:
 
-* **6 sheets uses the least material** and still fits 18 spare hinge pieces, enough
-  for one more box's hinges.
-* **The 7-piece hinges fit at unchanged sheet sizes everywhere except 8 sheets.** The
-  16 extra required pieces come out of the spares, so 6, 9, 10 and 12 sheets each
-  hold the same total number of hinge pieces as before.
-* **8 sheets grew by 2 mm each way** (+1.8% material). The larger sheet happened to
-  pack much better, so it now holds 19 spares instead of 8.
-* **10 sheets has only 3 spares**, the fewest of any layout.
+* **6 sheets uses the least material** and fits 30 spare hinge pieces, enough for
+  two more boxes' hinges.
+* **3.2 mm plywood made four of the sheets a little bigger.** The hinge pieces scale
+  with the thickness, so they are about 7% larger than at 3 mm, and the pieces no
+  longer fit 6, 9, 10 or 12 sheets at their stored sizes. Each grew in one direction:
+  6 sheets by 2 mm to 280 × 255, 9 by 2 mm to 258 × 189, 10 by 4 mm to 226 × 197 and
+  12 by 2 mm to 190 × 198. 8 sheets, already grown for the 7-piece hinges, still fits
+  at 190 × 287.
+* **9 sheets has only 6 spares**, the fewest of any layout.
 * How many spares fit depends on where the packer happens to leave gaps, not just on
   total free area.
 
@@ -432,12 +438,12 @@ How `make_model.py` builds it:
 2. While each wall is drawn, it records the drawing frame at the wall's inner corner.
    That turns the wall's paths into wall coordinates, so the outline (finger joints,
    hinge cut-outs and holes included) is the generator's own, not a redrawing.
-3. Each wall is extruded to 3 mm and folded into place. The hinge pieces go where the
+3. Each wall is extruded to 3.2 mm and folded into place. The hinge pieces go where the
    generator cut the t × t holes for them in the back walls, and each hinge gets a
    3 mm pin.
 
-A voxel check at 0.25 mm found no overlap between any two pieces of a box, and none
-between the boxes when nested.
+A voxel check at 0.25 mm, made when the boxes were drawn for 3 mm plywood, found no
+overlap between any two pieces of a box, and none between the boxes when nested.
 
 ## 5. Engraved text
 
@@ -449,16 +455,16 @@ layout views and the 3D model all use these same outlines.
 
 **Front.** Two lines, centred on the front wall of the box (not the lid), the top of
 the text towards the open top edge. Box 1 gets the largest font size that leaves
-12 mm clear on every side of its 54 mm high front: 15.4 mm. The other boxes scale up
+12 mm clear on every side of its 53.6 mm high front: 15.2 mm. The other boxes scale up
 from it in proportion to the height of their fronts, so the text takes up the same
 share of each front's height.
 
 | Box | Front text | Front (mm) | Font size (mm) |
 |---|---|---|---|
-| 1 | Scientific / Discoveries | 154 × 54 | 15.4 |
-| 2 | Feline / Facts | 162 × 62 | 17.7 |
-| 3 | Problematic / Data | 170 × 70 | 20.0 |
-| 4 | Exuberant / Ideas | 178 × 78 | 22.3 |
+| 1 | Scientific / Discoveries | 153.6 × 53.6 | 15.2 |
+| 2 | Feline / Facts | 161.6 × 61.6 | 17.5 |
+| 3 | Problematic / Data | 169.6 × 69.6 | 19.8 |
+| 4 | Exuberant / Ideas | 177.6 × 77.6 | 22.1 |
 
 **Bottom.** The recipient's name, then "Chrismukkah 2026", at 6 mm on all four
 (capitals about 4.1 mm high), centred. It reads right way up when you tip the box
@@ -467,10 +473,10 @@ when you orbit under the box from the front.
 
 | Box | Bottom text | Bottom (mm) |
 |---|---|---|
-| 1 | Ember Barber / Chrismukkah 2026 | 154 × 74 |
-| 2 | Leah Barber / Chrismukkah 2026 | 162 × 89 |
-| 3 | Rina Foygel Barber / Chrismukkah 2026 | 170 × 104 |
-| 4 | Mathew Barber / Chrismukkah 2026 | 178 × 119 |
+| 1 | Ember Barber / Chrismukkah 2026 | 153.6 × 73.6 |
+| 2 | Leah Barber / Chrismukkah 2026 | 161.6 × 88.6 |
+| 3 | Rina Foygel Barber / Chrismukkah 2026 | 169.6 × 103.6 |
+| 4 | Mathew Barber / Chrismukkah 2026 | 177.6 × 118.6 |
 
 **Tree and menorah.** Beside the bottom text, a line-art Christmas tree on the left
 and a nine-branch menorah (the shamash raised in the middle) on the right, the same
@@ -481,10 +487,10 @@ the ornaments filled. The menorah is 16.5 × 20.4 mm and the tree 13.5 × 20.1 m
 
 | Box | Tree to the bottom's left edge (mm) | Menorah to the bottom's right edge (mm) |
 |---|---|---|
-| 1 | 30.0 | 27.1 |
-| 2 | 34.0 | 31.1 |
-| 3 | 36.0 | 33.1 |
-| 4 | 42.0 | 39.1 |
+| 1 | 29.8 | 26.9 |
+| 2 | 33.8 | 30.9 |
+| 3 | 35.8 | 32.9 |
+| 4 | 41.8 | 38.9 |
 
 In the cut files the text and art are green (boxes.py's etching colour), filled outlines inside
 the piece it belongs to. `engrave_boxes.py` adds it to the box SVGs from the generator,
@@ -515,10 +521,10 @@ drawing, made for this lid.
 
 | Box | Artwork | Lid top (mm) | Engraved (mm) |
 |---|---|---|---|
-| 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 154 × 74 | 138.0 × 57.7 |
-| 2 | Black cat silhouettes in 14 poses (`AdobeStock_939770434.svg`) | 162 × 89 | 146.0 × 73.0 |
-| 3 | Anscombe's quartet (`anscombes-quartet.svg`) | 170 × 104 | 154.0 × 87.9 |
-| 4 | A brain with eight thought clouds, no text (`ideas.svg`) | 178 × 119 | 162.0 × 101.3 |
+| 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 153.6 × 73.6 | 137.6 × 57.5 |
+| 2 | Black cat silhouettes in 14 poses (`AdobeStock_939770434.svg`) | 161.6 × 88.6 | 145.2 × 72.6 |
+| 3 | Anscombe's quartet (`anscombes-quartet.svg`) | 169.6 × 103.6 | 153.6 × 87.6 |
+| 4 | A brain with eight thought clouds, no text (`ideas.svg`) | 177.6 × 118.6 | 161.6 × 101.0 |
 
 `engraving.py` scales each piece of art to the largest size that leaves 8 mm clear on
 the lid top, centred. Like the text, it is green filled outlines in the lid top's
@@ -560,7 +566,7 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
   left-to-right order and is spread across the full width, and the rows are spread
   evenly down the lid. The ball cat at the end of the middle row sits 4 mm in from
   the right edge, under the round cat above it. The art now fills the lid at
-  2.0 : 1, 146.0 × 73.0 mm, with the cats at 94% of their old size and the closest
+  2.0 : 1, 145.2 × 72.6 mm, with the cats at 93.5% of their old size and the closest
   two about 3.4 mm apart. Again, the SVG to keep in `art/` is the rearranged one.
 * **Which panel is the lid top.** On every box the two x × y panels are no longer
   the same: the one with the artwork is the lid top, the one with the name is the
@@ -617,7 +623,7 @@ y = 3 + x/2, but they look nothing alike: a loose cloud, a smooth curve, a strai
 line with one outlier, and a single column with one far point that sets the slope.
 
 `lid_charts.py` draws them with shapely as filled outlines (0.7 mm axes, 0.5 mm fit
-lines, 2.2 mm X's of 0.7 mm strokes) on a 170 × 104 mm face, box 3's lid top, and
+lines, 2.2 mm X's of 0.7 mm strokes) on a 169.6 × 103.6 mm face, box 3's lid top, and
 writes `art/anscombes-quartet.svg`. The charts share one scale, x 0–20 and y 0–14 on
 70 × 38 mm axes, ticks at x = 5, 10, 15 and y = 4, 8, 12, with no labels. Each fit
 line is worked out from that chart's own points. Their ink is drawn just inside the
@@ -632,16 +638,24 @@ for the hinges and one for the finger joints between the walls. Both use 11 burn
 values from 0.075 to 0.125 mm in steps of 0.005 mm. The burn values are engraved as
 ".075" for 0.075 mm.
 
+The labels are single-line text in the Hershey Roman Simplex font (`hershey.py`,
+`fonts/futural.jhf`), not filled outlines like the boxes' engraving: each stroke is
+traced once, which is quick and stays legible at these sizes (1.6 mm tall on the
+hinge pieces, 2.2 mm on the strip, 3 mm on the finger joint pieces). They are cyan
+`rgb(0,255,255)`, so they get their own layer in the laser software: set it to
+line (vector) engraving, at low power, not fill. A fill layer skips them, as they
+are open lines.
+
 ### Hinges
 
-`burn-test.svg` (a 94 × 28 mm strip plus pieces, 96 × 60 mm in all, drawn by
+`burn-test.svg` (a 94 × 28 mm strip plus pieces, 102 × 62 mm in all, drawn by
 `burn_test_sheet.py`) tests the hinges. It has the same hinges as the boxes, drawn by
 boxes.py with the `generate.sh` settings but cut down to one eye each, at 11 burn
 values from 0.075 to 0.125 mm in steps of 0.005 mm:
 
 * **A strip with a row of 11 hinges along one long edge**, 8 mm apart. Each one is
   the box side of a one-eye hinge, as on a box's back wall: the slot in the edge for
-  the eye and one 3 × 3 mm hole for a hinge piece. Each hinge is cut at its own burn
+  the eye and one 3.2 × 3.2 mm hole for a hinge piece. Each hinge is cut at its own burn
   value, engraved above it (".075" is 0.075 mm), from 0.075 at the left to 0.125 at
   the right.
 * **Below it, one hinge piece per burn value**, in the same order, nested in pairs
@@ -658,9 +672,9 @@ A bigger value makes the holes smaller and the pieces bigger:
 
 | | Drawn size | At 0.075 | At 0.1 | At 0.125 |
 |---|---|---|---|---|
-| Hinge hole | 3 − 2 × burn | 2.85 mm | 2.80 mm | 2.75 mm |
-| Neck of a piece (goes through the hole) | 3 + 2 × burn | 3.15 mm | 3.20 mm | 3.25 mm |
-| Notch in a piece (takes the 3 mm wall) | 3 − 2 × burn | 2.85 mm | 2.80 mm | 2.75 mm |
+| Hinge hole | 3.2 − 2 × burn | 3.05 mm | 3.00 mm | 2.95 mm |
+| Neck of a piece (goes through the hole) | 3.2 + 2 × burn | 3.35 mm | 3.40 mm | 3.45 mm |
+| Notch in a piece (takes the 3.2 mm wall) | 3.2 − 2 × burn | 3.05 mm | 3.00 mm | 2.95 mm |
 | Pin hole | 3.2 − 2 × burn | 3.05 mm | 3.00 mm | 2.95 mm |
 
 To read it, fit each piece into the hole with its own value, as on a box. The best
@@ -675,10 +689,10 @@ pieces at the same burn value.
 
 ### Finger joints
 
-`finger-test.svg` (206 × 114 mm, drawn by `finger_test_sheet.py`) tests the finger joints
+`finger-test.svg` (219 × 116 mm, drawn by `finger_test_sheet.py`) tests the finger joints
 that hold every corner of the boxes together. They are boxes.py's default joint,
-which `generate.sh` keeps: 6 mm (2t) fingers and 6 mm spaces, with no play. For
-each burn value there is a pair of pieces, 66 mm long and engraved with the value:
+which `generate.sh` keeps: 6.4 mm (2t) fingers and 6.4 mm spaces, with no play. For
+each burn value there is a pair of pieces, 70.4 mm long and engraved with the value:
 
 * **An "f" piece**, with five fingers along its bottom edge.
 * **Below it, the matching "F" piece**, with the gaps for those fingers along its
@@ -689,22 +703,23 @@ pair's burn value, so a bigger value makes the fingers wider and the gaps narrow
 
 | | Drawn size | At 0.075 | At 0.1 | At 0.125 |
 |---|---|---|---|---|
-| Finger | 6 + 2 × burn | 6.15 mm | 6.20 mm | 6.25 mm |
-| Gap | 6 − 2 × burn | 5.85 mm | 5.80 mm | 5.75 mm |
+| Finger | 6.4 + 2 × burn | 6.55 mm | 6.60 mm | 6.65 mm |
+| Gap | 6.4 − 2 × burn | 6.25 mm | 6.20 mm | 6.15 mm |
 
 To read it, push each pair together at a right angle, as at a box corner. The best
 value is the smallest one where the joint holds without glue. As with the hinges,
 the fit depends on the sum of the two pieces' values, and the boxes cut both at
-the same value. The fingers are 3 mm deep, the drawn thickness, so plywood that is
-thicker or thinner than 3 mm leaves them sunk or standing proud at the corner.
+the same value. The fingers are 3.2 mm deep, the drawn thickness, so plywood that is
+thicker or thinner than 3.2 mm leaves them sunk or standing proud at the corner.
 
 ### Using the results
 
 The boxes cut everything at one burn value, so pick one that suits both the hinges
 and the finger joints. Then set `--burn` in step 1 of `generate.sh` and `BURN` in
-`engrave_boxes.py` to it, and rerun `generate.sh`. Both tests use 3 mm for the wall
-thickness, so the plywood's real thickness affects how they fit too. Check that
-thickness, and change `--thickness` as well if it is far from 3 mm.
+`engrave_boxes.py` to it, and rerun `generate.sh`. Both tests use 3.2 mm for the wall
+thickness, the measured thickness of the plywood, which affects how they fit too. If
+a new batch measures differently, change the thickness as well
+([Regenerating](#regenerating) lists where).
 
 ## 7. Engraving test
 
@@ -719,7 +734,7 @@ settings before the real job. It has six pieces, each a plain cut rectangle with
 | Box 3 lid | The corner of chart III: axes, ticks, X's and the fit line | 34 × 34 |
 | Box 4 lid | The karaoke cloud: the mic's mesh and the notes | 34 × 34 |
 | Box 1 bottom | The tree, "Ember Barber", "Chrismukkah 2026" and the menorah | 105 × 28 |
-| Box 1 front | "Scientific Discoveries" at 15.4 mm | 103 × 38 |
+| Box 1 front | "Scientific Discoveries" at 15.2 mm | 101 × 38 |
 
 The engraving is the boxes' own, at the same size: `engrave_test_sheet.py` lays it out
 with `engraving.py` on the faces of the box SVGs, as `engrave_boxes.py` does, and
@@ -741,9 +756,10 @@ Cut the tests one at a time, in this order, on scraps of the plywood for the box
    rectangles, so they show whether the cut goes cleanly through the plywood
    without charring it. The burn tests depend on both. The kerf changes with the cut
    settings (power, speed, focus and passes), and the burn values on the burn
-   tests are engraved small (2.4–3 mm), so they read best at good settings.
+   tests are engraved small (1.6–3 mm, as single lines), so they read best at good
+   settings.
 2. **The hinge burn test** (`burn-test.svg`, [section 6](#hinges)), at the cut
-   settings from step 1. It is the smallest test (96 × 60 mm) and gives a first
+   settings from step 1. It is the smallest test (102 × 62 mm) and gives a first
    burn value.
 3. **The finger joint test** (`finger-test.svg`, [section 6](#finger-joints)), at
    the same settings. It checks that value on the corners of the boxes. Choose one
@@ -756,7 +772,7 @@ kerf, and with it the best burn value, changes with them.
 
 ### All three on one sheet
 
-`all-tests.svg` (238 × 227 mm, drawn by `all_tests.py`) has the three tests on one
+`all-tests.svg` (245 × 229 mm, drawn by `all_tests.py`) has the three tests on one
 sheet, for one laser job: the engraving test at the top left, the hinge test beside
 it and the finger test below, 5 mm apart. Each is drawn by its own script, exactly
 as in its own file, and only moved; the paths are plain, with no transforms.
@@ -793,8 +809,8 @@ again (`burn-test.svg` and `finger-test.svg` on their own).
   `engrave-test.svg` ([section 8](#8-the-order-of-the-tests) gives the order), or
   `all-tests.svg` with all three at once.
 * Each box needs two metal hinge pins about 3 mm thick, for example cut-off nails; the
-  holes are 3.2 mm. With 7 pieces per hinge each pin spans about 22 mm of hinge
-  pieces (7 × 3.15 mm). Cut the pins to that length: they are captured once the hinge
+  holes are 3.2 mm. With 7 pieces per hinge each pin spans about 23.5 mm of hinge
+  pieces (7 × 3.36 mm). Cut the pins to that length: they are captured once the hinge
   is assembled.
 
 ## Regenerating
@@ -825,5 +841,8 @@ labels, and the whole of `generate.sh` takes seconds. Set `REPACK=1` to pack fro
 scratch anyway.
 
 To change sizes, thickness, lid height or hinge pieces, edit step 1 of `generate.sh`.
+The thickness is also `T` in `engrave_boxes.py`, `make_model.py` and
+`burn_test_sheet.py` (which the other test sheets use), and box 3's lid face, `W, H`
+in `lid_charts.py`, is 2t smaller than the box: change them all together.
 To search sheet sizes from scratch instead of starting from the stored ones, drop
 `--sheet` in step 2 (10–15 minutes per layout).

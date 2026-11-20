@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """Check a multi-sheet cut file: no two pieces closer than GAP, every piece at
-least EDGE inside its sheet.  Works from the SVG alone (real outlines).
+least EDGE inside its sheet, and no two sheets' cut lines closer than
+SHEET_GAP.  Works from the SVG alone (real outlines).
 
 usage: check_layout.py SHEETS.svg [...]
 """
-import math
 import re
 import sys
 import xml.etree.ElementTree as ET
 
 from shapely import affinity
-from shapely.geometry import Polygon, box
+from shapely.geometry import Polygon
 from shapely.strtree import STRtree
 from svgpathtools import parse_path
 
-GAP, EDGE, TOL = 3.0, 5.0, 0.05
+GAP, EDGE, SHEET_GAP, TOL = 3.0, 5.0, 3.0, 0.05
 
 
 def apply_transform(poly, t):
@@ -38,11 +38,8 @@ def outline(d):
 
 def check(f):
     root = ET.parse(f).getroot()
-    cut = [g for g in root if g.get("id") == "sheet-cut-lines"][0][0].get("d")
-    TW, TH = float(root.get("width")[:-2]), float(root.get("height")[:-2])
-    cols = len(re.findall(r"M [\d.]+ 0 V", cut)) + 1
-    rows = len(re.findall(r"M 0 [\d.]+ H", cut))
-    W, H = TW / cols, TH / rows
+    cuts = [g for g in root if g.get("id") == "sheet-cut-lines"][0]
+    sheets = [outline(p.get("d")) for p in cuts]     # one closed rectangle per sheet
     pieces = []
     for g in root:
         if not g.tag.endswith("g") or g.get("id") == "sheet-cut-lines":
@@ -51,19 +48,23 @@ def check(f):
             if p.tag.endswith("path") and p.get("class") == "outline":
                 pieces.append(apply_transform(outline(p.get("d")), g.get("transform", "")))
     problems = []
+    for i, a in enumerate(sheets):
+        for j in range(i + 1, len(sheets)):
+            if a.exterior.distance(sheets[j].exterior) < SHEET_GAP - TOL:
+                problems.append(f"sheets {i + 1} and {j + 1} only "
+                                f"{a.exterior.distance(sheets[j].exterior):.2f} mm apart")
     for i, poly in enumerate(pieces):
-        cx, cy = poly.centroid.x, poly.centroid.y
-        sx, sy = math.floor(cx / W), math.floor(cy / H)
-        inner = box(sx * W + EDGE - TOL, sy * H + EDGE - TOL,
-                    (sx + 1) * W - EDGE + TOL, (sy + 1) * H - EDGE + TOL)
-        if not inner.contains(poly):
-            problems.append(f"piece {i} not {EDGE} mm inside sheet ({sx},{sy})")
+        s = next((s for s in range(len(sheets)) if sheets[s].contains(poly.centroid)), None)
+        if s is None:
+            problems.append(f"piece {i} is on no sheet")
+        elif not sheets[s].buffer(-EDGE + TOL, join_style="mitre").contains(poly):
+            problems.append(f"piece {i} not {EDGE} mm inside sheet {s + 1}")
     tree = STRtree(pieces)
     for i, poly in enumerate(pieces):
         for j in tree.query(poly.buffer(GAP - TOL)):
             if j > i and pieces[j].distance(poly) < GAP - TOL:
                 problems.append(f"pieces {i} and {j} only {pieces[j].distance(poly):.2f} mm apart")
-    print(f"{f}: {len(pieces)} pieces, {'OK' if not problems else f'{len(problems)} problems'}")
+    print(f"{f}: {len(sheets)} sheets, {len(pieces)} pieces, {'OK' if not problems else f'{len(problems)} problems'}")
     for p in problems[:10]:
         print("   ", p)
     return not problems

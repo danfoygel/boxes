@@ -69,12 +69,12 @@ def main():
                     key=lambda p: int(re.findall(r"\d+", p.name)[0])):
         root, area, hinges = file_info(f)
         TW, TH = mm(root, "width"), mm(root, "height")
-        d = [g for g in root if g.get("id") == "sheet-cut-lines"][0][0].get("d")
-        # d = outer border "M 0 0 H .. V .. H 0 Z", then "M x 0 V .." per inner column
-        # line and "M 0 y H .." per inner row line
-        cols = len(re.findall(r"M [\d.]+ 0 V", d)) + 1
-        rows_ = len(re.findall(r"M 0 [\d.]+ H", d))   # also matches the border's "M 0 0 H"
-        rows.append((cols * rows_, TW / cols, TH / rows_, cols, rows_, TW, TH, area, hinges))
+        # one closed rectangle per sheet: (x0, x1, y0, y1) each
+        cuts = [parse_path(p.get("d")).bbox()
+                for p in [g for g in root if g.get("id") == "sheet-cut-lines"][0]]
+        x0, x1, y0, y1 = cuts[0]
+        cols, rows_ = len({round(c[0]) for c in cuts}), len({round(c[2]) for c in cuts})
+        rows.append((len(cuts), x1 - x0, y1 - y0, cols, rows_, TW, TH, area, hinges))
     best = min(n * w * h for n, w, h, *_ in rows)
     needed = needed_hinges()
     print("| Sheets | Sheet (mm) | Sheet (in) | Grid | Overall (mm) | Overall (in) "

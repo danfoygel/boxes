@@ -9,7 +9,7 @@ face Special Elite, and the bottom with the recipient's name and "Chrismukkah 20
 between a small Christmas tree and a menorah. Box 1's lid top also carries an
 ink-sketch science illustration (microscope, DNA, heart, brain and lab glassware),
 box 2's three rows of black cat silhouettes, box 3's Anscombe's quartet, and
-box 4's a brain bursting with ideas.
+box 4's a brain with eight thought clouds of things its owner loves doing.
 
 | Box | Outside (mm) | Front | Bottom |
 |---|---|---|---|
@@ -159,7 +159,7 @@ hinge pieces, 75.6% utilization. Cut file:
 16. *For box 4 lid, design an SVG that's inspired by this design* (a stock clip-art
     brain bursting with a light bulb, gears and speech bubbles). *However, I want it to
     have a wider aspect ratio to better fit the lid, and absolutely no text, just
-    graphics.*
+    graphics.* Later replaced (request 28).
 17. *Make the tree and menorah on the bottom a little smaller, and bring them closer
     to the text.*
 18. *Make an SVG for the lid top of the "Problematic Data" box that shows a variety of
@@ -202,6 +202,16 @@ hinge pieces, 75.6% utilization. Cut file:
 27. *Modify the box 2 design to space out the cats vertically. Show me some options
     side-by-side.* Then: *I like option D* (three rows of 5, 5 and 4). *Move this
     cat a little bit to the left* (the ball cat at the end of the middle row).
+28. *Update the box 4 lid design. Keep the brain in the center. Add 6 thought bubbles
+    spread around the canvas … Remove everything else.* Then: *images representing six
+    things in those bubbles - golf, sailing, skiing, biking, hiking, soccer … clearly
+    recognizable at a small size*, picked from grids of candidates. Then: *remove that
+    little half-circle shape from inside the bubbles. Make the bubbles 20% bigger … Move
+    the bubbles so they're approximately the same distance from the edge of the
+    brain*, and then *further away*. Then *two more bubbles on the bottom left and
+    bottom right*, their trails *left-right symmetric*, with chess and karaoke, and
+    *the chess pieces a little bit smaller*. Light bulbs in the gaps were tried and
+    dropped for *sparkles of various sizes*.
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -499,7 +509,7 @@ drawing, made for this lid.
 | 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 154 × 74 | 138.0 × 57.7 |
 | 2 | Black cat silhouettes in 14 poses (`AdobeStock_939770434.svg`) | 162 × 89 | 146.0 × 73.0 |
 | 3 | Anscombe's quartet (`anscombes-quartet.svg`) | 170 × 104 | 154.0 × 87.9 |
-| 4 | A brain bursting with ideas, no text (`ideas.svg`) | 178 × 119 | 162.0 × 101.5 |
+| 4 | A brain with eight thought clouds, no text (`ideas.svg`) | 178 × 119 | 162.0 × 101.3 |
 
 `engraving.py` scales each piece of art to the largest size that leaves 8 mm clear on
 the lid top, centred. Like the text, it is green filled outlines in the lid top's
@@ -553,15 +563,15 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
   hatching inside the drawings is only 0.05–0.08 mm. Engrave at 300 DPI or finer, and
   expect the hatching to soften into shading. In box 2's art the white contour lines
   inside the cats are about 0.1 mm wide and may close up. The eyes are large enough
-  to come out clearly. In box 4's art the outlines come out about 1.25 mm wide and the
-  detail lines 0.6–0.9 mm. Its finest parts are the bulb's filament and wires (about
-  0.3 mm) and the bubbles in the flask's liquid (about 0.6 mm across), which may fill
-  in; the rest engraves cleanly at any usual DPI.
+  to come out clearly. In box 4's art the outlines come out about 1.3 mm wide and the
+  detail lines 0.6–0.9 mm. Its finest parts are the soccer boot's laces (about
+  0.3 mm), the mic's mesh and the slit under the rook's battlements (about 0.4 mm),
+  which may fill in, and the sparkles' points, which will round off; the rest
+  engraves cleanly at any usual DPI.
 * **Box 4's drawing.** `art/draw_ideas.py` draws it: a brain in true side view, with
-  lines fanning out of its top between a light bulb, three meshing gears, a speech
-  bubble with a bubbling lab flask, a thought cloud, a speech bubble with a sparkle, a
-  signal, lightning, an atom, a paper plane, stars and confetti. It was drawn for the
-  lid's shape, about 1.6 : 1, from a stock clip-art idea, without any of its text.
+  eight thought clouds fanned round it, each holding a small picture of something its
+  owner loves doing (hiking, golf, skiing, sailing, biking, soccer, chess and
+  karaoke), and sparkles in the gaps. It is drawn for the lid's shape, about 1.6 : 1.
   * The brain's main grooves are where they are on a real brain (the lateral fissure,
     the central sulcus and its neighbours, the frontal, temporal and intraparietal
     sulci). The smaller folds are grown from the notches in its outline and then into
@@ -569,9 +579,19 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
     drawing.
   * Outlines are an even 1.2 mm; inner detail is drawn with a brush that tapers to a
     point, so it reads as inked by hand.
-  * Each burst line is shortened until it clears everything near it, the bulb's glow
-    lines that would touch something are left out, and the confetti goes only where
-    there is room.
+  * The six upper clouds are each 18 mm from the brain at their nearest, at angles
+    chosen so that neighbouring clouds are evenly spaced, about 13 mm apart, and each
+    trails two circles towards the nearest point of the brain. The two bottom clouds
+    are instead mirror images of each other across the middle of the brain, which
+    isn't symmetric (the cerebellum sticks out at the back), so the bottom-left one is
+    about 19 mm from the brain and the bottom-right one about 12 mm; their trails rise
+    at 20°.
+  * Each picture is simple filled shapes and lines, scaled up as far as it fits inside
+    its cloud; the chess pieces are then taken down to 85%. The clouds on the left are
+    mirrored, with their pictures still the right way round.
+  * The sparkles go in biggest first, each where it is farthest from everything
+    already drawn and, a little less, from the lid's edge, at least 2.5 mm clear of
+    everything.
   * Shapes are built with shapely and written out as black filled outlines, one path
     per piece, so `engraving.py` takes them as they are. To change the drawing, edit
     `draw_ideas.py` and run `generate.sh`, which runs it.
@@ -679,7 +699,7 @@ thickness, and change `--thickness` as well if it is far from 3 mm.
 
 ## 7. Engraving test
 
-`engrave-test.svg` (143 × 114 mm, drawn by `engrave_test_sheet.py`) tests the engraving
+`engrave-test.svg` (137 × 108 mm, drawn by `engrave_test_sheet.py`) tests the engraving
 settings before the real job. It has six pieces, each a plain cut rectangle with
 4 mm clear round its engraving:
 
@@ -688,7 +708,7 @@ settings before the real job. It has six pieces, each a plain cut rectangle with
 | Box 1 lid | The heart (fine lines) | 31 × 31 |
 | Box 2 lid | A lying cat (solid fill, with its eyes left bare) | 27 × 27 |
 | Box 3 lid | The corner of chart III: axes, ticks, X's and the fit line | 34 × 34 |
-| Box 4 lid | The light bulb and its rays | 40 × 40 |
+| Box 4 lid | The karaoke cloud: the mic's mesh and the notes | 34 × 34 |
 | Box 1 bottom | The tree, "Ember Barber", "Chrismukkah 2026" and the menorah | 105 × 28 |
 | Box 1 front | "Scientific Discoveries" at 15.4 mm | 103 × 38 |
 
@@ -700,7 +720,7 @@ single shape, so its sample is the art cut to a rectangle at chart III's corner,
 which cuts only the axes and the fit line.
 
 Engrave it on a scrap of the same plywood, at the settings you plan to use, and
-change them until the cat's eyes stay open, the heart's and the bulb's fine lines
+change them until the cat's eyes stay open, the heart's fine lines and the mic's mesh
 come out clean, and the letters are crisp without burning at the edges.
 
 ## 8. The order of the tests
@@ -727,7 +747,7 @@ kerf, and with it the best burn value, changes with them.
 
 ### All three on one sheet
 
-`all-tests.svg` (245 × 233 mm, drawn by `all_tests.py`) has the three tests on one
+`all-tests.svg` (238 × 227 mm, drawn by `all_tests.py`) has the three tests on one
 sheet, for one laser job: the engraving test at the top left, the hinge test beside
 it and the finger test below, 5 mm apart. Each is drawn by its own script, exactly
 as in its own file, and only moved; the paths are plain, with no transforms.

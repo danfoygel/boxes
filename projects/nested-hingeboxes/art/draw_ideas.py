@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Draw art/ideas.svg, the lid artwork for box 4 ("Exuberant Ideas").
 
-A brain with ideas bursting out of it in a wide fan: a light bulb, gears, speech
-and thought bubbles (one with a lab flask), a signal, lightning, an atom, a paper plane, stars and
-confetti.  No text.
+A brain with eight thought clouds fanned round it, each with a small picture of
+something its owner loves doing: hiking, golf, skiing, sailing, biking, soccer,
+chess and karaoke, with sparkles in the gaps.  No text.
 
 Everything is built as shapely shapes in mm on a 160 x 100 canvas (y down) and
 written out as black filled outlines, one path per piece, outline anticlockwise
@@ -25,7 +25,7 @@ import shapely
 from shapely import affinity
 from shapely.geometry import LineString, Point, Polygon, box
 from shapely.geometry.polygon import orient
-from shapely.ops import unary_union
+from shapely.ops import nearest_points, unary_union
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "ideas.svg"
@@ -92,15 +92,6 @@ def arc(cx, cy, r, a0, a1, n=24):
              cy + r * math.sin(math.radians(a0 + (a1 - a0) * k / n))) for k in range(n + 1)]
 
 
-def star(cx, cy, r, points=5, inner=0.45, rot=-90.0, round_=0.25):
-    pts = []
-    for k in range(2 * points):
-        a = math.radians(rot + 180 * k / points)
-        rr = r if k % 2 == 0 else r * inner
-        pts.append((cx + rr * math.cos(a), cy + rr * math.sin(a)))
-    return Polygon(pts).buffer(-round_).buffer(round_)
-
-
 def twinkle(cx, cy, r):
     """A four-pointed sparkle with curved sides."""
     pts = []
@@ -119,10 +110,6 @@ def dot(cx, cy, r):
 def ellipse(cx, cy, rx, ry, rot=0.0):
     e = affinity.scale(Point(0, 0).buffer(1, quad_segs=32), rx, ry, origin=(0, 0))
     return affinity.translate(affinity.rotate(e, rot, origin=(0, 0)), cx, cy)
-
-
-def place(geoms, at, rot=0.0):
-    return [affinity.translate(affinity.rotate(g, rot, origin=(0, 0)), *at) for g in geoms]
 
 
 # --- the brain -----------------------------------------------------------------
@@ -286,251 +273,314 @@ for _ in range(80):
     ink.append(brush(pts, LINE, 0.18, 0.18))
 
 
-# --- the light bulb --------------------------------------------------------------
-# Drawn upright around the centre of the glass, then tipped back to the upper left.
-R = 12.0
-glass = [(R * math.cos(math.radians(a)), R * math.sin(math.radians(a))) for a in range(40, -221, -20)]
-glass = Polygon(spline(glass + [(-6.6, 13), (-5.3, 18), (5.3, 18), (6.6, 13)], closed=True))
-bulb = [stroke(glass, BOLD)]
-bulb.append(brush(arc(0, 0, R - 3.2, 192, 252), 1.5, 0.3, 0.3))     # shine
-bulb.append(brush(arc(0, 0, R - 2.6, 20, 62), 0.7, 0.4, 0.4))       # shade on the far side
-# glass stem, support wires and a coiled filament
-bulb.append(brush([(-2.4, 18), (-1.2, 10.5)], FINE))
-bulb.append(brush([(2.4, 18), (1.2, 10.5)], FINE))
-bulb.append(brush([(-1.2, 10.5), (-3.4, 5.2)], 0.45))
-bulb.append(brush([(1.2, 10.5), (3.4, 5.2)], 0.45))
-coil = [(-3.4 + 6.8 * t - 0.75 * math.sin(2 * math.pi * 5 * t), 5.2 - 1.1 * math.sin(math.pi * t)
-         - 1.0 * math.cos(2 * math.pi * 5 * t) + 1.0) for t in (k / 200 for k in range(201))]
-bulb.append(brush(coil, 0.42))
-# screw base: three threads, then the contact
-for k, y in enumerate((19.6, 22.1, 24.6)):
-    half = 5.6 - 0.35 * k
-    bulb.append(LineString([(-half, y), (half, y + 0.5)]).buffer(0.95, quad_segs=8))
-bulb.append(Polygon(spline([(-3.0, 26.2), (-2.2, 27.9), (0, 28.6), (2.2, 27.9), (3.0, 26.2)]) +
-                    [(-3.0, 26.2)]).buffer(0.25))
-BULB_C, BULB_TILT, BULB_SCALE = (40, 23), -16, 0.64
-BULB_INK = place([affinity.scale(g, BULB_SCALE, BULB_SCALE, origin=(0, 0)) for g in bulb], BULB_C, BULB_TILT)
-ink += BULB_INK
-# its glow, added once everything else is placed (see below), so that a glow
-# line that would touch something is left out
-GLOW = []
-for k, a in enumerate(range(-160, 30, 19)):
-    a = math.radians(a + BULB_TILT)
-    r0, r1 = (15.3, 21) if k % 2 == 0 else (15.8, 19)
-    GLOW.append(brush([(BULB_C[0] + BULB_SCALE * r * math.cos(a), BULB_C[1] + BULB_SCALE * r * math.sin(a))
-                       for r in (r0, r1)], 1.0, 0.0, 0.6))
+# --- what the brain is thinking about ------------------------------------------------
+# Eight small pictures, one per thought cloud.  Each is drawn about 11 x 8 mm,
+# centred on the origin, then scaled to fill its cloud (see fit_in_cloud).
+THIN = 0.5    # mm, the finest lines in the pictures
 
 
-# --- gears -----------------------------------------------------------------------
-MOD = 1.3
+def ln(pts, w=0.7):
+    return stroke(list(pts), w)
 
 
-def gear(c, teeth, rot, style):
-    cx, cy = c
-    rp = MOD * teeth / 2
-    pts = []
-    for i in range(teeth):
-        a = math.radians(rot) + 2 * math.pi * i / teeth
-        p = math.pi / teeth
-        for da, r in ((-0.6, rp - 0.75 * MOD), (-0.36, rp + 0.8 * MOD), (0.36, rp + 0.8 * MOD),
-                      (0.6, rp - 0.75 * MOD)):
-            pts.append((cx + r * math.cos(a + da * p), cy + r * math.sin(a + da * p)))
-    body = Polygon(pts).buffer(-0.3).buffer(0.3)
-    if style == "holes":
-        body = body.difference(dot(cx, cy, rp * 0.2))
-        for i in range(5):
-            a = math.radians(rot) + 2 * math.pi * (i + 0.5) / 5
-            body = body.difference(dot(cx + rp * 0.55 * math.cos(a), cy + rp * 0.55 * math.sin(a), rp * 0.19))
-    elif style == "ring":
-        body = body.difference(dot(cx, cy, rp * 0.6)).union(stroke(Point(cx, cy).buffer(rp * 0.3), LINE))
-    else:
-        body = body.difference(dot(cx, cy, rp * 0.36))
-    return body, rp
+def poly(pts, r=0.0):
+    """A polygon, its corners rounded by r."""
+    p = Polygon(pts)
+    return p.buffer(-r).buffer(r) if r else p
 
 
-GA = (112, 20)
-ga, ra = gear(GA, 12, 0, "holes")
-ink.append(ga)
-for teeth, ang, style in ((8, 52, "ring"), (6, -36, "plain")):
-    rb = MOD * teeth / 2
-    th = math.radians(ang)
-    c = (GA[0] + (ra + rb + 0.5) * math.cos(th), GA[1] + (ra + rb + 0.5) * math.sin(th))
-    # turned so that its teeth fall between A's where they meet
-    ink.append(gear(c, teeth, ang + 180 + 180 / teeth + ang * 12 / teeth, style)[0])
+def rect(x0, y0, x1, y1, r=0.0):
+    return poly([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], r)
 
 
-# --- bubbles -----------------------------------------------------------------------
-def speech(cx, cy, rx, ry, tail):
-    body = ellipse(cx, cy, rx, ry)
-    tx, ty = tail
-    dx, dy = tx - cx, ty - cy
+def ring(cx, cy, r, w=0.7):
+    return stroke(Point(cx, cy).buffer(r, quad_segs=24), w)
+
+
+def wave(x0, x1, y, amp=0.35, lam=2.4, w=THIN):
+    n = max(8, int((x1 - x0) / 0.2))
+    return ln([(x0 + (x1 - x0) * k / n, y + amp * math.sin(2 * math.pi * (x1 - x0) * k / n / lam))
+               for k in range(n + 1)], w)
+
+
+def moved(geoms, dx, dy, rot=0.0, s=1.0):
+    """geoms scaled by s and turned by rot degrees about the origin, then moved."""
+    return [affinity.translate(affinity.rotate(affinity.scale(g, s, s, origin=(0, 0)), rot, origin=(0, 0)), dx, dy)
+            for g in geoms]
+
+
+def unit(a, b):
+    dx, dy = b[0] - a[0], b[1] - a[1]
     n = math.hypot(dx, dy)
-    ux, uy = dx / n, dy / n
-    base = 0.42 * min(rx, ry)
-    tri = Polygon([(cx + ux * 0.5 * rx - uy * base, cy + uy * 0.5 * ry + ux * base),
-                   (cx + ux * 0.5 * rx + uy * base, cy + uy * 0.5 * ry - ux * base), (tx, ty)])
-    return unary_union([body, tri]).buffer(0.8).buffer(-0.8)
+    return dx / n, dy / n
 
 
-def shine(cx, cy, rx, ry):
-    """A short highlight inside the upper left of an oval."""
-    pts = [(cx + 0.72 * rx * math.cos(math.radians(a)), cy + 0.66 * ry * math.sin(math.radians(a)))
-           for a in range(195, 246, 3)]
-    return brush(pts, 0.9, 0.35, 0.35)
+def figure(head, limbs, w=0.8, hr=0.85):
+    """A stick figure: a round head and limbs, each a list of points."""
+    return [dot(*head, hr)] + [ln(j, w) for j in limbs]
 
 
-def flask(cx, cy, h):
-    """A conical lab flask h mm tall, half full, bubbling."""
-    k = h / 8
-    body = Polygon([(cx + k * x, cy + k * y) for x, y in (
-        (-1.1, -4), (1.1, -4), (1.1, -1.2), (3.6, 3.2), (3.6, 4), (-3.6, 4), (-3.6, 3.2), (-1.1, -1.2))])
-    body = body.buffer(-0.35 * k).buffer(0.35 * k)
-    out = [stroke(body, FINE), brush([(cx - 1.7 * k, cy - 4 * k), (cx + 1.7 * k, cy - 4 * k)], 0.75)]
-    liquid = body.buffer(-0.6 * k).intersection(box(cx - 5 * k, cy + 0.9 * k, cx + 5 * k, cy + 5 * k))
-    for bx, by, br in ((-1.2, 2.6, 0.45), (0.9, 1.9, 0.35), (1.6, 3.1, 0.3)):
-        liquid = liquid.difference(dot(cx + bx * k, cy + by * k, br * k))
-    out.append(liquid)
-    for bx, by, br in ((0.3, -5.3, 0.45), (-0.6, -6.6, 0.32)):
-        out.append(stroke(Point(cx + bx * k, cy + by * k).buffer(br * k), 0.4))
+def soccer_ball(cx, cy, r, w=0.7):
+    """The middle pentagon, the five round it cut off by the edge, and the seams between."""
+    out = [ring(cx, cy, r, w)]
+    inner = Point(cx, cy).buffer(r - w / 2)
+    pr = 0.36 * r
+    out.append(Polygon([(cx + pr * math.cos(math.radians(-90 + 72 * k)),
+                         cy + pr * math.sin(math.radians(-90 + 72 * k))) for k in range(5)]))
+    for k in range(5):
+        a = math.radians(-90 + 72 * k)
+        u = (math.cos(a), math.sin(a))
+        out.append(ln([(cx + pr * u[0], cy + pr * u[1]), (cx + 0.66 * r * u[0], cy + 0.66 * r * u[1])], THIN))
+        oc = (cx + 0.98 * r * u[0], cy + 0.98 * r * u[1])
+        out.append(Polygon([(oc[0] + 0.32 * r * math.cos(a + math.pi + 2 * math.pi * j / 5),
+                             oc[1] + 0.32 * r * math.sin(a + math.pi + 2 * math.pi * j / 5))
+                            for j in range(5)]).intersection(inner))
     return out
 
 
-# upper left: a speech bubble with a bubbling flask in it
-ink.append(stroke(speech(17, 16, 8.5, 6, (22, 26.5)), BOLD))
-ink.append(shine(17, 16, 8.5, 6))
-ink += flask(17.6, 17.2, 6.6)
+def golf():
+    """A flag in the hole, the ball beside it on the green."""
+    return [ln([(0, -4.6), (0, 2.6)], 0.55), poly([(0, -4.7), (4.2, -3.3), (0, -1.9)], 0.15),
+            ellipse(0, 2.9, 1.6, 0.55), dot(-2.9, 2.0, 0.85), ln(arc(0, 11, 8.2, 243, 297), THIN)]
 
-# upper right: a thought cloud with three dots, trailing down towards the brain
-CLOUD, CS = (144, 15), 0.75
-cloud = unary_union([dot(CLOUD[0] + CS * dx, CLOUD[1] + CS * dy, CS * r) for dx, dy, r in (
+
+def skiing():
+    """A skier in a crouch going down a slope, snow flying off the tails."""
+    d = unit((-5, 0.2), (5, 4.2))                    # down the slope
+    n = (d[1], -d[0])
+    tail, tip = [(t * d[0] + 0.5 * n[0], t * d[1] + 0.5 * n[1]) for t in (-3.0, 3.2)]
+    u = unit(tail, tip)
+    ski = ln(spline([tail, (tip[0] - 1.4 * u[0], tip[1] - 1.4 * u[1]),
+                     (tip[0] - 0.4 * u[0] + 0.3 * n[0], tip[1] - 0.4 * u[1] + 0.3 * n[1]),
+                     (tip[0] + 0.95 * n[0], tip[1] + 0.95 * n[1])]), 0.75)
+    body = figure((1.4, -5.45), [[(0.1, -0.65), (1.3, -1.95), (-0.8, -2.65), (0.5, -4.55)],
+                                 [(0.5, -4.35), (1.2, -3.25), (2.1, -3.35)]], 0.95, 0.95)
+    hand, end = (2.1, -3.35), (-3.2, -1.85)          # the pole, back under the arm
+    u = unit(hand, end)
+    b = (end[0] - 0.8 * u[0], end[1] - 0.8 * u[1])
+    grip = (hand[0] + 0.12 * (end[0] - hand[0]), hand[1] + 0.12 * (end[1] - hand[1]))
+    pole = [ln([hand, end], 0.45), ln([hand, grip], 0.85),
+            ln([(b[0] + 0.6 * u[1], b[1] - 0.6 * u[0]), (b[0] - 0.6 * u[1], b[1] + 0.6 * u[0])], 0.45)]
+    snow = [dot(x, y, 0.6 - 0.1 * k) for k, (x, y) in enumerate(((-3.4, -1.6), (-4.4, -2.8), (-4.7, -4.2),
+                                                                 (-4.3, -5.4)))]
+    return [ski] + body + pole + [ln([(t * d[0], t * d[1]) for t in (-5.4, 5.4)], THIN)] + snow + [
+        dot(-3.4, -3.0, 0.4), dot(-5.6, -3.4, 0.35)]
+
+
+def sailing():
+    """A sailboat, mainsail and jib, on the waves."""
+    return [poly([(-0.45, -4.8), (-0.45, 1.4), (-4.4, 1.4), (-3.0, -1.2), (-1.5, -3.5)], 0.15),
+            poly([(0.45, -3.8), (0.45, 1.4), (3.6, 1.4), (2.1, -0.9)], 0.15),
+            poly([(-5.0, 2.0), (5.2, 2.0), (3.8, 3.6), (-3.6, 3.6)], 0.2), wave(-4.8, 4.8, 4.5)]
+
+
+def biking():
+    """A racing bike, its rider bent over the bars."""
+    s = 0.92
+    S = lambda x, y: (x * s, y * s)  # noqa: E731
+    rh, fh, bb = S(-3.5, 1.5), S(3.6, 1.5), S(-0.5, 1.5)          # hubs, bottom bracket
+    st, ht, hb = S(-1.4, -1.5), S(2.0, -1.5), S(2.3, -0.5)         # seat tube top, head tube
+    out = [ring(*rh, 2.5 * s, 0.6), ring(*fh, 2.5 * s, 0.6), dot(*rh, 0.4 * s + 0.1), dot(*fh, 0.4 * s + 0.1)]
+    for a, b in ((rh, bb), (rh, st), (bb, S(-1.6, -2.2)), (st, ht), (bb, hb), (ht, hb), (hb, fh),
+                 (ht, S(1.85, -2.3))):
+        out.append(ln([a, b], 0.6))
+    out.append(stroke(spline([S(1.85, -2.3), S(2.9, -2.25), S(3.25, -1.85), S(3.0, -1.4)]), 0.6))   # drop bars
+    out += [ellipse(*S(-1.75, -2.45), 1.0 * s, 0.33 * s + 0.05, -4), dot(*bb, 0.7 * s)]           # saddle, chainring
+    return out + figure((1.9, -4.6), [[(-1.5, -2.6), (1.0, -3.8)], [(0.9, -3.6), (2.2, -2.9), (2.75, -2.1)],
+                                      [(-1.4, -2.5), (0.5, -1.0), (-0.2, 2.0)]], 0.85, 0.8)
+
+
+def pine(cx, base, h):
+    out = [ln([(cx, base), (cx, base - 0.25 * h)], 0.6)]
+    for t, w in ((0.2, 0.55), (0.45, 0.42), (0.68, 0.3)):
+        y = base - t * h
+        out.append(poly([(cx - w * h / 2, y), (cx + w * h / 2, y), (cx, y - 0.42 * h)], 0.1))
+    return out
+
+
+def hiking():
+    """A hiker with a pack and a stick, next to a pine."""
+    pack = affinity.rotate(rect(-2.1, -2.9, -0.5, 0.0, 0.45), 10, origin=(-1.3, -1.4))
+    body = figure((1.1, -3.6), [[(0.6, -2.6), (0.0, 0.6)], [(0.0, 0.6), (1.0, 2.3), (1.4, 4.2), (2.2, 4.2)],
+                                [(0.0, 0.6), (-0.7, 2.4), (-1.7, 4.0), (-1.1, 4.3)],
+                                [(0.5, -2.0), (1.3, -0.8), (2.6, -1.4)]])
+    return [pack] + body + [ln([(2.7, -2.3), (3.3, 4.4)], 0.45)] + pine(6.2, 4.4, 7.4) + [
+        ln([(-2.6, 4.7), (8.6, 4.7)], THIN)]
+
+
+def soccer():
+    """A studded boot that has just kicked the ball."""
+    upper = poly([(-4.2, -1.8), (-2.0, -2.2), (0.0, -1.6), (2.6, -0.6), (4.4, 0.4), (4.6, 1.6), (-4.4, 1.6),
+                  (-4.6, 0.0)], 0.5)
+    studs = [poly([(x - 0.4, 2.0), (x + 0.4, 2.0), (x + 0.25, 3.0), (x - 0.25, 3.0)], 0.1)
+             for x in (-3.6, -2.2, 0.6, 2.2, 3.7)]
+    laces = [ln([(-0.4 + 0.75 * k, -1.7 + 0.32 * k), (-0.7 + 0.75 * k, -0.6 + 0.32 * k)], 0.4) for k in range(4)]
+    boot = moved([stroke(upper, 0.7), ln([(-4.6, 1.9), (4.8, 1.9)], 0.8), *studs, *laces], -4.0, 1.8, -25, 0.6)
+    return boot + soccer_ball(2.8, -0.6, 2.8) + [ln([(-0.4, -2.9), (-0.9, -3.8)], 0.45),
+                                                 ln([(-0.7, -1.9), (-1.6, -2.4)], 0.45)]
+
+
+def chess_base(w=2.8):
+    """What every piece stands on: a plinth and a flared foot."""
+    return unary_union([rect(-w, 3.3, w, 4.4, 0.3), poly([(-w + 0.5, 3.4), (w - 0.5, 3.4), (1.5, 2.3), (-1.5, 2.3)])])
+
+
+def chess():
+    """A rook and a knight."""
+    top = rect(-2.5, -4.4, 2.5, -2.0, 0.15).difference(
+        unary_union([rect(-1.3, -4.8, -0.5, -3.5), rect(0.5, -4.8, 1.3, -3.5)]))
+    rook = unary_union([chess_base(2.9), poly([(-1.8, 2.5), (1.8, 2.5), (1.5, -2.0), (-1.5, -2.0)]), top])
+    rook = rook.difference(ln([(-2.6, -1.85), (2.6, -1.85)], 0.35))
+    head = poly([(2.3, 2.4), (2.6, -0.2), (2.0, -2.6), (1.0, -4.4), (0.4, -3.5), (-0.8, -3.3), (-2.2, -2.0),
+                 (-3.3, -0.5), (-3.4, 0.5), (-2.6, 1.0), (-1.6, 0.5), (-0.6, 0.3), (-1.4, 1.4), (-1.8, 2.5)], 0.35)
+    knight = unary_union([chess_base(), head]).difference(dot(-0.9, -1.9, 0.42))
+    return moved([rook], -3.1, 0) + moved([knight], 3.2, 0)
+
+
+def note(cx, cy, s=1.0, flag=True):
+    """An eighth note s times full size, its head at (cx, cy)."""
+    x = cx + 0.82 * s                                # the stem
+    out = [ellipse(cx, cy, 0.95 * s, 0.68 * s, -22), ln([(x, cy - 0.2 * s), (x, cy - 4.2 * s)], 0.45)]
+    if flag:
+        out.append(brush(spline([(x, cy - 4.2 * s), (cx + 1.9 * s, cy - 3.1 * s), (cx + 2.0 * s, cy - 2.0 * s)]),
+                         0.6, 0.0, 0.5))
+    return out
+
+
+def karaoke():
+    """A handheld mic, tipped, with a pair of notes and a single one."""
+    head = Point(0, -2.7).buffer(2.0)
+    mesh = unary_union([ln([(-3, -2.7 + k), (3, -2.7 + k + 1.2)], 0.3) for k in (-1.5, -0.5, 0.5)] +
+                       [ln([(-3, -2.7 + k + 1.2), (3, -2.7 + k)], 0.3) for k in (-1.5, -0.5, 0.5)])
+    mic = [unary_union([stroke(head, 0.7), mesh.intersection(head.buffer(-0.3))]),
+           rect(-1.6, -1.05, 1.6, -0.35, 0.15), poly([(-1.15, -0.2), (1.15, -0.2), (0.6, 5.0), (-0.6, 5.0)], 0.3)]
+    s, cx, cy = 0.62, 1.6, -1.4                      # the beamed pair
+    pair = note(cx, cy, s, False) + note(cx + 2.6 * s, cy - 0.6 * s, s, False) + [
+        poly([(cx + 0.6 * s, cy - 4.4 * s), (cx + 3.65 * s, cy - 5.0 * s), (cx + 3.65 * s, cy - 4.0 * s),
+              (cx + 0.6 * s, cy - 3.4 * s)])]
+    return moved(mic, -3.4, 0.6, 25) + pair + note(4.4, 2.8, 0.8)
+
+
+# --- the thought clouds --------------------------------------------------------------
+# Eight clouds fanned round the brain, each GAP mm from it at its nearest, and
+# spread so that neighbours are evenly spaced.  The two along the bottom are
+# mirror images of each other across the middle of the brain instead, since the
+# brain isn't symmetric.  A cloud on the left is drawn mirrored.
+CS = 0.9
+CLOUD = unary_union([dot(CS * dx, CS * dy, CS * r) for dx, dy, r in (
     (-8, 1.5, 4.8), (-3.5, -3, 5.4), (3, -3.5, 5.2), (8.2, 0.5, 4.6), (5, 5, 4.4),
     (-1.5, 5.2, 4.6), (-7, 5.5, 3.6), (0, 1, 6))])
-ink.append(stroke(cloud, BOLD))
-ink.append(brush(arc(CLOUD[0] - CS * 3.5, CLOUD[1] - CS * 3, CS * 3.4, 200, 260), 0.8, 0.35, 0.35))
-for dx in (-3.4, 0, 3.4):
-    ink.append(dot(CLOUD[0] + dx, CLOUD[1] + 1.4, 1.0))
-ink.append(stroke(Point(136, 25.5).buffer(1.5), LINE))
-ink.append(stroke(Point(133.5, 29.3).buffer(0.9), FINE))
-
-# right: a speech bubble with a sparkle
-SB = (143, 47)
-ink.append(stroke(speech(*SB, 8, 5.8, (134, 54)), BOLD))
-ink.append(shine(*SB, 8, 5.8))
-ink.append(twinkle(SB[0] + 0.4, SB[1] + 0.2, 4.0))
-ink.append(twinkle(SB[0] + 4.3, SB[1] - 2.8, 1.6))
-
-# left: a signal, beaming up and out
-SIG = (14, 50)
-ink.append(dot(*SIG, 1.4))
-for r in (3.6, 6.0, 8.4):
-    ink.append(brush(arc(*SIG, r, -92, -8, 20), 1.15, 0.12, 0.12, floor=0.55))
-
-# lightning
-BOLT = [(0.3, 0), (1, 0), (0.62, 0.4), (0.95, 0.4), (0.08, 1.22), (0.38, 0.58), (0.02, 0.58)]
+ROOM = CLOUD.buffer(-BOLD / 2 - 0.9)                 # inside the outline, with a margin
+GAP = 18.0
+O = (80, 66)                                         # the clouds are placed along rays from here
+MID_X = 80.0
+CLOUDS = [  # (angle from O, picture, shrink); the last is the bottom pair: left, right
+    (-170.0, hiking, 1.0), (-141.9, golf, 1.0), (-110.3, skiing, 1.0), (-72.4, sailing, 1.0),
+    (-39.3, biking, 1.0), (-10.0, soccer, 1.0)]
+BOTTOM = (162.5, 22.0, 20.0, chess, 0.85, karaoke)   # angle, centre x, trail angle, left, shrink, right
 
 
-def bolt(at, w, h, rot):
-    return place([Polygon([(x * w, y * h) for x, y in BOLT]).buffer(-0.15).buffer(0.15)], at, rot)[0]
+def cloud_at(c, mirror):
+    return affinity.translate(affinity.scale(CLOUD, -1 if mirror else 1, 1, origin=(0, 0)), *c)
 
 
-ink.append(bolt((57, 20), 5.4, 7.6, 16))
-ink.append(bolt((123, 55), 4.8, 6.6, -18))
-
-# lower left: an atom
-ATOM = (24, 82)
-for a in (0, 60, 120):
-    ink.append(stroke(ellipse(*ATOM, 7.6, 2.8, a), LINE))
-ink.append(dot(*ATOM, 1.4))
-ink.append(dot(ATOM[0] + 7.6, ATOM[1], 0.75))
-
-# lower right: a paper plane taking off, its trail dashed behind it
-T, W1, N, W2 = ((137 + 0.75 * (x - 137), 81 + 0.75 * (y - 81))
-                for x, y in ((148, 70), (124, 80.5), (132, 83.5), (135, 92.5)))
-ink.append(stroke(Polygon([T, W1, N, W2]), BOLD))
-ink.append(Polygon([N, T, (137 + 0.75 * (133.6 - 137), 81 + 0.75 * (87.6 - 81))]).buffer(0.25))          # the shaded keel
-trail = LineString(spline([(125.5, 83.5), (121.5, 86), (119, 90), (116.5, 93.5)]))
-s = 0.0
-while s < trail.length:
-    seg = [trail.interpolate(s + t).coords[0] for t in (0, 0.9, min(1.8, trail.length - s))]
-    ink.append(brush(seg, FINE, 0.3, 0.3))
-    s += 3.2
-
-# buzzing either side of the brain
-for a0, a1 in ((158, 186), (-14, 12)):
-    for r in (36.5, 39.5):
-        ink.append(brush(arc(80, 66, r + 3, a0 + (r - 36.5), a1 - (r - 36.5)), 1.0, 0.3, 0.3))
-
-# a few big stars to set the rhythm; the confetti fills in around them later
-for x, y, r in ((6.5, 32, 2.8), (32, 5, 2.4), (8, 68, 2.6), (92, 6, 2.3), (155, 31, 2.8),
-                (154, 64, 2.6), (66, 8, 2.1)):
-    ink.append(star(x, y, r))
-
-near_bulb = unary_union([g for g in ink if not any(g is b for b in BULB_INK)]).buffer(1.4)
-ink += [g for g in GLOW if not g.intersects(near_bulb)]
-
-# --- the burst ---------------------------------------------------------------------
-# Wedges fan out from inside the top of the brain, between everything else, each
-# shortened until it is clear of whatever it would run into.
-O = (80, 55)
-FRAME = box(-50, -50, W + 50, H + 50).difference(box(2, 2, W - 2, H - 2))
-KEEP_OUT = unary_union(ink).difference(BRAIN.buffer(2.5)).buffer(1.8).union(FRAME)
-
-
-def ray(angle, length, width, hollow=False, gap=3.2):
+def cloud_out(angle):
+    """The point along the ray from O where a cloud first comes GAP from the brain."""
     u = (math.cos(math.radians(angle)), math.sin(math.radians(angle)))
-    r1 = 0.0
-    while BRAIN.distance(Point(O[0] + r1 * u[0], O[1] + r1 * u[1])) < gap or \
-            BRAIN.contains(Point(O[0] + r1 * u[0], O[1] + r1 * u[1])):
-        r1 += 0.2
-    n = (-u[1], u[0])
-    p = lambda r, s: (O[0] + r * u[0] + s * n[0], O[1] + r * u[1] + s * n[1])  # noqa: E731
-    while length >= 6:
-        r2 = r1 + length
-        w = Polygon([p(r1, -0.12), p(r2, -width / 2), p(r2, width / 2), p(r1, 0.12)])
-        w = w.union(Point(p(r2, 0)).buffer(width / 2, quad_segs=12))
-        w = stroke(w.buffer(0.5).buffer(-0.5), LINE) if hollow else w
-        if not w.intersects(KEEP_OUT):
-            return w
-        length -= 0.5
-    return Polygon()
+    mirror = u[0] < 0
+    lo, hi = 0.0, 80.0
+    for _ in range(18):
+        m = (lo + hi) / 2
+        lo, hi = (lo, m) if cloud_at((O[0] + m * u[0], O[1] + m * u[1]), mirror).distance(BRAIN) >= GAP else (m, hi)
+    return (O[0] + hi * u[0], O[1] + hi * u[1]), mirror
 
 
-RAYS = [  # (angle, length, outer width, hollow)
-    (-178, 24, 1.7, False), (-168, 18, 2.8, True), (-157, 26, 2.0, False), (-121, 10, 1.3, False),
-    (-106, 16, 1.7, False), (-91, 38, 3.2, True), (-77, 22, 1.5, False), (-64, 15, 1.6, False),
-    (-48, 14, 1.6, False), (-34, 22, 2.0, False), (-24, 18, 2.8, True), (-13, 28, 2.0, False),
-    (-2, 22, 1.7, False),
-]
-rays = [ray(*r) for r in RAYS]
-ink += rays
+def fit_in_cloud(geoms, c, mirror, shrink=1.0):
+    """A picture scaled up as far as it will go inside the cloud, then by shrink."""
+    g = unary_union(geoms)
+    if mirror:   # fit the picture the right way round in the mirrored room
+        g = affinity.scale(g, -1, 1, origin=(0, 0))
+    x0, y0, x1, y1 = g.bounds
+    g = affinity.translate(g, -(x0 + x1) / 2, -(y0 + y1) / 2)
+    best = (0, 0, 0)
+    for dx in [k * 0.25 for k in range(-6, 7)]:
+        for dy in [k * 0.25 for k in range(-6, 7)]:
+            lo, hi = max(0.3, best[0]), 1.6
+            if not ROOM.contains(affinity.translate(affinity.scale(g, lo, lo, origin=(0, 0)), dx, dy)):
+                continue
+            for _ in range(12):
+                m = (lo + hi) / 2
+                lo, hi = (m, hi) if ROOM.contains(affinity.translate(affinity.scale(g, m, m, origin=(0, 0)),
+                                                                     dx, dy)) else (lo, m)
+            if lo > best[0]:
+                best = (lo, dx, dy)
+    s, dx, dy = best
+    g = affinity.translate(affinity.scale(g, s, s, origin=(0, 0)), dx, dy)
+    if mirror:
+        g = affinity.scale(g, -1, 1, origin=(0, 0))
+    g = affinity.scale(g, shrink, shrink, origin=g.centroid)
+    return affinity.translate(g, *c)
 
-# --- confetti --------------------------------------------------------------------
-# Small stars, sparkles, plus signs, dots and rings, spread evenly into the gaps.
-taken = unary_union([Polygon(g.exterior) for g in getattr(unary_union(ink), "geoms", [])])
-placed = []
-cands = [(x + rng.uniform(-1.2, 1.2), y + rng.uniform(-1.2, 1.2))
-         for x in np.arange(3.5, W - 3, 3.0) for y in np.arange(3.5, H - 3, 3.0)]
-rng.shuffle(cands)
-kinds = ["star", "twinkle", "plus", "dot", "ring"]
-for x, y in cands:
-    q = Point(x, y)
-    if taken.distance(q) < 6.0 or any(q.distance(o) < 17.0 for o in placed):
-        continue
-    if BRAIN.buffer(6).contains(q):
-        continue
-    kind = kinds[len(placed) % len(kinds)]
-    if kind == "star":
-        g = star(x, y, rng.uniform(1.3, 1.8), rot=rng.uniform(-110, -70), round_=0.12)
-    elif kind == "twinkle":
-        g = twinkle(x, y, rng.uniform(1.7, 2.2))
-    elif kind == "plus":
-        g = unary_union([brush([(x - 1.1, y), (x + 1.1, y)], 0.65), brush([(x, y - 1.1), (x, y + 1.1)], 0.65)])
-    elif kind == "dot":
-        g = dot(x, y, rng.uniform(0.7, 1.0))
-    else:
-        g = stroke(Point(x, y).buffer(rng.uniform(0.8, 1.1)), FINE)
-    placed.append(q)
+
+def trail(p, u, length):
+    """Two circles, big then small, spaced evenly along length mm from p in direction u."""
+    (r1, w1), (r2, w2) = (1.8, 0.85), (1.08, 0.6)
+    sp = (length - 2 * r1 - 2 * r2) / 3
+    return [stroke(Point(p[0] + u[0] * d, p[1] + u[1] * d).buffer(r), w)
+            for d, r, w in ((sp + r1, r1, w1), (2 * sp + 2 * r1 + r2, r2, w2))]
+
+
+clouds = []
+for angle, picture, shrink in CLOUDS:
+    c, mirror = cloud_out(angle)
+    cl = cloud_at(c, mirror)
+    p, q = nearest_points(cl, BRAIN)
+    ink += [stroke(cl, BOLD), *trail((p.x, p.y), unit((p.x, p.y), (q.x, q.y)), GAP),
+            fit_in_cloud(picture(), c, mirror, shrink)]
+    clouds.append(cl)
+
+# the bottom pair: the left one where the ray puts it, moved sideways to a set
+# x, its trail leaving its edge at a set angle up and in, as long as the shorter
+# of the runs to the brain on either side; the right one, the mirror image
+angle, x, up, left, shrink, right = BOTTOM
+c = (x, cloud_out(angle)[0][1])
+cl = cloud_at(c, True)
+u = (math.cos(math.radians(up)), -math.sin(math.radians(up)))
+ray = LineString([c, (c[0] + 80 * u[0], c[1] + 80 * u[1])])
+p = min(getattr(ray.intersection(cl.exterior), "geoms", [ray.intersection(cl.exterior)]),
+        key=lambda q: Point(c).distance(q))
+runs = []
+for br in (BRAIN, affinity.scale(BRAIN, -1, 1, origin=(MID_X, 0))):
+    hits = ray.intersection(br.exterior)
+    runs.append(p.distance(min(getattr(hits, "geoms", [hits]), key=lambda q: Point(c).distance(q))))
+pair = [stroke(cl, BOLD), *trail((p.x, p.y), u, min(runs))]
+ink += pair + [affinity.scale(g, -1, 1, origin=(MID_X, 0)) for g in pair]
+ink += [fit_in_cloud(left(), c, True, shrink), fit_in_cloud(right(), (2 * MID_X - c[0], c[1]), False)]
+clouds += [cl, affinity.scale(cl, -1, 1, origin=(MID_X, 0))]
+
+
+# --- sparkles ------------------------------------------------------------------------
+# Biggest first, each where it is farthest from everything already drawn, so they
+# spread out and the big ones take the big gaps.  The lid's edge counts too, a
+# little less, so they don't line up along it.
+SPARKLES = [4.2, 3.8, 3.4, 3.2, 3.0, 2.8, 2.6, 2.4, 2.4, 2.2, 2.0, 2.0, 1.8, 1.8, 1.6, 1.6, 1.5, 1.4]  # radii, mm
+MARGIN = 3.0
+CLEAR = 2.5   # mm between a sparkle and anything else
+sx, sy = np.meshgrid(np.arange(MARGIN, W - MARGIN, 0.5), np.arange(MARGIN, H - MARGIN, 0.5))
+spots = shapely.points(sx.ravel(), sy.ravel())
+edge = shapely.distance(spots, box(MARGIN, MARGIN, W - MARGIN, H - MARGIN).exterior)
+taken = unary_union(ink)
+sparkles = []
+for r in SPARKLES:
+    d = shapely.distance(spots, taken)
+    ok = (d >= r + CLEAR) & (edge >= r)
+    i = int(np.argmax(np.where(ok, np.minimum(d, edge + 4.0), -1)))
+    if not ok[i]:
+        break
+    g = twinkle(spots[i].x, spots[i].y, r)
     ink.append(g)
+    taken = taken.union(g)
+    sparkles.append(g)
 
 
 def main():
@@ -546,7 +596,9 @@ def main():
     OUT.write_text(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:g}mm" height="{H:g}mm" '
                    f'viewBox="0 0 {W:g} {H:g}">\n' + "\n".join(paths) + "\n</svg>\n")
     x0, y0, x1, y1 = art.bounds
-    print(f"{OUT}: {len(paths)} paths, {len(folds)} brain folds, {len(placed)} confetti, "
+    gaps = [cl.distance(BRAIN) for cl in clouds]
+    print(f"{OUT}: {len(paths)} paths, {len(folds)} brain folds, {len(clouds)} clouds "
+          f"({min(gaps):.1f}-{max(gaps):.1f} mm from the brain), {len(sparkles)} sparkles, "
           f"ink {x1 - x0:.1f} x {y1 - y0:.1f} mm")
 
 

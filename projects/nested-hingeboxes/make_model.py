@@ -43,7 +43,7 @@ import engraving  # noqa: E402
 T = 3.2
 LIDHEIGHT = 20.0
 EYES = 7
-SIZES = [(160, 80, 60), (168, 95, 68), (176, 110, 76), (184, 125, 84)]  # x, y, h as in generate.sh
+SIZES = [(160, 80, 60), (168.4, 96.4, 68.4), (176.8, 112.8, 76.8), (185.2, 129.2, 85.2)]  # x, y, h as in generate.sh
 COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#b0367c"]  # as in color_layouts.py
 BEZIER_STEPS = 8
 

@@ -5,7 +5,7 @@
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Misc - HingeBurnTest</dc:title>
-<dc:date>2026-11-20 13:26:28</dc:date>
+<dc:date>2026-11-20 13:40:51</dc:date>
 <dc:source>boxes HingeBurnTest --thickness 3.2 --burn 0.1 --reference 0 --labels 0 --output burn-test.svg</dc:source>
 <dc:description>
 

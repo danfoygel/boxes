@@ -21,8 +21,9 @@ outline is cut at the generate.sh value (0.1 mm).  boxes.py draws an outline wit
 the cutting path offset outwards by the burn value, so where the value changes
 along the outline, the path steps sideways by the difference (at most 0.025 mm,
 on the straight edge between two hinges) and each hinge is the one a box cut at
-its value would have.  The engraving is filled outlines in boxes.py's etching
-colour (green), in the box engraving's font.
+its value would have.  The labels are single-line text in a Hershey font
+(hershey.py), for engraving as lines in their own colour (cyan, LINES), not filled
+like the boxes' engraving.
 """
 import sys
 import xml.etree.ElementTree as ET
@@ -30,7 +31,7 @@ from pathlib import Path
 
 from svgpathtools import CubicBezier, Line, QuadraticBezier, parse_path
 
-import engraving
+import hershey
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent.parent))
@@ -42,13 +43,14 @@ BURN = 0.1                # generate.sh's burn, used for the strip's outline bet
 BURNS = [round(0.075 + 0.005 * i, 3) for i in range(11)]   # 0.075 ... 0.125 mm
 PITCH = 8.0               # mm from one hinge to the next (on a box, hinges are 2t apart at least)
 END = 3.0                 # mm of plain edge at each end of the strip
-LABEL = 3.0               # mm, font size of the labels, which run inward from the holes
+LABEL = 2.2               # mm, digit height of the labels, which run inward from the holes
 LABEL_DEPTH = 18.5        # mm, strip edge to the centre of a label (the holes reach 14.4 mm)
-TITLE = 3.0               # mm, font size of the title, above the labels
+TITLE = 2.2               # mm, capital height of the title, above the labels
 TITLE_DEPTH = 25.0        # mm, strip edge to the centre of the title
 DEPTH = 28.0              # mm, the strip's width
-PIECE_LABEL = 2.4         # mm, font size of the labels on the pieces (fits their 6 x 6 mm flat)
+PIECE_LABEL = 1.6         # mm, digit height of the labels on the pieces (fits their 6 x 6 mm flat)
 GREEN = "rgb(0,255,0)"    # boxes.py Color.ETCHING
+LINES = Color.CYAN        # the single-line labels, engraved as lines
 NAMESPACES = {"": "http://www.w3.org/2000/svg", "cc": "http://creativecommons.org/ns#",
               "dc": "http://purl.org/dc/elements/1.1/",
               "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"}
@@ -93,10 +95,19 @@ class Engraved(Boxes):
                     raise ValueError(f"can't draw {type(seg).__name__}")
             self.ctx.stroke()
 
-    def engrave(self, text, x, y, size, angle=0):
-        """Text centred (by its ink) on x, y, as glyph outlines in the etching colour."""
-        d, _ = engraving.outlines([text], size, 0, 0)
-        self.engrave_path(d, x, y, angle)
+    def engrave(self, text, x, y, height, angle=0):
+        """Text centred (by its ink) on x, y, its digits `height` mm tall, as single
+        lines in the LINES colour."""
+        self.ctx.stroke()   # finish any outline in progress in its own colour
+        with self.saved_context():
+            self.moveTo(x, y, angle)
+            self.set_source_color(LINES)
+            for line in hershey.strokes(text, height):
+                (x0, y0), *rest = line
+                self.ctx.move_to(x0, -y0)   # boxes.py is y up
+                for px, py in rest:
+                    self.ctx.line_to(px, -py)
+            self.ctx.stroke()
 
     def summary(self):
         return f"burn {', '.join(label(b) for b in BURNS)} mm"
@@ -104,7 +115,8 @@ class Engraved(Boxes):
     @classmethod
     def svg(cls, name):
         """Render as an SVG tree (for a file called `name`), with the etching filled,
-        as in engrave_boxes.py; and the Boxes object."""
+        as in engrave_boxes.py, and the single-line labels left as lines; and the
+        Boxes object."""
         box = cls()
         box.parseArgs(["--thickness", str(T), "--burn", str(BURN), "--reference", "0", "--labels", "0",
                        "--output", name])
@@ -117,6 +129,8 @@ class Engraved(Boxes):
                 el.set("class", "engraving")
                 el.set("fill", GREEN)
                 el.set("stroke-width", "0.01")
+            elif el.tag.endswith("path") and el.get("stroke") == LINES.as_css():
+                el.set("class", "engraving-line")
         return tree, box
 
     @classmethod

@@ -111,6 +111,7 @@ hinge pieces, 75.4% utilization. Cut file:
 | `art/` | The lid artwork drawn here: Anscombe's quartet (`anscombes-quartet.svg`, box 3), drawn by `lid_charts.py`, and `ideas.svg` (box 4), drawn by `draw_ideas.py` |
 | `lid_charts.py` | Draws box 3's Anscombe's quartet into `art/` |
 | `make_model.py`, `model_template.html` | Build `model.html`, the interactive 3D model |
+| `check_model.py`, `model_pieces.js` | Checks the 3D model with the boxes nested: no two pieces overlap, and each box has 2 mm of room inside the next ([section 4](#4-3d-model)) |
 | `model.html` | The four boxes in 3D: open it in a browser to rotate, nest and open them |
 | `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges), plus their engraved text and lid artwork |
 | `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files, coloured by cutting order |
@@ -445,13 +446,17 @@ How `make_model.py` builds it:
    generator cut the t × t holes for them in the back walls, and each hinge gets a
    3 mm pin.
 
-A voxel check of the model, nested with every lid closed, found no overlap between
-any two pieces of a box, and none between the boxes, at 0.25 mm and again at 0.1 mm.
-Measured from the model, each box has 2.00 mm of play inside the next one out in
-every direction: 1 mm each side in x and in y (the knuckles to the outer box's hinge
-pieces at the back), and 2 mm above its lid, as it rests on the floor. Moving box 1
-up 2.5 mm, or back 1.5 mm, does make it overlap box 2, so the check catches a
-collision.
+`check_model.py` checks the model with the boxes nested and every lid closed.
+`model_pieces.js` reads each piece from `model.html` as it is placed there, and the
+check samples a 0.25 mm grid wherever two pieces' bounding boxes meet, testing each
+point against the real pieces (the extruded outlines, holes included, and the pins).
+It finds no overlap between any two pieces of a box, and none between the boxes; with
+`--step 0.1` too. It then measures each box's room inside the next one out: 2.00 mm
+in every direction, 1 mm each side in x and in y (the knuckles to the outer box's
+hinge pieces at the back) and 2 mm above its lid, as it rests on the floor. As a
+control it moves box 1 up and back: by its measured room less 0.1 mm it still fits,
+and by 0.5 mm more it overlaps box 2 (at 2.5 mm up or 1.5 mm back), so the check does
+catch a collision. It exits with an error if any of this fails.
 
 ## 5. Engraved text
 
@@ -833,6 +838,10 @@ python3 projects/nested-hingeboxes/compare.py
 
 ```bash
 node projects/nested-hingeboxes/render_previews.js
+```
+
+```bash
+python3 projects/nested-hingeboxes/check_model.py
 ```
 
 Each multi-sheet layout takes about 3–8 minutes to pack, and `generate.sh` runs them

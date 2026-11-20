@@ -557,7 +557,13 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
   the eye whites and fine contour lines, with the pupils painted black again on top.
   Engraving the white too would fill the cats in solid. So `engraving.py` works out
   the painted area in paint order (black shapes added, white ones cut out, curves
-  flattened to within 0.02 mm), giving 36 outlines with the white left unengraved.
+  flattened to within 0.02 mm), giving 39 outlines with the white left unengraved.
+  The white contour lines inside the cats are drawn only about 0.1 mm wide, too
+  thin to survive engraving, so each white shape thinner than 0.5 mm
+  (`LID_MIN_LINE`) is grown all round to 0.5 mm before it is cut out. The eyes are
+  wider and stay as drawn. Where a grown line runs under a black shape painted
+  after it (the ball cat's nose, under its paw), the slivers left of it are filled
+  in.
 * **Box 1's layout.** The stock file was about 1.7 : 1, so on the 2.4 : 1 lid it
   left a wide bare strip at each end. Its 27 separate drawings (heart, microscope,
   DNA strands, molecules, glassware, cells, brain) have been moved apart, each
@@ -590,8 +596,8 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
 * **Fine detail.** In box 1's art the main lines come out about 0.25 mm wide, but the
   hatching inside the drawings is only 0.05–0.08 mm. Engrave at 300 DPI or finer, and
   expect the hatching to soften into shading. In box 2's art the white contour lines
-  inside the cats are about 0.1 mm wide and may close up. The eyes are large enough
-  to come out clearly. In box 4's art the outlines come out about 1.3 mm wide and the
+  inside the cats are widened from about 0.1 mm to 0.5 mm (see above). The eyes are
+  large enough to come out clearly. In box 4's art the outlines come out about 1.3 mm wide and the
   detail lines 0.6–0.9 mm. Its finest parts are the soccer boot's laces (about
   0.3 mm), the mic's mesh and the slit under the rook's battlements (about 0.4 mm),
   which may fill in, and the sparkles' points, which will round off; the rest
@@ -743,7 +749,7 @@ settings before the real job. It has six pieces, each a plain cut rectangle with
 | Piece | Engraving | Piece size (mm) |
 |---|---|---|
 | Box 1 lid | The heart (fine lines) | 31 × 31 |
-| Box 2 lid | A lying cat (solid fill, with its eyes left bare) | 27 × 27 |
+| Box 2 lid | A lying cat (solid fill, with its eyes and contour lines left bare) | 27 × 27 |
 | Box 3 lid | The corner of chart III: axes, ticks, X's and the fit line | 34 × 34 |
 | Box 4 lid | The karaoke cloud: the mic's mesh and the notes | 34 × 34 |
 | Box 1 bottom | The tree, "Ember Barber", "Chrismukkah 2026" and the menorah | 105 × 28 |
@@ -757,7 +763,7 @@ single shape, so its sample is the art cut to a rectangle at chart III's corner,
 which cuts only the axes and the fit line.
 
 Engrave it on a scrap of the same plywood, at the settings you plan to use, and
-change them until the cat's eyes stay open, the heart's fine lines and the mic's mesh
+change them until the cat's eyes and contour lines stay open, the heart's fine lines and the mic's mesh
 come out clean, and the letters are crisp without burning at the edges.
 
 ## 8. The order of the tests

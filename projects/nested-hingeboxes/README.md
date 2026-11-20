@@ -834,6 +834,8 @@ again (`burn-test.svg` and `finger-test.svg` on their own).
   rectangles go last.
 * To cut one sheet at a time, select that sheet's pieces and its magenta rectangle
   (everything inside the rectangle) and run the same colour order on just those. Each
+  rectangle is its own shape (`sheet-1`, `sheet-2`, …), not grouped with the others,
+  so it can be selected on its own. Each
   sheet's number is in red in its top-left margin.
 * Kerf compensation is the boxes.py default (`--burn 0.1`). Cut `burn-test.svg`
   and `finger-test.svg` first to check it ([section 6](#6-burn-tests)), after

@@ -34,7 +34,7 @@ def file_info(f):
     root = ET.parse(f).getroot()
     area, hinges = 0.0, 0
     for g in root:
-        if not g.tag.endswith("g") or g.get("id") == "sheet-cut-lines":
+        if not g.tag.endswith("}g"):
             continue
         paths = [el for el in g.iter() if el.tag.endswith("path")]
         hinges += sum(el.get("class") == "outline" and el.get("stroke") == HINGE_CUT

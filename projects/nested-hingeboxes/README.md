@@ -532,12 +532,12 @@ stops at the engraving step. Box 3's lid gets Anscombe's quartet,
 drawn by `lid_charts.py` (see [below](#box-3-anscombes-quartet)). Box 4's is an original
 drawing, made for this lid.
 
-| Box | Artwork | Lid top (mm) | Engraved (mm) |
-|---|---|---|---|
-| 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 153.6 × 73.6 | 137.6 × 57.5 |
-| 2 | Black cat silhouettes in 14 poses (`AdobeStock_939770434.svg`) | 162.0 × 90.0 | 146.0 × 73.0 |
-| 3 | Anscombe's quartet (`anscombes-quartet.svg`) | 170.4 × 106.4 | 154.4 × 90.4 |
-| 4 | A brain with eight thought clouds, no text (`ideas.svg`) | 178.8 × 122.8 | 162.8 × 101.8 |
+| Box | Artwork | Lid top (mm) | Engraved (mm) | Share of the lid top (across × down) |
+|---|---|---|---|---|
+| 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 153.6 × 73.6 | 137.6 × 57.5 | 90% × 78% |
+| 2 | Black cat silhouettes in 14 poses (`AdobeStock_939770434.svg`) | 162.0 × 90.0 | 146.0 × 73.0 | 90% × 81% |
+| 3 | Anscombe's quartet (`anscombes-quartet.svg`) | 170.4 × 106.4 | 154.4 × 90.4 | 91% × 85% |
+| 4 | A brain with eight thought clouds, no text (`ideas.svg`) | 178.8 × 122.8 | 162.8 × 101.8 | 91% × 83% |
 
 `engraving.py` scales each piece of art to the largest size that leaves 8 mm clear on
 the lid top, centred. Like the text, it is green filled outlines in the lid top's
@@ -605,7 +605,10 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
 * **Box 4's drawing.** `art/draw_ideas.py` draws it: a brain in true side view, with
   eight thought clouds fanned round it, each holding a small picture of something its
   owner loves doing (hiking, golf, skiing, sailing, biking, soccer, chess and
-  karaoke), and sparkles in the gaps. It is drawn for the lid's shape, about 1.6 : 1.
+  karaoke), and sparkles in the gaps. It was drawn for the lid's shape inside the
+  8 mm pad when the boxes were 3 mm, about 1.6 : 1. Box 4 is now deeper (2 mm of
+  play at 3.2 mm), so that area is about 1.5 : 1: the drawing fills the width and
+  leaves 10.5 mm clear above and below.
   * The brain's main grooves are where they are on a real brain (the lateral fissure,
     the central sulcus and its neighbours, the frontal, temporal and intraparietal
     sulci). The smaller folds are grown from the notches in its outline and then into

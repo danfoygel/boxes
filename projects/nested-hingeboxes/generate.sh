@@ -15,18 +15,18 @@ mkdir -p boxes sheets
 "$PY" -c 'import sys, engraving; m = [str(f) for f in engraving.LID_ART if f and not f.exists()]
 sys.exit("missing lid art, see the README (Lid artwork): " + ", ".join(m) if m else 0)'
 
-# 1. The four boxes: outside dimensions (HingeBox's default), 3 mm material,
+# 1. The four boxes: outside dimensions (HingeBox's default), 3.2 mm material,
 #    lid height 20 mm.
 i=1
 while read -r x y h; do
   PYTHONPATH="$ROOT" "$PY" "$ROOT/scripts/boxes" HingeBox --x "$x" --y "$y" --h "$h" \
-    --lidheight 20 --thickness 3 --CabinetHinge_eyes_per_hinge 7 --reference 0 --output "boxes/box$i.svg"
+    --lidheight 20 --thickness 3.2 --CabinetHinge_eyes_per_hinge 7 --reference 0 --output "boxes/box$i.svg"
   i=$((i + 1))
 done <<'SIZES'
 160 80 60
-168 95 68
-176 110 76
-184 125 84
+168.4 96.4 68.4
+176.8 112.8 76.8
+185.2 129.2 85.2
 SIZES
 BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 

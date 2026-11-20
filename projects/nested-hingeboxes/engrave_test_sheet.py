@@ -32,8 +32,8 @@ from burn_test_sheet import HERE, Engraved
 LID_SAMPLES = [
     ("heart", (4.0, -0.4, 21.6, 23.3), False),
     ("cat", (-3.0, 24.2, 22.2, 41.7), False),
-    ("corner of chart III", (0.0, 62.0, 26.0, 88.0), True),
-    ("karaoke cloud", (128.3, 73.4, 158.1, 95.7), False),
+    ("corner of chart III", (0.0, 64.5, 26.0, 90.5), True),
+    ("karaoke cloud", (128.9, 73.8, 158.9, 96.2), False),
 ]
 MARGIN = 4.0              # mm, piece edge to its engraving
 GAP = 2.0                 # mm between pieces, beyond boxes.py's spacing

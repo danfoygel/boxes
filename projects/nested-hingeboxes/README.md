@@ -445,8 +445,13 @@ How `make_model.py` builds it:
    generator cut the t × t holes for them in the back walls, and each hinge gets a
    3 mm pin.
 
-A voxel check at 0.25 mm, made when the boxes were drawn for 3 mm plywood, found no
-overlap between any two pieces of a box, and none between the boxes when nested.
+A voxel check of the model, nested with every lid closed, found no overlap between
+any two pieces of a box, and none between the boxes, at 0.25 mm and again at 0.1 mm.
+Measured from the model, each box has 2.00 mm of play inside the next one out in
+every direction: 1 mm each side in x and in y (the knuckles to the outer box's hinge
+pieces at the back), and 2 mm above its lid, as it rests on the floor. Moving box 1
+up 2.5 mm, or back 1.5 mm, does make it overlap box 2, so the check catches a
+collision.
 
 ## 5. Engraved text
 

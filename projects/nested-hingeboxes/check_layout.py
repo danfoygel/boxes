@@ -4,7 +4,6 @@ least EDGE inside its sheet.  Works from the SVG alone (real outlines).
 
 usage: check_layout.py SHEETS.svg [...]
 """
-import math
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -36,13 +35,16 @@ def outline(d):
     return Polygon([(z.real, z.imag) for z in pts]).buffer(0)
 
 
+def sheets(root):
+    """Each sheet's cut rectangle (x0, y0, x1, y1), from its path "M x0 y0 H x1 V y1 H x0 Z"."""
+    cut = [g for g in root if g.get("id") == "sheet-cut-lines"][0]
+    return [tuple(float(v) for v in re.match(r"M ([\d.]+) ([\d.]+) H ([\d.]+) V ([\d.]+)", p.get("d")).groups())
+            for p in cut]
+
+
 def check(f):
     root = ET.parse(f).getroot()
-    cut = [g for g in root if g.get("id") == "sheet-cut-lines"][0][0].get("d")
-    TW, TH = float(root.get("width")[:-2]), float(root.get("height")[:-2])
-    cols = len(re.findall(r"M [\d.]+ 0 V", cut)) + 1
-    rows = len(re.findall(r"M 0 [\d.]+ H", cut))
-    W, H = TW / cols, TH / rows
+    rects = sheets(root)
     pieces = []
     for g in root:
         if not g.tag.endswith("g") or g.get("id") == "sheet-cut-lines":
@@ -52,12 +54,14 @@ def check(f):
                 pieces.append(apply_transform(outline(p.get("d")), g.get("transform", "")))
     problems = []
     for i, poly in enumerate(pieces):
-        cx, cy = poly.centroid.x, poly.centroid.y
-        sx, sy = math.floor(cx / W), math.floor(cy / H)
-        inner = box(sx * W + EDGE - TOL, sy * H + EDGE - TOL,
-                    (sx + 1) * W - EDGE + TOL, (sy + 1) * H - EDGE + TOL)
-        if not inner.contains(poly):
-            problems.append(f"piece {i} not {EDGE} mm inside sheet ({sx},{sy})")
+        c = poly.centroid
+        s = next((k for k, (x0, y0, x1, y1) in enumerate(rects) if x0 <= c.x <= x1 and y0 <= c.y <= y1), None)
+        if s is None:
+            problems.append(f"piece {i} not on any sheet")
+            continue
+        x0, y0, x1, y1 = rects[s]
+        if not box(x0 + EDGE - TOL, y0 + EDGE - TOL, x1 - EDGE + TOL, y1 - EDGE + TOL).contains(poly):
+            problems.append(f"piece {i} not {EDGE} mm inside sheet {s + 1}")
     tree = STRtree(pieces)
     for i, poly in enumerate(pieces):
         for j in tree.query(poly.buffer(GAP - TOL)):

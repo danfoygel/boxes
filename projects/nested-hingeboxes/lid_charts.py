@@ -3,7 +3,7 @@
 
 usage: lid_charts.py [OUT.svg]      (default art/anscombes-quartet.svg)
 
-The SVG is the lid top's inner face, 169.6 x 103.6 mm (box 3's x by y panel less
+The SVG is the lid top's inner face, 170.4 x 106.4 mm (box 3's x by y panel less
 t all round), with the art as filled outlines in boxes.py's etching colour
 (green).  A red rectangle marks the face's edge; it is unfilled, so
 engraving.lid_art leaves it out.  engraving.LID_ART puts the art on box 3's
@@ -25,9 +25,9 @@ from shapely.ops import unary_union
 
 import engraving
 
-W, H = 169.6, 103.6        # mm, inner face of box 3's lid top (176 x 110 less 2t)
+W, H = 170.4, 106.4        # mm, inner face of box 3's lid top (176.8 x 112.8 less 2t)
 XMAX, YMAX = 20, 14        # chart units: each chart's axes run 0-20 across and 0-14 up
-U, UY = 3.497, 2.71        # mm per chart unit across and up: the four charts' ink fills 153.5 x 87.5 mm
+U, UY = 3.517, 2.81        # mm per chart unit across and up: the four charts' ink fills 154.3 x 90.3 mm
 TICKS_X, TICKS_Y = (5, 10, 15), (4, 8, 12)
 GAP_X, GAP_Y = 10.0, 8.0   # mm between one chart's axes and the next
 TICK = 1.5                 # mm, length of the axis ticks

@@ -22,7 +22,7 @@ from pathlib import Path
 SVG_NS = "http://www.w3.org/2000/svg"
 ET.register_namespace("", SVG_NS)
 HERE = Path(__file__).resolve().parent
-BOX_SIZES = {1: "160 × 80 × 80", 2: "168 × 95 × 88", 3: "176 × 110 × 96", 4: "184 × 125 × 104"}
+BOX_SIZES = {1: "160 × 80 × 80", 2: "168.4 × 96.4 × 88.4", 3: "176.8 × 112.8 × 96.8", 4: "185.2 × 129.2 × 105.2"}
 COLORS = {1: "#2a78d6", 2: "#eb6834", 3: "#1baf7a", 4: "#b0367c", None: "#8a8984"}
 TINT = 0.45          # share of the colour in the fill (rest is white)
 INK = "#1f1f1e"      # text colour

@@ -5,7 +5,7 @@ value that fits best.
 
 usage: burn_test_sheet.py [OUT.svg]      (default: burn-test.svg next to this script)
 
-The hinges are drawn by boxes.py itself, with the generate.sh settings (3 mm,
+The hinges are drawn by boxes.py itself, with the generate.sh settings (3.2 mm,
 the default "inside" CabinetHinge), so they are the ones in the boxes, cut down
 to a single eye:
 
@@ -37,14 +37,14 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent.parent))
 from boxes import Boxes, Color, edges  # noqa: E402
 
-T = 3.0                   # --thickness in generate.sh
+T = 3.2                   # --thickness in generate.sh
 EYES = 1                  # eyes per test hinge: one hole, for one piece (the boxes have 7)
 BURN = 0.1                # generate.sh's burn, used for the strip's outline between the hinges
 BURNS = [round(0.075 + 0.005 * i, 3) for i in range(11)]   # 0.075 ... 0.125 mm
 PITCH = 8.0               # mm from one hinge to the next (on a box, hinges are 2t apart at least)
 END = 3.0                 # mm of plain edge at each end of the strip
 LABEL = 2.2               # mm, digit height of the labels, which run inward from the holes
-LABEL_DEPTH = 18.5        # mm, strip edge to the centre of a label (the holes reach 13.5 mm)
+LABEL_DEPTH = 18.5        # mm, strip edge to the centre of a label (the holes reach 14.4 mm)
 TITLE = 2.2               # mm, capital height of the title, above the labels
 TITLE_DEPTH = 25.0        # mm, strip edge to the centre of the title
 DEPTH = 28.0              # mm, the strip's width

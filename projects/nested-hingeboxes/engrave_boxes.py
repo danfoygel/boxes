@@ -29,7 +29,7 @@ from svgpathtools import parse_path
 
 import engraving
 
-T = 3.0       # --thickness in generate.sh
+T = 3.2       # --thickness in generate.sh
 BURN = 0.1    # boxes.py's default kerf allowance, which generate.sh keeps
 BLACK, BLUE = "rgb(0,0,0)", "rgb(0,0,255)"
 GREEN = "rgb(0,255,0)"   # boxes.py Color.ETCHING

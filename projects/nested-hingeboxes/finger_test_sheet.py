@@ -5,7 +5,7 @@ fits best.
 
 usage: finger_test_sheet.py [OUT.svg]      (default: finger-test.svg next to this script)
 
-The joints are drawn by boxes.py itself, with the generate.sh settings (3 mm and
+The joints are drawn by boxes.py itself, with the generate.sh settings (3.2 mm and
 the default finger joint, as on every corner of the boxes: 2t fingers and spaces,
 no play), at the burn values of the hinge test (burn_test_sheet.py):
 

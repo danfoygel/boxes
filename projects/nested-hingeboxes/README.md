@@ -49,7 +49,9 @@ Pages workflow publishes it with each push to `master`.
 
 There are five layouts, with 6, 8, 9, 10 or 12 sheets. Each one holds every piece of
 all four boxes plus as many spare hinge pieces as fit. Every piece is at least 3 mm
-from its neighbours and 5 mm inside its sheet's cut line. The pictures below are the
+from its neighbours and 5 mm inside its sheet's cut line. Each sheet has its own
+rectangular cut line, 3 mm from its neighbours', so you can cut one sheet at a time.
+The pictures below are the
 colour-coded views from `layouts/`: blue is box 1, orange box 2, aqua box 3, plum box 4,
 and grey the hinge pieces, which fit any box. Cut from the files in `sheets/`, which
 have the same layout coloured by cutting order: holes orange, hinge pieces blue, the
@@ -58,7 +60,7 @@ other pieces black, the sheet cut lines magenta ([cut colours](#cut-colours)).
 
 ### 6 sheets
 
-280 × 257 mm (11.02 × 10.12 in) each, in a 2 × 3 grid (560 × 771 mm overall). 9 spare
+280 × 257 mm (11.02 × 10.12 in) each, in a 2 × 3 grid (563 × 777 mm overall). 9 spare
 hinge pieces, 79.4% utilization. Uses the least material. Cut file:
 [`sheets/sheets6.svg`](sheets/sheets6.svg).
 
@@ -66,21 +68,21 @@ hinge pieces, 79.4% utilization. Uses the least material. Cut file:
 
 ### 8 sheets
 
-196 × 285 mm (7.72 × 11.22 in) each, in a 4 × 2 grid (784 × 570 mm overall). 24 spare
+196 × 285 mm (7.72 × 11.22 in) each, in a 4 × 2 grid (793 × 573 mm overall). 24 spare
 hinge pieces, 77.2% utilization. Cut file: [`sheets/sheets8.svg`](sheets/sheets8.svg).
 
 ![8-sheet layout, colour-coded by box](previews/layout-sheets8.png)
 
 ### 9 sheets
 
-256 × 193 mm (10.08 × 7.60 in) each, in a 3 × 3 grid (768 × 579 mm overall). 19 spare
+256 × 193 mm (10.08 × 7.60 in) each, in a 3 × 3 grid (774 × 585 mm overall). 19 spare
 hinge pieces, 77.4% utilization. Cut file: [`sheets/sheets9.svg`](sheets/sheets9.svg).
 
 ![9-sheet layout, colour-coded by box](previews/layout-sheets9.png)
 
 ### 10 sheets
 
-224 × 201 mm (8.82 × 7.91 in) each, in a 2 × 5 grid (448 × 1005 mm overall). 13 spare
+224 × 201 mm (8.82 × 7.91 in) each, in a 2 × 5 grid (451 × 1017 mm overall). 13 spare
 hinge pieces, 76.2% utilization. Cut file:
 [`sheets/sheets10.svg`](sheets/sheets10.svg).
 
@@ -88,7 +90,7 @@ hinge pieces, 76.2% utilization. Cut file:
 
 ### 12 sheets
 
-190 × 200 mm (7.48 × 7.87 in) each, in a 4 × 3 grid (760 × 600 mm overall). 18 spare
+190 × 200 mm (7.48 × 7.87 in) each, in a 4 × 3 grid (769 × 606 mm overall). 18 spare
 hinge pieces, 75.4% utilization. Cut file:
 [`sheets/sheets12.svg`](sheets/sheets12.svg).
 
@@ -99,8 +101,8 @@ hinge pieces, 75.4% utilization. Cut file:
 | Path | What it is |
 |---|---|
 | `generate.sh` | Regenerates every SVG in this folder |
-| `pack_sheets.py` | Packs all pieces onto N equal sheets laid out in a grid, with cut lines between sheets, and fills the leftover space with spare hinge pieces; when only the engraving has changed it keeps the layout and updates the engraving |
-| `check_layout.py` | Checks a multi-sheet file from the SVG alone: every gap ≥ 3 mm, every piece ≥ 5 mm inside its sheet |
+| `pack_sheets.py` | Packs all pieces onto N equal sheets laid out in a grid, each with its own cut line and 3 mm apart, and fills the leftover space with spare hinge pieces; when only the engraving has changed it keeps the layout and updates the engraving |
+| `check_layout.py` | Checks a multi-sheet file from the SVG alone: every gap ≥ 3 mm, every piece ≥ 5 mm inside its sheet, sheets ≥ 3 mm apart |
 | `color_layouts.py` | Makes the colour-coded layout views in `layouts/` |
 | `compare.py` | Prints the comparison table of all layouts |
 | `render_previews.js` | Renders the SVGs to PNG previews and screenshots the 3D model (Playwright + Chromium) |
@@ -217,6 +219,9 @@ hinge pieces, 75.4% utilization. Cut file:
     thick.*
 30. *Let's make it* (the play between nested boxes) *be 2mm in all three. Keep box1
     size the same, and grow the other boxes as needed.*
+31. *Change the cutting process so that I can cut one sheet at a time: replace the
+    dividing lines between sheets with a separate rectangle around each sheet, and
+    a small gap between them.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -315,8 +320,10 @@ the innermost box (153.6 mm wide inside) still has plenty of room for two of the
 ## 3. N equal sheets with spare hinge pieces
 
 Every piece is at least 5 mm inside its sheet's cut line, which leaves a protective
-frame, and 3 mm from every other piece. The sheets sit in the grid closest to square,
-and neighbours share one cut line.
+frame, and 3 mm from every other piece. The sheets sit in the grid closest to square.
+Each sheet has its own rectangular cut line with a 3 mm gap to the next, so cutting
+one sheet free never cuts into another: you can cut the sheets one at a time, in
+separate jobs, from one large board.
 
 How `pack_sheets.py` builds a layout:
 
@@ -340,7 +347,8 @@ How `pack_sheets.py` builds a layout:
    hook-shaped pieces interlock and tuck in beside the finger joints. The layout with
    the most hinge pieces wins.
 3. **Independent check.** `check_layout.py` re-reads every finished SVG and confirms
-   each gap is ≥ 3 mm and each piece is ≥ 5 mm inside its sheet. All layouts pass.
+   each gap is ≥ 3 mm, each piece is ≥ 5 mm inside its sheet, and the sheets' cut
+   lines are ≥ 3 mm apart. All layouts pass.
 
 Spare pieces are unlabelled like the other hinge pieces. Cut them all; any 14 make one
 box's hinges (2 hinges × 7 pieces).
@@ -356,7 +364,7 @@ The cut files have one colour per laser operation, in cutting order:
 | 1 | Holes in every piece: hinge pieces' pin holes, box pieces' square hinge holes | orange `rgb(255,128,0)` |
 | 2 | Hinge pieces' outlines | blue `rgb(0,0,255)` |
 | 3 | Every other piece's outline | black `rgb(0,0,0)` |
-| 4 | Sheet cut lines | magenta `rgb(255,0,255)` |
+| 4 | Sheet cut lines, one rectangle per sheet | magenta `rgb(255,0,255)` |
 
 The holes go first, so no piece is cut free and shifts before its holes are cut.
 Engraving is green `rgb(0,255,0)`, as in boxes.py. (Only the burn tests have cyan
@@ -369,16 +377,17 @@ are red `rgb(255,0,0)` and are not for cutting. In the SVG each cut path also ha
 
 Utilization = real area of the cut pieces in the file (outlines minus holes and
 finger notches, spare hinge pieces included) / total sheet area. "vs best" is the
-extra material compared with the smallest layout. The table is the output of
-`compare.py`.
+extra material compared with the smallest layout. Material counts the sheets only;
+the overall panel is slightly larger because of the 3 mm gaps between sheets. The
+table is the output of `compare.py`.
 
 | Sheets | Sheet (mm) | Sheet (in) | Grid | Overall (mm) | Overall (in) | Material (m²) | vs best | Hinge pieces | Utilization |
 |---|---|---|---|---|---|---|---|---|---|
-| **6** | **280 × 257** | **11.02 × 10.12** | **2 × 3** | **560 × 771** | **22.05 × 30.35** | **0.432** | **best** | **65 (+9 spare)** | **79.4%** |
-| 8 | 196 × 285 | 7.72 × 11.22 | 4 × 2 | 784 × 570 | 30.87 × 22.44 | 0.447 | +3.5% | 80 (+24 spare) | 77.2% |
-| 9 | 256 × 193 | 10.08 × 7.60 | 3 × 3 | 768 × 579 | 30.24 × 22.80 | 0.445 | +3.0% | 75 (+19 spare) | 77.4% |
-| 10 | 224 × 201 | 8.82 × 7.91 | 2 × 5 | 448 × 1005 | 17.64 × 39.57 | 0.450 | +4.3% | 69 (+13 spare) | 76.2% |
-| 12 | 190 × 200 | 7.48 × 7.87 | 4 × 3 | 760 × 600 | 29.92 × 23.62 | 0.456 | +5.6% | 74 (+18 spare) | 75.4% |
+| **6** | **280 × 257** | **11.02 × 10.12** | **2 × 3** | **563 × 777** | **22.17 × 30.59** | **0.432** | **best** | **65 (+9 spare)** | **79.4%** |
+| 8 | 196 × 285 | 7.72 × 11.22 | 4 × 2 | 793 × 573 | 31.22 × 22.56 | 0.447 | +3.5% | 80 (+24 spare) | 77.2% |
+| 9 | 256 × 193 | 10.08 × 7.60 | 3 × 3 | 774 × 585 | 30.47 × 23.03 | 0.445 | +3.0% | 75 (+19 spare) | 77.4% |
+| 10 | 224 × 201 | 8.82 × 7.91 | 2 × 5 | 451 × 1017 | 17.76 × 40.04 | 0.450 | +4.3% | 69 (+13 spare) | 76.2% |
+| 12 | 190 × 200 | 7.48 × 7.87 | 4 × 3 | 769 × 606 | 30.28 × 23.86 | 0.456 | +5.6% | 74 (+18 spare) | 75.4% |
 
 56 hinge pieces are needed (4 boxes × 2 hinges × 7).
 
@@ -809,6 +818,10 @@ again (`burn-test.svg` and `finger-test.svg` on their own).
 * In the multi-sheet files the sheet cut lines come last, so the pieces are cut before
   the sheets come free. If your laser software reorders cuts, make sure the sheet
   lines go last.
+* Each sheet has its own cut line, 3 mm from its neighbours', so you can cut one sheet
+  at a time: select everything inside one sheet's magenta rectangle (its "Sheet N"
+  label is in the top-left corner) and run just that. In the SVG every piece, label
+  and sheet cut line also carries `data-sheet` (0 for sheet 1).
 * Kerf compensation is the boxes.py default (`--burn 0.1`). Cut `burn-test.svg`
   and `finger-test.svg` first to check it ([section 6](#6-burn-tests)), after
   `engrave-test.svg` ([section 8](#8-the-order-of-the-tests) gives the order), or

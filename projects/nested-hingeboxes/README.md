@@ -106,7 +106,8 @@ hinge pieces, 75.6% utilization. Cut file:
 | `render_previews.js` | Renders the SVGs to PNG previews and screenshots the 3D model (Playwright + Chromium) |
 | `engraving.py` | The engraving: the words, their sizes, and their outlines in Special Elite, the tree and menorah beside the bottom text, and the lid artwork scaled to fit |
 | `engrave_boxes.py` | Adds the engraving to the box SVGs, and renders each lid top to `previews/` |
-| `fonts/` | Special Elite (`SpecialElite-Regular.ttf`, from Google Fonts) and its licence (Apache 2.0) |
+| `hershey.py` | Single-line text in the Hershey font, for the burn tests' labels |
+| `fonts/` | Special Elite (`SpecialElite-Regular.ttf`, from Google Fonts) and its licence (Apache 2.0); the Hershey Roman Simplex single-line font (`futural.jhf`) and its terms (`HERSHEY-LICENSE.txt`) |
 | `art/` | The lid artwork drawn here: Anscombe's quartet (`anscombes-quartet.svg`, box 3), drawn by `lid_charts.py`, and `ideas.svg` (box 4), drawn by `draw_ideas.py` |
 | `lid_charts.py` | Draws box 3's Anscombe's quartet into `art/` |
 | `make_model.py`, `model_template.html` | Build `model.html`, the interactive 3D model |
@@ -349,7 +350,8 @@ The cut files have one colour per laser operation, in cutting order:
 | 4 | Sheet cut lines | magenta `rgb(255,0,255)` |
 
 The holes go first, so no piece is cut free and shifts before its holes are cut.
-Engraving is green `rgb(0,255,0)`, as in boxes.py. The "Box N" and "Sheet N" labels
+Engraving is green `rgb(0,255,0)`, as in boxes.py. (Only the burn tests have cyan
+`rgb(0,255,255)`, their labels, engraved as lines: see [section 6](#6-burn-tests).) The "Box N" and "Sheet N" labels
 are red `rgb(255,0,0)` and are not for cutting. In the SVG each cut path also has
 `class="outline"` or `class="hole"`, which `check_layout.py`, `compare.py` and
 `color_layouts.py` read.
@@ -623,6 +625,14 @@ for the hinges and one for the finger joints between the walls. Both use 11 burn
 values from 0.075 to 0.125 mm in steps of 0.005 mm. The burn values are engraved as
 ".075" for 0.075 mm.
 
+The labels are single-line text in the Hershey Roman Simplex font (`hershey.py`,
+`fonts/futural.jhf`), not filled outlines like the boxes' engraving: each stroke is
+traced once, which is quick and stays legible at these sizes (1.6 mm tall on the
+hinge pieces, 2.2 mm on the strip, 3 mm on the finger joint pieces). They are cyan
+`rgb(0,255,255)`, so they get their own layer in the laser software: set it to
+line (vector) engraving, at low power, not fill. A fill layer skips them, as they
+are open lines.
+
 ### Hinges
 
 `burn-test.svg` (a 94 × 28 mm strip plus pieces, 96 × 60 mm in all, drawn by
@@ -732,7 +742,8 @@ Cut the tests one at a time, in this order, on scraps of the plywood for the box
    rectangles, so they show whether the cut goes cleanly through the plywood
    without charring it. The burn tests depend on both. The kerf changes with the cut
    settings (power, speed, focus and passes), and the burn values on the burn
-   tests are engraved small (2.4–3 mm), so they read best at good settings.
+   tests are engraved small (1.6–3 mm, as single lines), so they read best at good
+   settings.
 2. **The hinge burn test** (`burn-test.svg`, [section 6](#hinges)), at the cut
    settings from step 1. It is the smallest test (96 × 60 mm) and gives a first
    burn value.

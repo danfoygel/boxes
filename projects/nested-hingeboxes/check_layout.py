@@ -37,9 +37,8 @@ def outline(d):
 
 def sheets(root):
     """Each sheet's cut rectangle (x0, y0, x1, y1), from its path "M x0 y0 H x1 V y1 H x0 Z"."""
-    cut = [g for g in root if g.get("id") == "sheet-cut-lines"][0]
     return [tuple(float(v) for v in re.match(r"M ([\d.]+) ([\d.]+) H ([\d.]+) V ([\d.]+)", p.get("d")).groups())
-            for p in cut]
+            for p in root if p.get("class") == "sheet"]
 
 
 def check(f):
@@ -47,7 +46,7 @@ def check(f):
     rects = sheets(root)
     pieces = []
     for g in root:
-        if not g.tag.endswith("g") or g.get("id") == "sheet-cut-lines":
+        if not g.tag.endswith("}g"):
             continue
         for p in g:
             if p.tag.endswith("path") and p.get("class") == "outline":

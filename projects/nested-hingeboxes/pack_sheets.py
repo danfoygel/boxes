@@ -406,7 +406,9 @@ def reengrave(out, parts, fp):
     W, H = (float(v) for v in root.get("data-sheet-size").split("x"))
     placed = [(int(ng.get("data-sheet")), parts[int(ng.get("data-part"))], ng.get("data-place"), None)
               for ng in root.iter(f"{{{SVG_NS}}}g") if ng.get("data-part") is not None]
-    n_sheets = len([p for g in root if g.get("id") == "sheet-cut-lines" for p in g])
+    # sheet rectangles: class="sheet", or data-sheet in the older files that grouped them
+    n_sheets = len([r for r in root.iter(f"{{{SVG_NS}}}path")
+                    if r.get("class") == "sheet" or r.get("data-sheet") is not None])
     write_svg(out, n_sheets, W, H, placed, parts, fp)
     return True
 
@@ -438,13 +440,13 @@ def write_svg(out, n_sheets, W, H, placed, parts, fp):
             "font-size": "3", "font-family": "sans-serif", "fill": "rgb(255,0,0)",
             "dominant-baseline": "middle"})
         t.text = f"Sheet {b + 1}"
-    # sheet rectangles last, one per sheet
-    g = ET.SubElement(svg, f"{{{SVG_NS}}}g", {"id": "sheet-cut-lines"})
+    # sheet rectangles last, each its own shape (no shared group), so laser
+    # software can select one sheet's rectangle on its own
     for b in range(n_sheets):
         x, y = corner(b)
-        ET.SubElement(g, f"{{{SVG_NS}}}path", {"d": f"M {x:g} {y:g} H {x + W:g} V {y + H:g} H {x:g} Z",
-                                              "stroke": SHEET_CUT, "fill": "none", "stroke-width": "0.2",
-                                              "data-sheet": str(b + 1)})
+        ET.SubElement(svg, f"{{{SVG_NS}}}path", {"d": f"M {x:g} {y:g} H {x + W:g} V {y + H:g} H {x:g} Z",
+                                                "id": f"sheet-{b + 1}", "class": "sheet", "stroke": SHEET_CUT,
+                                                "fill": "none", "stroke-width": "0.2"})
     ET.ElementTree(svg).write(out, encoding="utf-8", xml_declaration=True)
     return cols, rows, TW, TH
 

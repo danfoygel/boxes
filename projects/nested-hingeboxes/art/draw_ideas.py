@@ -348,7 +348,7 @@ def skiing():
     """A skier in a crouch going down a slope, snow flying off the tails."""
     d = unit((-5, 0.2), (5, 4.2))                    # down the slope
     n = (d[1], -d[0])
-    tail, tip = [(t * d[0] + 0.5 * n[0], t * d[1] + 0.5 * n[1]) for t in (-3.0, 3.2)]
+    tail, tip = ((t * d[0] + 0.5 * n[0], t * d[1] + 0.5 * n[1]) for t in (-3.0, 3.2))
     u = unit(tail, tip)
     ski = ln(spline([tail, (tip[0] - 1.4 * u[0], tip[1] - 1.4 * u[1]),
                      (tip[0] - 0.4 * u[0] + 0.3 * n[0], tip[1] - 0.4 * u[1] + 0.3 * n[1]),

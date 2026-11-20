@@ -14,9 +14,9 @@ box 4's a brain with eight thought clouds of things its owner loves doing.
 | Box | Outside (mm) | Front | Bottom |
 |---|---|---|---|
 | 1 (innermost) | 160 × 80 × 80 | Scientific Discoveries | Ember Barber |
-| 2 | 168 × 95 × 88 | Feline Facts | Leah Barber |
-| 3 | 176 × 110 × 96 | Problematic Data | Rina Foygel Barber |
-| 4 (outermost) | 184 × 125 × 104 | Exuberant Ideas | Mathew Barber |
+| 2 | 168.4 × 96.4 × 88.4 | Feline Facts | Leah Barber |
+| 3 | 176.8 × 112.8 × 96.8 | Problematic Data | Rina Foygel Barber |
+| 4 (outermost) | 185.2 × 129.2 × 105.2 | Exuberant Ideas | Mathew Barber |
 
 The project covers:
 
@@ -58,38 +58,38 @@ other pieces black, the sheet cut lines magenta ([cut colours](#cut-colours)).
 
 ### 6 sheets
 
-280 × 255 mm (11.02 × 10.04 in) each, in a 2 × 3 grid (560 × 765 mm overall). 30 spare
-hinge pieces, 79.0% utilization. Uses the least material. Cut file:
+280 × 257 mm (11.02 × 10.12 in) each, in a 2 × 3 grid (560 × 771 mm overall). 9 spare
+hinge pieces, 79.4% utilization. Uses the least material. Cut file:
 [`sheets/sheets6.svg`](sheets/sheets6.svg).
 
 ![6-sheet layout, colour-coded by box](previews/layout-sheets6.png)
 
 ### 8 sheets
 
-190 × 287 mm (7.48 × 11.30 in) each, in a 4 × 2 grid (760 × 574 mm overall). 15 spare
+196 × 285 mm (7.72 × 11.22 in) each, in a 4 × 2 grid (784 × 570 mm overall). 24 spare
 hinge pieces, 77.2% utilization. Cut file: [`sheets/sheets8.svg`](sheets/sheets8.svg).
 
 ![8-sheet layout, colour-coded by box](previews/layout-sheets8.png)
 
 ### 9 sheets
 
-258 × 189 mm (10.16 × 7.44 in) each, in a 3 × 3 grid (774 × 567 mm overall). 6 spare
-hinge pieces, 76.4% utilization. Cut file: [`sheets/sheets9.svg`](sheets/sheets9.svg).
+256 × 193 mm (10.08 × 7.60 in) each, in a 3 × 3 grid (768 × 579 mm overall). 19 spare
+hinge pieces, 77.4% utilization. Cut file: [`sheets/sheets9.svg`](sheets/sheets9.svg).
 
 ![9-sheet layout, colour-coded by box](previews/layout-sheets9.png)
 
 ### 10 sheets
 
-226 × 197 mm (8.90 × 7.76 in) each, in a 2 × 5 grid (452 × 985 mm overall). 17 spare
-hinge pieces, 75.7% utilization. Cut file:
+224 × 201 mm (8.82 × 7.91 in) each, in a 2 × 5 grid (448 × 1005 mm overall). 13 spare
+hinge pieces, 76.2% utilization. Cut file:
 [`sheets/sheets10.svg`](sheets/sheets10.svg).
 
 ![10-sheet layout, colour-coded by box](previews/layout-sheets10.png)
 
 ### 12 sheets
 
-190 × 198 mm (7.48 × 7.80 in) each, in a 4 × 3 grid (760 × 594 mm overall). 33 spare
-hinge pieces, 75.1% utilization. Cut file:
+190 × 200 mm (7.48 × 7.87 in) each, in a 4 × 3 grid (760 × 600 mm overall). 18 spare
+hinge pieces, 75.4% utilization. Cut file:
 [`sheets/sheets12.svg`](sheets/sheets12.svg).
 
 ![12-sheet layout, colour-coded by box](previews/layout-sheets12.png)
@@ -215,6 +215,8 @@ hinge pieces, 75.1% utilization. Cut file:
     dropped for *sparkles of various sizes*.
 29. *Update all measurements/designs for my material - I measured it to be 3.2mm
     thick.*
+30. *Let's make it* (the play between nested boxes) *be 2mm in all three. Keep box1
+    size the same, and grow the other boxes as needed.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -252,9 +254,13 @@ pieces.
 
 ## 2. The four boxes
 
-The chosen offsets are **8 mm for x and height, 15 mm for y**. The plywood measures
-3.2 mm, which leaves 1.6 mm of play in x and height and 0.6 mm in y. That works for
-material up to about 3.3 mm thick; at that thickness y has no play left.
+The plywood measures 3.2 mm, and the boxes leave **2 mm of play in every
+direction**, so the offsets are **8.4 mm for x and height (2t + 2) and 16.4 mm for y
+(4.5t + 2)**. Box 1 sets the sizes; each other box is the one before it plus the
+offsets. (The first offsets, 8 and 15 mm, left 2 mm and 1.5 mm of play at 3 mm, but
+only 1.6 mm and 0.6 mm at 3.2 mm.) Each 0.1 mm the plywood is thicker than drawn takes
+0.2 mm off the play in x and height and 0.45 mm off y, so y runs out first, at about
+3.64 mm.
 
 All boxes use outside dimensions, `--thickness 3.2`, `--lidheight 20` and
 `--CabinetHinge_eyes_per_hinge 7`. Outside mode is HingeBox's default, and
@@ -267,18 +273,18 @@ knuckles, which stick out another 4.8 mm at the back.
 | Box | Outside (mm) | `--h` | Outside (in) | Inside (mm) |
 |---|---|---|---|---|
 | 1 (innermost) | 160 × 80 × 80 | 60 | 6.30 × 3.15 × 3.15 | 153.6 × 73.6 × 73.6 |
-| 2 | 168 × 95 × 88 | 68 | 6.61 × 3.74 × 3.46 | 161.6 × 88.6 × 81.6 |
-| 3 | 176 × 110 × 96 | 76 | 6.93 × 4.33 × 3.78 | 169.6 × 103.6 × 89.6 |
-| 4 (outermost) | 184 × 125 × 104 | 84 | 7.24 × 4.92 × 4.09 | 177.6 × 118.6 × 97.6 |
+| 2 | 168.4 × 96.4 × 88.4 | 68.4 | 6.63 × 3.80 × 3.48 | 162.0 × 90.0 × 82.0 |
+| 3 | 176.8 × 112.8 × 96.8 | 76.8 | 6.96 × 4.44 × 3.81 | 170.4 × 106.4 × 90.4 |
+| 4 (outermost) | 185.2 × 129.2 × 105.2 | 85.2 | 7.29 × 5.09 × 4.14 | 178.8 × 122.8 × 98.8 |
 
 Inside, each box is 6.4 mm (2t) smaller than outside in every direction. The inside
 height is the box's h − 6.4 plus the 20 mm lid, for example 53.6 + 20 for box 1. Each
-box's outside is 1.6 mm narrower and 1.6 mm lower than the next box's inside. In depth
-it is 0.6 mm short, once its knuckles (4.8 mm) and the outer box's hinge pieces
+box's outside is 2 mm narrower and 2 mm lower than the next box's inside. In depth it
+is 2 mm short too, once its knuckles (4.8 mm) and the outer box's hinge pieces
 (3.2 mm) are counted.
 
-With the knuckles, the outermost box takes up 184 × 129.8 × 104 mm
-(7.24 × 5.11 × 4.09 in).
+With the knuckles, the outermost box takes up 185.2 × 134.0 × 105.2 mm
+(7.29 × 5.28 × 4.14 in).
 
 ### Outside mode
 
@@ -320,7 +326,7 @@ How `pack_sheets.py` builds a layout:
    (`--sheet` in `generate.sh`). A sheet grows, in 2 mm steps and smallest area
    first, only if the required pieces no longer fit. With 7-piece hinges, only the
    8-sheet layout had to grow, from 188 × 285 to 190 × 287 mm. With 3.2 mm plywood
-   the other four grew too (see the takeaways below).
+   and the larger boxes 2–4, all five grew (see the takeaways below).
 2. **Spare hinge pieces at that fixed size.** The hinge pieces are identical for all
    four boxes, so any spare fits any box. Each layout is tried both ways:
    * **A:** the box pieces plus k hinge pieces are packed as rectangles, then more
@@ -368,25 +374,31 @@ extra material compared with the smallest layout. The table is the output of
 
 | Sheets | Sheet (mm) | Sheet (in) | Grid | Overall (mm) | Overall (in) | Material (m²) | vs best | Hinge pieces | Utilization |
 |---|---|---|---|---|---|---|---|---|---|
-| **6** | **280 × 255** | **11.02 × 10.04** | **2 × 3** | **560 × 765** | **22.05 × 30.12** | **0.428** | **best** | **86 (+30 spare)** | **79.0%** |
-| 8 | 190 × 287 | 7.48 × 11.30 | 4 × 2 | 760 × 574 | 29.92 × 22.60 | 0.436 | +1.8% | 71 (+15 spare) | 77.2% |
-| 9 | 258 × 189 | 10.16 × 7.44 | 3 × 3 | 774 × 567 | 30.47 × 22.32 | 0.439 | +2.4% | 62 (+6 spare) | 76.4% |
-| 10 | 226 × 197 | 8.90 × 7.76 | 2 × 5 | 452 × 985 | 17.80 × 38.78 | 0.445 | +3.9% | 73 (+17 spare) | 75.7% |
-| 12 | 190 × 198 | 7.48 × 7.80 | 4 × 3 | 760 × 594 | 29.92 × 23.39 | 0.451 | +5.4% | 89 (+33 spare) | 75.1% |
+| **6** | **280 × 257** | **11.02 × 10.12** | **2 × 3** | **560 × 771** | **22.05 × 30.35** | **0.432** | **best** | **65 (+9 spare)** | **79.4%** |
+| 8 | 196 × 285 | 7.72 × 11.22 | 4 × 2 | 784 × 570 | 30.87 × 22.44 | 0.447 | +3.5% | 80 (+24 spare) | 77.2% |
+| 9 | 256 × 193 | 10.08 × 7.60 | 3 × 3 | 768 × 579 | 30.24 × 22.80 | 0.445 | +3.0% | 75 (+19 spare) | 77.4% |
+| 10 | 224 × 201 | 8.82 × 7.91 | 2 × 5 | 448 × 1005 | 17.64 × 39.57 | 0.450 | +4.3% | 69 (+13 spare) | 76.2% |
+| 12 | 190 × 200 | 7.48 × 7.87 | 4 × 3 | 760 × 600 | 29.92 × 23.62 | 0.456 | +5.6% | 74 (+18 spare) | 75.4% |
 
 56 hinge pieces are needed (4 boxes × 2 hinges × 7).
 
 Takeaways:
 
-* **6 sheets uses the least material** and fits 30 spare hinge pieces, enough for
-  two more boxes' hinges.
-* **3.2 mm plywood made four of the sheets a little bigger.** The hinge pieces scale
-  with the thickness, so they are about 7% larger than at 3 mm, and the pieces no
-  longer fit 6, 9, 10 or 12 sheets at their stored sizes. Each grew in one direction:
-  6 sheets by 2 mm to 280 × 255, 9 by 2 mm to 258 × 189, 10 by 4 mm to 226 × 197 and
-  12 by 2 mm to 190 × 198. 8 sheets, already grown for the 7-piece hinges, still fits
-  at 190 × 287.
-* **9 sheets has only 6 spares**, the fewest of any layout.
+* **6 sheets uses the least material**, but has only 9 spare hinge pieces, the fewest
+  of any layout and not quite enough for one more box's 14.
+* **3.2 mm plywood and the 2 mm play made every sheet a little bigger.** The hinge
+  pieces scale with the thickness (about 7% larger than at 3 mm), and boxes 2–4 grew
+  by 0.4–1.2 mm in width and height and 1.4–4.2 mm in depth, so none of the layouts
+  fit at its stored size any more. From the `--sheet` sizes in `generate.sh`:
+
+  | Sheets | Stored (mm) | Now (mm) |
+  |---|---|---|
+  | 6 | 278 × 255 | 280 × 257 |
+  | 8 | 188 × 285 | 196 × 285 |
+  | 9 | 256 × 189 | 256 × 193 |
+  | 10 | 222 × 197 | 224 × 201 |
+  | 12 | 188 × 198 | 190 × 200 |
+
 * How many spares fit depends on where the packer happens to leave gaps, not just on
   total free area.
 
@@ -453,9 +465,9 @@ share of each front's height.
 | Box | Front text | Front (mm) | Font size (mm) |
 |---|---|---|---|
 | 1 | Scientific / Discoveries | 153.6 × 53.6 | 15.2 |
-| 2 | Feline / Facts | 161.6 × 61.6 | 17.5 |
-| 3 | Problematic / Data | 169.6 × 69.6 | 19.8 |
-| 4 | Exuberant / Ideas | 177.6 × 77.6 | 22.1 |
+| 2 | Feline / Facts | 162.0 × 62.0 | 17.6 |
+| 3 | Problematic / Data | 170.4 × 70.4 | 20.0 |
+| 4 | Exuberant / Ideas | 178.8 × 78.8 | 22.4 |
 
 **Bottom.** The recipient's name, then "Chrismukkah 2026", at 6 mm on all four
 (capitals about 4.1 mm high), centred. It reads right way up when you tip the box
@@ -465,9 +477,9 @@ when you orbit under the box from the front.
 | Box | Bottom text | Bottom (mm) |
 |---|---|---|
 | 1 | Ember Barber / Chrismukkah 2026 | 153.6 × 73.6 |
-| 2 | Leah Barber / Chrismukkah 2026 | 161.6 × 88.6 |
-| 3 | Rina Foygel Barber / Chrismukkah 2026 | 169.6 × 103.6 |
-| 4 | Mathew Barber / Chrismukkah 2026 | 177.6 × 118.6 |
+| 2 | Leah Barber / Chrismukkah 2026 | 162.0 × 90.0 |
+| 3 | Rina Foygel Barber / Chrismukkah 2026 | 170.4 × 106.4 |
+| 4 | Mathew Barber / Chrismukkah 2026 | 178.8 × 122.8 |
 
 **Tree and menorah.** Beside the bottom text, a line-art Christmas tree on the left
 and a nine-branch menorah (the shamash raised in the middle) on the right, the same
@@ -479,9 +491,9 @@ the ornaments filled. The menorah is 16.5 × 20.4 mm and the tree 13.5 × 20.1 m
 | Box | Tree to the bottom's left edge (mm) | Menorah to the bottom's right edge (mm) |
 |---|---|---|
 | 1 | 29.8 | 26.9 |
-| 2 | 33.8 | 30.9 |
-| 3 | 35.8 | 32.9 |
-| 4 | 41.8 | 38.9 |
+| 2 | 34.0 | 31.1 |
+| 3 | 36.2 | 33.3 |
+| 4 | 42.4 | 39.5 |
 
 In the cut files the text and art are green (boxes.py's etching colour), filled outlines inside
 the piece it belongs to. `engrave_boxes.py` adds it to the box SVGs from the generator,
@@ -513,9 +525,9 @@ drawing, made for this lid.
 | Box | Artwork | Lid top (mm) | Engraved (mm) |
 |---|---|---|---|
 | 1 | Science and medical research in blue-ink sketch style (`AdobeStock_2095995062.svg`) | 153.6 × 73.6 | 137.6 × 57.5 |
-| 2 | Black cat silhouettes in 14 poses (`AdobeStock_939770434.svg`) | 161.6 × 88.6 | 145.2 × 72.6 |
-| 3 | Anscombe's quartet (`anscombes-quartet.svg`) | 169.6 × 103.6 | 153.6 × 87.6 |
-| 4 | A brain with eight thought clouds, no text (`ideas.svg`) | 177.6 × 118.6 | 161.6 × 101.0 |
+| 2 | Black cat silhouettes in 14 poses (`AdobeStock_939770434.svg`) | 162.0 × 90.0 | 146.0 × 73.0 |
+| 3 | Anscombe's quartet (`anscombes-quartet.svg`) | 170.4 × 106.4 | 154.4 × 90.4 |
+| 4 | A brain with eight thought clouds, no text (`ideas.svg`) | 178.8 × 122.8 | 162.8 × 101.8 |
 
 `engraving.py` scales each piece of art to the largest size that leaves 8 mm clear on
 the lid top, centred. Like the text, it is green filled outlines in the lid top's
@@ -557,7 +569,7 @@ engraved, to `previews/lid-boxN.png` (not the stock art of boxes 1 and 2,
   left-to-right order and is spread across the full width, and the rows are spread
   evenly down the lid. The ball cat at the end of the middle row sits 4 mm in from
   the right edge, under the round cat above it. The art now fills the lid at
-  2.0 : 1, 145.2 × 72.6 mm, with the cats at 93.5% of their old size and the closest
+  2.0 : 1, 146.0 × 73.0 mm, with the cats at 94% of their old size and the closest
   two about 3.4 mm apart. Again, the SVG to keep in `art/` is the rearranged one.
 * **Which panel is the lid top.** On every box the two x × y panels are no longer
   the same: the one with the artwork is the lid top, the one with the name is the
@@ -614,9 +626,9 @@ y = 3 + x/2, but they look nothing alike: a loose cloud, a smooth curve, a strai
 line with one outlier, and a single column with one far point that sets the slope.
 
 `lid_charts.py` draws them with shapely as filled outlines (0.7 mm axes, 0.5 mm fit
-lines, 2.2 mm X's of 0.7 mm strokes) on a 169.6 × 103.6 mm face, box 3's lid top, and
+lines, 2.2 mm X's of 0.7 mm strokes) on a 170.4 × 106.4 mm face, box 3's lid top, and
 writes `art/anscombes-quartet.svg`. The charts share one scale, x 0–20 and y 0–14 on
-70 × 38 mm axes, ticks at x = 5, 10, 15 and y = 4, 8, 12, with no labels. Each fit
+70 × 39 mm axes, ticks at x = 5, 10, 15 and y = 4, 8, 12, with no labels. Each fit
 line is worked out from that chart's own points. Their ink is drawn just inside the
 8 mm pad, so `engraving.py` puts them on at full size. In chart IV the column's
 points are as close as 0.4 mm apart, so their X's run together, as in Anscombe's
@@ -714,7 +726,7 @@ a new batch measures differently, change the thickness as well
 
 ## 7. Engraving test
 
-`engrave-test.svg` (137 × 108 mm, drawn by `engrave_test_sheet.py`) tests the engraving
+`engrave-test.svg` (138 × 108 mm, drawn by `engrave_test_sheet.py`) tests the engraving
 settings before the real job. It has six pieces, each a plain cut rectangle with
 4 mm clear round its engraving:
 

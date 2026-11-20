@@ -24,9 +24,9 @@ while read -r x y h; do
   i=$((i + 1))
 done <<'SIZES'
 160 80 60
-168 95 68
-176 110 76
-184 125 84
+168.4 96.4 68.4
+176.8 112.8 76.8
+185.2 129.2 85.2
 SIZES
 BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 

@@ -59,6 +59,7 @@ LID_ART = [HERE / "art" / "AdobeStock_2095995062.svg", HERE / "art" / "AdobeStoc
 STOCK_ART = set(LID_ART[:2])
 LID_PAD = 8.0       # mm clear around the lid artwork
 LID_TOLERANCE = 0.02  # mm, how far flattened curves may stray, for art with white shapes
+LID_MIN_LINE = 0.5  # mm, white lines narrower than this (box 2's contour lines) are widened to it
 WHITE = ("#ffffff", "#fff", "white")
 
 
@@ -310,7 +311,12 @@ def lid_art(src, w, h, at=(0.0, 0.0), pad=LID_PAD):
     one string per shape, curves kept (kept apart so that each keeps its own holes
     under the nonzero fill rule).  With white shapes, the painted area is worked
     out in paint order (dark shapes added, white ones cut out) and comes back as
-    one string per piece of it, curves flattened."""
+    one string per piece of it, curves flattened.  A white shape thinner than
+    LID_MIN_LINE (by mean width, twice its area over its perimeter) is grown all
+    round to that width, so that fine bare lines don't close up when engraved;
+    wider ones, such as eyes, are left as drawn.  Where a grown line runs under a
+    dark shape painted after it, only slivers of it may be left: a hole nowhere
+    half LID_MIN_LINE wide is filled in."""
     shapes, (x0, y0, x1, y1) = _art_shapes(src)
     s = min((w - 2 * pad) / (x1 - x0), (h - 2 * pad) / (y1 - y0))
     ox = at[0] + w / 2 - s * (x0 + x1) / 2
@@ -322,9 +328,12 @@ def lid_art(src, w, h, at=(0.0, 0.0), pad=LID_PAD):
     dark = Polygon()
     for p, white in shapes:
         r = _region(transform(p, fit))
+        if white and not r.is_empty and (width := 2 * r.area / r.length) < LID_MIN_LINE:
+            r = r.buffer((LID_MIN_LINE - width) / 2)
         dark = dark.difference(r) if white else dark.union(r)
-    polys = getattr(dark, "geoms", [dark])
-    return [_path(q) for q in polys if q.geom_type == "Polygon" and not q.is_empty], ink
+    polys = [Polygon(q.exterior, [r for r in q.interiors if not Polygon(r).buffer(-LID_MIN_LINE / 4).is_empty])
+             for q in getattr(dark, "geoms", [dark]) if q.geom_type == "Polygon" and not q.is_empty]
+    return [_path(q) for q in polys], ink
 
 
 def filled(ds):

@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """Pack the parts of several boxes.py SVGs onto N equal-sized sheets that sit
-side by side in a grid on one big panel, with cut lines between the sheets,
-then fill the leftover space with as many spare hinge pieces as fit.
+in a grid on one big panel, each sheet in its own cut rectangle and SHEET_GAP
+apart, so the sheets can be cut one at a time, then fill the leftover space
+with as many spare hinge pieces as fit.
 
 usage: pack_sheets.py [--sheet WxH] [--repack] N OUT.svg BOX1.svg [BOX2.svg ...]
 
 * Packing only depends on the pieces' cut lines and the settings, not on what
   is engraved inside them.  OUT records a fingerprint of both, and each piece
   in it records which input piece it is.  If OUT already exists with the same
-  fingerprint, only the engraving (and the "Box N" label placed below it) is
-  brought up to date, in seconds, and the layout is kept.  Any other change, or
-  --repack, packs from scratch.
+  fingerprint, the file is redrawn from the layout it records (each piece's
+  sheet and place on it), in seconds: that brings the engraving (and the "Box N"
+  label placed below it), the colours and the sheets' spacing up to date.  Any
+  other change, or --repack, packs from scratch.
 
-* Every part stays at least EDGE mm inside its sheet's cut line (the frame
+* Every part stays at least EDGE mm inside its sheet's cut rectangle (the frame
   that protects the parts when the sheets are stacked) and GAP mm from other
   parts.
 * Sheet size: the search tries sheet widths in 2 mm steps and binary-searches
@@ -34,12 +36,13 @@ usage: pack_sheets.py [--sheet WxH] [--repack] N OUT.svg BOX1.svg [BOX2.svg ...]
     outlines (>= GAP between pieces, >= EDGE from the sheet edge).
   - The variant with the most hinge pieces wins.
 * The grid (cols x rows) is the factorisation of N whose overall panel is
-  closest to square.  Neighbouring sheets share one cut line.  The sheet cut
-  lines come last in the file so they are cut after the parts.
+  closest to square.  Each sheet has its own cut rectangle, SHEET_GAP from its
+  neighbours', so any one sheet can be cut on its own.  The sheet rectangles
+  come last in the file so they are cut after the parts.
 * Cut colours follow the cutting order, one colour per laser operation: the
   holes in every piece first (orange), so no piece is cut free before its
   holes, then the hinge pieces' outlines (blue), then the other pieces'
-  outlines (black), then the sheet cut lines (magenta).  Each cut path is also
+  outlines (black), then the sheet rectangles (magenta).  Each cut path is also
   marked class="outline" or class="hole" for the scripts that read the file.
 * Labels are red (boxes.py annotation colour, not meant to be cut): "Box N" on
   each box part and "Sheet N" in each sheet's top-left frame.  On an engraved
@@ -69,13 +72,14 @@ from boxes.svgmerge import SvgMerge, SVG_NS  # noqa: E402
 
 EDGE = 5.0    # min distance part -> sheet cut line
 GAP = 3.0     # min distance part -> part
+SHEET_GAP = 2.0   # between neighbouring sheets' cut rectangles
 RES = 0.25    # shape-filling grid (mm)
 BLACK = "rgb(0,0,0)"     # boxes.py: outer cut (piece outline)
 BLUE = "rgb(0,0,255)"    # boxes.py: inner cut (hole)
 HOLE_CUT = "rgb(255,128,0)"    # cut first: the holes in every piece
 HINGE_CUT = "rgb(0,0,255)"     # cut second: the hinge pieces' outlines
 PIECE_CUT = "rgb(0,0,0)"       # cut third: every other piece's outline
-SHEET_CUT = "rgb(255,0,255)"   # cut last: the sheet cut lines
+SHEET_CUT = "rgb(255,0,255)"   # cut last: the sheet rectangles
 
 ALGOS = [rectpack.MaxRectsBssf, rectpack.MaxRectsBaf, rectpack.MaxRectsBl, rectpack.MaxRectsBlsf,
          rectpack.SkylineMwfl, rectpack.SkylineBl, rectpack.GuillotineBssfSas]
@@ -390,52 +394,57 @@ def fill_piece(ng, p):
 
 def reengrave(out, parts, fp):
     """If `out` was packed from these same pieces with the same settings (its
-    fingerprint is fp), refill every piece in it, which brings the engraving and
-    labels (and the cut colours) up to date and keeps the layout, and return True.  Otherwise leave
-    it alone and return False."""
+    fingerprint is fp), redraw it from the layout it records, which brings the
+    engraving, labels, cut colours and sheet spacing up to date and keeps the
+    layout, and return True.  Otherwise leave it alone and return False."""
     try:
-        tree = ET.parse(out)
+        root = ET.parse(out).getroot()
     except (FileNotFoundError, ET.ParseError):
         return False
-    if tree.getroot().get("data-pack") != fp:
+    if root.get("data-pack") != fp or root.get("data-sheet-size") is None:
         return False
-    for ng in tree.getroot().iter(f"{{{SVG_NS}}}g"):
-        if ng.get("data-part") is not None:
-            for c in list(ng):
-                ng.remove(c)
-            fill_piece(ng, parts[int(ng.get("data-part"))])
-        elif ng.get("id") == "sheet-cut-lines":
-            ng[0].set("stroke", SHEET_CUT)
-    tree.write(out, encoding="utf-8", xml_declaration=True)
+    W, H = (float(v) for v in root.get("data-sheet-size").split("x"))
+    placed = [(int(ng.get("data-sheet")), parts[int(ng.get("data-part"))], ng.get("data-place"), None)
+              for ng in root.iter(f"{{{SVG_NS}}}g") if ng.get("data-part") is not None]
+    n_sheets = len([p for g in root if g.get("id") == "sheet-cut-lines" for p in g])
+    write_svg(out, n_sheets, W, H, placed, parts, fp)
     return True
 
 
 def write_svg(out, n_sheets, W, H, placed, parts, fp):
     grids = [(c, n_sheets // c) for c in range(1, n_sheets + 1) if n_sheets % c == 0]
     cols, rows = min(grids, key=lambda g: abs(math.log((g[0] * W) / (g[1] * H))))
-    TW, TH = cols * W, rows * H
+    TW, TH = cols * W + (cols - 1) * SHEET_GAP, rows * H + (rows - 1) * SHEET_GAP
+
+    def corner(b):                   # top-left corner of sheet b
+        return (b % cols) * (W + SHEET_GAP), (b // cols) * (H + SHEET_GAP)
 
     svg = ET.Element(f"{{{SVG_NS}}}svg", {"width": f"{TW:.1f}mm", "height": f"{TH:.1f}mm",
-                                         "viewBox": f"0 0 {TW:.1f} {TH:.1f}", "data-pack": fp})
+                                         "viewBox": f"0 0 {TW:.1f} {TH:.1f}", "data-pack": fp,
+                                         "data-sheet-size": f"{W:g}x{H:g}"})
     index = {id(p): i for i, p in enumerate(parts)}
     for b, p, t, _ in placed:
-        t = f"translate({(b % cols) * W:.3f},{(b // cols) * H:.3f}) {t}"
-        ng = ET.SubElement(svg, f"{{{SVG_NS}}}g", {"transform": t, "style": p["g"].attrib.get("style", ""),
-                                                   "data-part": str(index[id(p)])})
+        x, y = corner(b)
+        # data-sheet and data-place record the layout, for reengrave
+        ng = ET.SubElement(svg, f"{{{SVG_NS}}}g", {"transform": f"translate({x:.3f},{y:.3f}) {t}",
+                                                   "style": p["g"].attrib.get("style", ""),
+                                                   "data-part": str(index[id(p)]), "data-sheet": str(b),
+                                                   "data-place": t})
         fill_piece(ng, p)
     for b in range(n_sheets):        # sheet numbers in the frame margin
+        x, y = corner(b)
         t = ET.SubElement(svg, f"{{{SVG_NS}}}text", {
-            "x": f"{(b % cols) * W + EDGE:.2f}", "y": f"{(b // cols) * H + EDGE / 2:.2f}",
+            "x": f"{x + EDGE:.2f}", "y": f"{y + EDGE / 2:.2f}",
             "font-size": "3", "font-family": "sans-serif", "fill": "rgb(255,0,0)",
             "dominant-baseline": "middle"})
         t.text = f"Sheet {b + 1}"
-    # sheet cut lines last, shared between neighbours
-    d = [f"M 0 0 H {TW} V {TH} H 0 Z"]
-    d += [f"M {c * W} 0 V {TH}" for c in range(1, cols)]
-    d += [f"M 0 {r * H} H {TW}" for r in range(1, rows)]
-    ET.SubElement(svg, f"{{{SVG_NS}}}g", {"id": "sheet-cut-lines"}).append(
-        ET.Element(f"{{{SVG_NS}}}path", {"d": " ".join(d), "stroke": SHEET_CUT, "fill": "none",
-                                          "stroke-width": "0.2"}))
+    # sheet rectangles last, one per sheet
+    g = ET.SubElement(svg, f"{{{SVG_NS}}}g", {"id": "sheet-cut-lines"})
+    for b in range(n_sheets):
+        x, y = corner(b)
+        ET.SubElement(g, f"{{{SVG_NS}}}path", {"d": f"M {x:g} {y:g} H {x + W:g} V {y + H:g} H {x:g} Z",
+                                              "stroke": SHEET_CUT, "fill": "none", "stroke-width": "0.2",
+                                              "data-sheet": str(b + 1)})
     ET.ElementTree(svg).write(out, encoding="utf-8", xml_declaration=True)
     return cols, rows, TW, TH
 
@@ -458,7 +467,7 @@ def main():
     parts = load_parts(a.files)
     fp = fingerprint(parts, [a.n_sheets, a.sheet])
     if not a.repack and reengrave(a.out, parts, fp):
-        log("same pieces and settings as before: engraving updated, layout kept")
+        log("same pieces and settings as before: layout kept, file redrawn")
         return
     needed = sum(p["box"] is None for p in parts)
     if a.sheet:

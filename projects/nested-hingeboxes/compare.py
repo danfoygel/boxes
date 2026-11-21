@@ -65,27 +65,34 @@ def inch(v):
     return f"{v / 25.4:.2f}"
 
 
+def size(v):
+    """mm to 0.1, without a trailing .0: 280, 227.5"""
+    return f"{v:.1f}".removesuffix(".0")
+
+
 def main():
     rows = []
     for f in sorted((HERE / "sheets").glob("sheets*.svg"),
-                    key=lambda p: int(re.findall(r"\d+", p.name)[0])):
+                    key=lambda p: (int(re.findall(r"\d+", p.name)[0]), len(p.stem))):
         root, area, hinges = file_info(f)
+        variant = re.sub(r"^sheets\d+-?", "", f.stem)     # sheets9-square: "square"
         TW, TH = mm(root, "width"), mm(root, "height")
         rects = sheets(root)
         x0, y0, x1, y1 = rects[0]
         cols, rows_ = len({r[0] for r in rects}), len({r[1] for r in rects})
-        rows.append((len(rects), x1 - x0, y1 - y0, cols, rows_, TW, TH, area, hinges))
-    best = min(n * w * h for n, w, h, *_ in rows)
+        rows.append((len(rects), variant, x1 - x0, y1 - y0, cols, rows_, TW, TH, area, hinges))
+    best = min(n * w * h for n, _, w, h, *_ in rows)
     needed = needed_hinges()
     print("| Sheets | Sheet (mm) | Sheet (in) | Grid | Overall (mm) | Overall (in) "
           "| Material (m²) | vs best | Hinge pieces | Utilization |")
     print("|---|---|---|---|---|---|---|---|---|---|")
-    for n, w, h, c, r, tw, th, area, hinges in rows:
+    for n, variant, w, h, c, r, tw, th, area, hinges in rows:
         a = n * w * h
         spare = hinges - needed
         hp = f"{hinges} (+{spare} spare)" if spare else f"{hinges}"
-        print(f"| {n} | {w:.0f} × {h:.0f} | {inch(w)} × {inch(h)} | {c} × {r} "
-              f"| {tw:.0f} × {th:.0f} | {inch(tw)} × {inch(th)} | {a / 1e6:.3f} "
+        label = f"{n} {variant}" if variant else f"{n}"
+        print(f"| {label} | {size(w)} × {size(h)} | {inch(w)} × {inch(h)} | {c} × {r} "
+              f"| {size(tw)} × {size(th)} | {inch(tw)} × {inch(th)} | {a / 1e6:.3f} "
               f"| {(a / best - 1) * 100:+.1f}% | {hp} | {area / a:.1%} |")
 
 

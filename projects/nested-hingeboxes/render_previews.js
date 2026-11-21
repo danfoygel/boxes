@@ -7,7 +7,7 @@ const path = require("path");
 
 const here = __dirname;
 const files = [];
-for (const n of [6, 8, 9, 10, 12]) files.push(`sheets/sheets${n}.svg`, `layouts/sheets${n}.svg`);
+for (const n of [6, 8, 9, "9-square", 10, 12]) files.push(`sheets/sheets${n}.svg`, `layouts/sheets${n}.svg`);
 
 (async () => {
   fs.mkdirSync(path.join(here, "previews"), { recursive: true });

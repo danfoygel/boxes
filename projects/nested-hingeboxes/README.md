@@ -48,7 +48,8 @@ Pages workflow publishes it with each push to `master`.
 
 ## Layouts
 
-There are five layouts, with 6, 8, 9, 10 or 12 sheets. Each one holds every piece of
+There are six layouts: 6, 8, 9, 10 or 12 sheets, and a second 9-sheet layout that
+makes the smallest square panel. Each one holds every piece of
 all four boxes plus as many spare hinge pieces as fit. Every piece is at least 3 mm
 from its neighbours and 5 mm inside its sheet's cut lines. The pictures below are the
 colour-coded views from `layouts/`: blue is box 1, orange box 2, aqua box 3, plum box 4,
@@ -80,6 +81,18 @@ hinge pieces, 77.4% utilization. Cut file: [`sheets/sheets9.svg`](sheets/sheets9
 
 ![9-sheet layout, colour-coded by box](previews/layout-sheets9.png)
 
+### 9 sheets, square
+
+227.5 × 227.5 mm (8.96 × 8.96 in) each, in a 3 × 3 grid (682.5 × 682.5 mm overall,
+26.87 in square): the smallest square panel found. Every engraved piece (the fronts,
+bottoms and lid tops) keeps its engraving horizontal, which the laser engraves faster.
+The box pieces were packed on their own and the hinge pieces filled in after them:
+61 spare hinge pieces, 75.1% utilization. Uses 7.9% more material than the 6-sheet
+layout ([how it was found](#the-smallest-square-panel)). Cut file:
+[`sheets/sheets9-square.svg`](sheets/sheets9-square.svg).
+
+![Square 9-sheet layout, colour-coded by box](previews/layout-sheets9-square.png)
+
 ### 10 sheets
 
 224 × 201 mm (8.82 × 7.91 in) each, in a 2 × 5 grid (448 × 1005 mm overall). 13 spare
@@ -101,7 +114,7 @@ hinge pieces, 75.4% utilization. Cut file:
 | Path | What it is |
 |---|---|
 | `generate.sh` | Regenerates every SVG in this folder |
-| `pack_sheets.py` | Packs all pieces onto N equal sheets laid out in a grid, with one cut line between neighbours (magenta) and the outer edge in its own colour (teal), and fills the leftover space with spare hinge pieces; when only the engraving has changed it keeps the layout and redraws the file |
+| `pack_sheets.py` | Packs all pieces onto N equal sheets laid out in a grid, with one cut line between neighbours (magenta) and the outer edge in its own colour (teal), and fills the leftover space with spare hinge pieces; `--upright` keeps engraved pieces unrotated and `--boxes-first` packs the box pieces before any hinge pieces; when only the engraving has changed it keeps the layout and redraws the file |
 | `check_layout.py` | Checks a multi-sheet file from the SVG alone: every gap ≥ 3 mm, every piece ≥ 5 mm inside its sheet |
 | `color_layouts.py` | Makes the colour-coded layout views in `layouts/` |
 | `compare.py` | Prints the comparison table of all layouts |
@@ -116,7 +129,7 @@ hinge pieces, 75.4% utilization. Cut file:
 | `check_model.py`, `model_pieces.js` | Checks the 3D model with the boxes nested: no two pieces overlap, and each box has 2 mm of room inside the next ([section 4](#4-3d-model)) |
 | `model.html` | The four boxes in 3D: open it in a browser to rotate, nest and open them |
 | `boxes/box1.svg` … `box4.svg` | The four boxes, each from the stock HingeBox generator (7-piece hinges), plus their engraved text and lid artwork |
-| `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files, coloured by cutting order |
+| `sheets/sheetsN.svg` | N equal sheets, with spare hinge pieces: the cut files, coloured by cutting order (`sheets9-square.svg`: the square 9-sheet layout) |
 | `burn_test_sheet.py`, `burn-test.svg` | The hinge burn test: a strip with a row of 11 one-hole hinges, and a hinge piece for each, at 11 burn values ([section 6](#6-burn-tests)) |
 | `finger_test_sheet.py`, `finger-test.svg` | The finger joint burn test: a pair of meshing pieces at each of the 11 burn values ([section 6](#6-burn-tests)) |
 | `engrave_test_sheet.py`, `engrave-test.svg` | The engraving test: one element of each lid's artwork, box 1's bottom and box 1's front text, each on a small piece ([section 7](#7-engraving-test)) |
@@ -227,6 +240,13 @@ hinge pieces, 75.4% utilization. Cut file:
 32. *Actually, undo that - I want a single line dividing the sheets, not separate
     boxes. Give one color to the outer perimeter and another color to the internal
     dividers.*
+33. *What is the smallest square that you can fit the design into? Any number of
+    sheets 6+.* Then: *not square sheets - square for the overall material that the
+    sheets are cut from. The sheets can be any shape that helps.* Then: *do the
+    layout without any hinge pieces - which will minimize the overall square. Then
+    fit in as many hinge pieces into the remaining area as possible* and *prefer
+    layouts that keep text horizontal - the printer is faster doing that.* Then:
+    *add the 9 sheet one. Don't replace any of the existing ones.*
 
 The single cutsheet (request 3) and the clustered layouts (request 4) have since been
 removed. The repository history has them.
@@ -394,6 +414,7 @@ extra material compared with the smallest layout. The table is the output of
 | **6** | **280 × 257** | **11.02 × 10.12** | **2 × 3** | **560 × 771** | **22.05 × 30.35** | **0.432** | **best** | **65 (+9 spare)** | **79.4%** |
 | 8 | 196 × 285 | 7.72 × 11.22 | 4 × 2 | 784 × 570 | 30.87 × 22.44 | 0.447 | +3.5% | 80 (+24 spare) | 77.2% |
 | 9 | 256 × 193 | 10.08 × 7.60 | 3 × 3 | 768 × 579 | 30.24 × 22.80 | 0.445 | +3.0% | 75 (+19 spare) | 77.4% |
+| 9 square | 227.5 × 227.5 | 8.96 × 8.96 | 3 × 3 | 682.5 × 682.5 | 26.87 × 26.87 | 0.466 | +7.9% | 117 (+61 spare) | 75.1% |
 | 10 | 224 × 201 | 8.82 × 7.91 | 2 × 5 | 448 × 1005 | 17.64 × 39.57 | 0.450 | +4.3% | 69 (+13 spare) | 76.2% |
 | 12 | 190 × 200 | 7.48 × 7.87 | 4 × 3 | 760 × 600 | 29.92 × 23.62 | 0.456 | +5.6% | 74 (+18 spare) | 75.4% |
 
@@ -418,6 +439,51 @@ Takeaways:
 
 * How many spares fit depends on where the packer happens to leave gaps, not just on
   total free area.
+* **The square 9-sheet layout uses the most material** but the smallest square panel
+  of 9 sheets, has the most spare hinge pieces, and is the only layout that keeps all
+  its engraving horizontal ([below](#the-smallest-square-panel)).
+
+### The smallest square panel
+
+The layouts above make each sheet as small as possible. For one square panel, the
+sheets are sized from the panel instead: c × r sheets of S/c × S/r, for the
+smallest square side S. The search tried each grid that can hold box 4's
+185.4 × 129.4 mm panels within 760 mm, and for each one:
+
+1. **Box pieces only.** The box pieces alone are rectangle-packed (rectpack's sort
+   orders plus 40 random orders), and S is the smallest square, to 1 mm, where they
+   fit. Hinge pieces are left out of this step, so they don't make the square bigger.
+2. **Then hinge pieces.** As many as fit are shape-filled into the space left over, as
+   in layout variant A above with k = 0. Every grid fit at least 82, more than the 56
+   needed, so none needs hinge pieces cut separately.
+3. **Engraving horizontal.** The laser engraves faster with the engraving horizontal,
+   so packer results that turn an engraved piece by 90° are dropped. With the
+   engraving free to turn, the best square was only 1 mm smaller (667 mm, 2 × 3), and
+   keeping the lid art horizontal as well as the text cost nothing.
+
+With every engraved piece horizontal (c across × r down):
+
+| Sheets | Grid | Square (mm) | Sheet (mm) | Hinge pieces |
+|---|---|---|---|---|
+| 6 | 3 × 2 | 668 | 222.7 × 334 | 96 |
+| 9 | 3 × 3 | 682 | 227.3 × 227.3 | 112 |
+| 6 | 2 × 3 | 685 | 342.5 × 228.3 | 177 |
+| 12 | 3 × 4 | 694 | 231.3 × 173.5 | 123 |
+| 8 | 2 × 4 | 701 | 350.5 × 175.3 | 210 |
+| 10 | 2 × 5 | 701 | 350.5 × 140.2 | 182 |
+| 15 | 3 × 5 | 720 | 240 × 144 | 245 |
+
+With the engraving kept unrotated, a grid and its transpose differ: 6 sheets 3
+across fit a 668 mm square, 2 across need 685 mm. Other counts (7, 11, 13, 14, 16 …)
+have no grid whose sheets hold box 4's panels in a square under 760 mm.
+
+The 9-sheet layout is in the cut files as `sheets9-square.svg`. Its sheets are
+227.5 mm, rounded up from 227.33 so that the sheet size and cut lines are exact
+numbers, which makes the panel 682.5 mm. `generate.sh` builds it with
+`pack_sheets.py --sheet 227.5x227.5 --upright --boxes-first`: `--upright` drops
+packer results that rotate an engraved piece and adds the random orders, and
+`--boxes-first` packs only the box pieces as rectangles before the hinge pieces are
+shape-filled. The 6-sheet, 668 mm layout from the search is not in the cut files.
 
 ### Colour-coded layout views
 

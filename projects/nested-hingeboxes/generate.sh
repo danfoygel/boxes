@@ -45,15 +45,20 @@ BOXES=(boxes/box1.svg boxes/box2.svg boxes/box3.svg boxes/box4.svg)
 #    and grown only where the required pieces no longer fit.  Drop --sheet to
 #    run the size search from scratch.  If only the engraving has changed, each
 #    sheet file keeps its layout and just gets the new engraving; set REPACK=1
-#    to pack from scratch anyway.
-while read -r n size; do
-  "$PY" pack_sheets.py --sheet "$size" ${REPACK:+--repack} "$n" "sheets/sheets$n.svg" "${BOXES[@]}" &
+#    to pack from scratch anyway.  Columns: N, sheet size, file name, options.
+#    sheets9-square is the smallest square panel found, 3 x 3 sheets of 227.5 mm,
+#    with every engraved piece kept horizontal and the hinge pieces filled in
+#    after the box pieces.
+while read -r n size name opts; do
+  # shellcheck disable=SC2086  # opts holds zero or more options
+  "$PY" pack_sheets.py --sheet "$size" $opts ${REPACK:+--repack} "$n" "sheets/$name.svg" "${BOXES[@]}" &
 done <<'SHEETS'
-6 278x255
-8 188x285
-9 256x189
-10 222x197
-12 188x198
+6 278x255 sheets6
+8 188x285 sheets8
+9 256x189 sheets9
+9 227.5x227.5 sheets9-square --upright --boxes-first
+10 222x197 sheets10
+12 188x198 sheets12
 SHEETS
 wait
 

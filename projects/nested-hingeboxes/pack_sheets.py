@@ -3,7 +3,8 @@
 side by side in a grid on one big panel, with cut lines between the sheets,
 then fill the leftover space with as many spare hinge pieces as fit.
 
-usage: pack_sheets.py [--sheet WxH] [--repack] N OUT.svg BOX1.svg [BOX2.svg ...]
+usage: pack_sheets.py [--sheet WxH] [--upright] [--boxes-first] [--repack]
+                      N OUT.svg BOX1.svg [BOX2.svg ...]
 
 * Packing only depends on the pieces' cut lines and the settings, not on what
   is engraved inside them.  OUT records a fingerprint of both, and each piece
@@ -34,6 +35,13 @@ usage: pack_sheets.py [--sheet WxH] [--repack] N OUT.svg BOX1.svg [BOX2.svg ...]
     correlation proposes positions; each is checked exactly against the real
     outlines (>= GAP between pieces, >= EDGE from the sheet edge).
   - The variant with the most hinge pieces wins.
+  - --boxes-first: only k = 0, so the box pieces are packed on their own and
+    every hinge piece is shape-filled into what they leave.
+* --upright: engraved parts (text or lid art) are never rotated, so their
+  engraving stays horizontal, which the laser engraves faster.  Packer results
+  that turn one are dropped, and to make up for that the packer also runs
+  without rotation and with SHUFFLES random part orders on top of its sort
+  orders.
 * The grid (cols x rows) is the factorisation of N whose overall panel is
   closest to square.  Neighbouring sheets share one cut line.  The sheet cut
   lines come last in the file so they are cut after the parts: the dividers
@@ -54,6 +62,7 @@ import hashlib
 import itertools
 import json
 import math
+import random
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -73,6 +82,7 @@ from boxes.svgmerge import SvgMerge, SVG_NS  # noqa: E402
 EDGE = 5.0    # min distance part -> sheet cut line
 GAP = 3.0     # min distance part -> part
 RES = 0.25    # shape-filling grid (mm)
+SHUFFLES = 40  # --upright: random part orders tried, on top of rectpack's sort orders
 BLACK = "rgb(0,0,0)"     # boxes.py: outer cut (piece outline)
 BLUE = "rgb(0,0,255)"    # boxes.py: inner cut (hole)
 HOLE_CUT = "rgb(255,128,0)"    # cut first: the holes in every piece
@@ -141,17 +151,27 @@ def svg_transform(part, angle, px, py):
 # --------------------------------------------------------- rectangle packing
 
 def packs(parts, n_sheets, W, H):
-    """Yield rect lists for every packer setting that fits all parts."""
+    """Yield rect lists for every packer setting that fits all parts, with every
+    upright part (--upright) unrotated."""
     iw, ih = W - 2 * EDGE + GAP, H - 2 * EDGE + GAP   # usable size incl. one GAP of padding
-    for algo, sort in itertools.product(ALGOS, SORTS):
-        pk = rectpack.newPacker(rotation=True, pack_algo=algo, sort_algo=sort,
+    upright = {i for i, p in enumerate(parts) if p.get("upright")}
+    order = list(range(len(parts)))
+    orders = [(sort, order) for sort in SORTS]
+    rotations = (True,)
+    if upright:
+        rng = random.Random(0)
+        orders += [(rectpack.SORT_NONE, rng.sample(order, len(order))) for _ in range(SHUFFLES)]
+        rotations = (True, False)
+    for rot, algo, (sort, seq) in itertools.product(rotations, ALGOS, orders):
+        pk = rectpack.newPacker(rotation=rot, pack_algo=algo, sort_algo=sort,
                                 bin_algo=rectpack.PackingBin.Global)
-        for i, p in enumerate(parts):
-            pk.add_rect(p["w"] + GAP, p["h"] + GAP, i)
+        for i in seq:
+            pk.add_rect(parts[i]["w"] + GAP, parts[i]["h"] + GAP, i)
         pk.add_bin(iw, ih, count=n_sheets)
         pk.pack()
         rl = pk.rect_list()
-        if len(rl) == len(parts):
+        if len(rl) == len(parts) and all(abs(w - (parts[i]["w"] + GAP)) < 0.01
+                                         for _, _, _, w, _, i in rl if i in upright):
             yield rl
 
 
@@ -305,7 +325,7 @@ def shape_fill(filler, n_sheets, placed):
     return placed
 
 
-def best_layout(parts, n_sheets, W, H, log, quick=False):
+def best_layout(parts, n_sheets, W, H, log, quick=False, boxes_first=False):
     """Try the rectangle layouts below and shape-fill each; the most hinge pieces wins.
 
     The rectangle packer is a heuristic whose choices depend on the small pieces
@@ -316,6 +336,7 @@ def best_layout(parts, n_sheets, W, H, log, quick=False):
     B drops them and places all hinge pieces by shape-filling.  A layout must
     end up with at least the required number of hinge pieces; None if none does.
     quick: stop at the first layout that holds every required piece.
+    boxes_first: only k = 0, the box pieces packed on their own.
     """
     hinge = next(p for p in parts if p["box"] is None)
     panels = [p for p in parts if p["box"] is not None]
@@ -323,7 +344,7 @@ def best_layout(parts, n_sheets, W, H, log, quick=False):
     filler = Filler(hinge, W, H)
     count = lambda pl: sum(p["box"] is None for _, p, _, _ in pl)   # noqa: E731
 
-    k_max = max_hinge_rects(panels, hinge, n_sheets, W, H, needed + 60)
+    k_max = 0 if boxes_first else max_hinge_rects(panels, hinge, n_sheets, W, H, needed + 60)
     best, seen, tried = None, set(), 0
     for k in sorted(set(range(0, k_max + 1, 10)) | {min(needed, k_max), k_max}):
         if k < 0:
@@ -344,8 +365,9 @@ def best_layout(parts, n_sheets, W, H, log, quick=False):
                     best = (f"{name}, k={k}", count(pl), pl)
                     if quick:
                         return best
-    log(f"{W:g} x {H:g}: {tried} layouts tried (rectangle packing fits at most {k_max} "
-        f"hinge pieces), best {best[1] if best else 'none'} "
+    how = ("box pieces packed first" if boxes_first
+           else f"rectangle packing fits at most {k_max} hinge pieces")
+    log(f"{W:g} x {H:g}: {tried} layouts tried ({how}), best {best[1] if best else 'none'} "
         f"{'hinge pieces (' + best[0] + ')' if best else f'(needs {needed})'}")
     return best
 
@@ -456,6 +478,11 @@ def main():
     ap.add_argument("--sheet", help="sheet size WxH in mm to start from (skips the size "
                     "search); grown in 2 mm steps, smallest area first, only if the "
                     "required pieces do not fit")
+    ap.add_argument("--upright", action="store_true",
+                    help="never rotate an engraved part, so its engraving stays horizontal")
+    ap.add_argument("--boxes-first", action="store_true",
+                    help="pack the box parts on their own, then fill hinge pieces into "
+                    "what is left")
     ap.add_argument("--repack", action="store_true",
                     help="pack from scratch even if OUT was packed from the same pieces")
     ap.add_argument("n_sheets", type=int)
@@ -467,7 +494,11 @@ def main():
         print(f"[{a.n_sheets} sheets] {msg}", file=sys.stderr, flush=True)
 
     parts = load_parts(a.files)
-    fp = fingerprint(parts, [a.n_sheets, a.sheet])
+    for p in parts:
+        p["upright"] = a.upright and any(c.get("class") == "engraving" for c in p["g"])
+    # the options are only in the fingerprint when set, so older files keep theirs
+    options = [o for o in ("upright", "boxes_first") if getattr(a, o)]
+    fp = fingerprint(parts, [a.n_sheets, a.sheet] + options)
     if not a.repack and reengrave(a.out, parts, fp):
         log("same pieces and settings as before: layout kept, file redrawn")
         return
@@ -477,14 +508,14 @@ def main():
     else:
         W, H = find_best(parts, a.n_sheets)
     log(f"sheet {W:g} x {H:g} mm")
-    best = best_layout(parts, a.n_sheets, W, H, log)
+    best = best_layout(parts, a.n_sheets, W, H, log, boxes_first=a.boxes_first)
     if best is None:
         sizes = sorted(((W + dw, H + dh) for dw in range(0, 42, 2) for dh in range(0, 42, 2)
                         if dw or dh), key=lambda s: (s[0] * s[1], abs(s[0] - s[1])))
         for W, H in sizes:
-            if best_layout(parts, a.n_sheets, W, H, log, quick=True):
+            if best_layout(parts, a.n_sheets, W, H, log, quick=True, boxes_first=a.boxes_first):
                 log(f"grown to {W:g} x {H:g} mm")
-                best = best_layout(parts, a.n_sheets, W, H, log)
+                best = best_layout(parts, a.n_sheets, W, H, log, boxes_first=a.boxes_first)
                 break
     strategy, hinges, placed = best
     cols, rows, TW, TH = write_svg(a.out, a.n_sheets, W, H, placed, parts, fp)

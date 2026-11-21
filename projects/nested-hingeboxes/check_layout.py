@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Check a multi-sheet cut file: no two pieces closer than GAP, every piece at
-least EDGE inside its sheet.  Works from the SVG alone (real outlines).
+least EDGE inside its sheet, and the sheet cut lines (outer edge and dividers)
+drawing the grid of sheets the file records.  Works from the SVG alone (real
+outlines).
 
 usage: check_layout.py SHEETS.svg [...]
 """
@@ -36,9 +38,18 @@ def outline(d):
 
 
 def sheets(root):
-    """Each sheet's cut rectangle (x0, y0, x1, y1), from its path "M x0 y0 H x1 V y1 H x0 Z"."""
-    return [tuple(float(v) for v in re.match(r"M ([\d.]+) ([\d.]+) H ([\d.]+) V ([\d.]+)", p.get("d")).groups())
-            for p in root if p.get("class") == "sheet"]
+    """Each sheet (x0, y0, x1, y1), from the sheet size, count and panel width
+    the file records, after checking that the cut lines draw that grid: the
+    outer edge and a line between every two neighbouring sheets."""
+    W, H = (float(v) for v in root.get("data-sheet-size").split("x"))
+    n, cols = int(root.get("data-sheets")), round(float(root.get("width")[:-2]) / W)
+    rows = n // cols
+    cut = {p.get("id"): p.get("d") for g in root if g.get("id") == "sheet-cut-lines" for p in g}
+    assert cut["sheet-border"] == f"M 0 0 H {cols * W:g} V {rows * H:g} H 0 Z", cut["sheet-border"]
+    xs = sorted(float(v) for v in re.findall(r"M ([\d.]+) 0 V", cut.get("sheet-dividers", "")))
+    ys = sorted(float(v) for v in re.findall(r"M 0 ([\d.]+) H", cut.get("sheet-dividers", "")))
+    assert xs == [c * W for c in range(1, cols)] and ys == [r * H for r in range(1, rows)], (xs, ys)
+    return [((b % cols) * W, (b // cols) * H, (b % cols + 1) * W, (b // cols + 1) * H) for b in range(n)]
 
 
 def check(f):

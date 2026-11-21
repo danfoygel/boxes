@@ -51,9 +51,10 @@ def convert(src, dst):
     counts = {}
     for el in root:
         el = copy.deepcopy(el)
-        if el.get("class") == "sheet":             # a sheet's cut rectangle
-            el.set("stroke", "#9a9994")
-            el.set("stroke-width", "0.4")
+        if el.get("id") == "sheet-cut-lines":
+            for p in el.iter(q("path")):
+                p.set("stroke", "#9a9994")
+                p.set("stroke-width", "0.4")
             body.append(el)
             continue
         if el.tag == q("text"):                     # "Sheet N"

@@ -70,7 +70,7 @@ def main():
     for f in sorted((HERE / "sheets").glob("sheets*.svg"),
                     key=lambda p: int(re.findall(r"\d+", p.name)[0])):
         root, area, hinges = file_info(f)
-        TW, TH = mm(root, "width"), mm(root, "height")   # overall, with the gaps between sheets
+        TW, TH = mm(root, "width"), mm(root, "height")
         rects = sheets(root)
         x0, y0, x1, y1 = rects[0]
         cols, rows_ = len({r[0] for r in rects}), len({r[1] for r in rects})
